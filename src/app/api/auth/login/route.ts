@@ -15,7 +15,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    await connectDB();
+    // 连接数据库（带超时错误提示）
+    try {
+      await connectDB();
+    } catch (dbError) {
+      const message = dbError instanceof Error ? dbError.message : '数据库连接失败';
+      console.error('登录 - 数据库连接失败:', message);
+      return NextResponse.json(
+        { success: false, error: '服务暂时不可用，请检查数据库配置或稍后重试' },
+        { status: 503 }
+      );
+    }
 
     // Find user by email
     const user = await User.findOne({ email: email.toLowerCase() });
@@ -59,15 +69,16 @@ export async function POST(request: NextRequest) {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      maxAge: 7 * 24 * 60 * 60, // 7 days
+      maxAge: 7 * 24 * 60 * 60,
       path: '/',
     });
 
     return response;
   } catch (error) {
     console.error('登录失败:', error);
+    const message = error instanceof Error ? error.message : '未知错误';
     return NextResponse.json(
-      { success: false, error: '登录失败，请稍后重试' },
+      { success: false, error: `登录失败: ${message}` },
       { status: 500 }
     );
   }
