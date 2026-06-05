@@ -12,210 +12,188 @@ interface ExpenseItem {
   category: string;
   description: string;
   imageUrl: string;
-  confirmed: boolean;
+  status: string;
   createdAt: string;
+}
+
+interface Stats {
+  totalAmount: number;
+  totalCount: number;
+  byCategory: Record<string, { count: number; total: number }>;
 }
 
 export default function ExpensesPage() {
   const { user, loading } = useAuth();
+  const now = new Date();
+  const [year, setYear] = useState(now.getFullYear());
+  const [month, setMonth] = useState(now.getMonth() + 1);
   const [expenses, setExpenses] = useState<ExpenseItem[]>([]);
-  const [stats, setStats] = useState({ total: 0, byCategory: {} as Record<string, number>, totalAmount: 0 });
-  const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(0);
-  const [filterConfirmed, setFilterConfirmed] = useState<string>('true');
+  const [stats, setStats] = useState<Stats | null>(null);
   const [fetching, setFetching] = useState(true);
+  const [page, setPage] = useState(1);
+
+  const monthKey = `${year}-${String(month).padStart(2, '0')}`;
+  const monthLabel = `${year}年${String(month).padStart(2, '0')}月`;
 
   const fetchExpenses = useCallback(async () => {
     setFetching(true);
     try {
-      const params = new URLSearchParams({ page: String(page), limit: '50' });
-      if (filterConfirmed !== 'all') params.set('confirmed', filterConfirmed);
-
-      const res = await fetch(`/api/expenses?${params}`);
+      const res = await fetch(`/api/expenses?month=${monthKey}&status=confirmed&page=${page}&limit=100`);
       const json = await res.json();
-
       if (json.success) {
         setExpenses(json.data.items);
-        setTotalPages(json.data.totalPages);
-
-        // Calculate stats
-        const all: ExpenseItem[] = json.data.items;
-        const byCategory: Record<string, number> = {};
-        let totalAmount = 0;
-        for (const item of all) {
-          byCategory[item.category] = (byCategory[item.category] || 0) + item.amount;
-          totalAmount += item.amount;
-        }
-        setStats({ total: json.data.total, byCategory, totalAmount });
+        setStats(json.data.stats);
       }
-    } catch {
-      // ignore
-    } finally {
-      setFetching(false);
-    }
-  }, [page, filterConfirmed]);
+    } catch {} finally { setFetching(false); }
+  }, [monthKey, page]);
 
-  useEffect(() => {
-    if (user) fetchExpenses();
-  }, [user, fetchExpenses]);
+  useEffect(() => { if (user) fetchExpenses(); }, [user, fetchExpenses]);
 
   const deleteExpense = async (id: string) => {
-    if (!confirm('确定删除这条记录？')) return;
-    try {
-      const res = await fetch(`/api/expenses/${id}`, { method: 'DELETE' });
-      const json = await res.json();
-      if (json.success) {
-        setExpenses((prev) => prev.filter((e) => e._id !== id));
-        fetchExpenses();
-      }
-    } catch {
-      // ignore
-    }
+    if (!confirm('删除这条记录？')) return;
+    await fetch(`/api/expenses/${id}`, { method: 'DELETE' });
+    fetchExpenses();
   };
 
-  if (!loading && !user) {
-    return <div className="text-center py-20 text-gray-500">请先登录</div>;
-  }
+  const months = Array.from({ length: 12 }, (_, i) => {
+    const m = i + 1;
+    return { value: m, label: `${m}月` };
+  });
+  const years = [now.getFullYear(), now.getFullYear() - 1, now.getFullYear() - 2];
 
-  if (loading) {
-    return <div className="text-center py-20"><div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto" /></div>;
-  }
+  if (!loading && !user) return <div className="text-center py-20 text-gray-500">请先登录</div>;
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-8 sm:py-12">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">杂费统计</h1>
-          <p className="text-gray-500 mt-1">查看和管理你的费用记录</p>
-        </div>
-        <Link
-          href="/expenses/upload"
-          className="px-5 py-2.5 bg-blue-600 text-white font-medium rounded-xl hover:bg-blue-700 transition-colors text-center"
-        >
-          + 上传新单据
-        </Link>
-      </div>
-
-      {/* Stats Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
-        <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
-          <p className="text-xs text-gray-500 mb-1">总记录</p>
-          <p className="text-2xl font-bold text-gray-800">{stats.total}</p>
-        </div>
-        <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
-          <p className="text-xs text-gray-500 mb-1">总金额</p>
-          <p className="text-2xl font-bold text-blue-600">HK$ {stats.totalAmount.toFixed(2)}</p>
-        </div>
-        <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
-          <p className="text-xs text-gray-500 mb-1">分类数</p>
-          <p className="text-2xl font-bold text-gray-800">{Object.keys(stats.byCategory).length}</p>
-        </div>
-        <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
-          <p className="text-xs text-gray-500 mb-1">平均金额</p>
-          <p className="text-2xl font-bold text-purple-600">
-            HK$ {stats.total > 0 ? (stats.totalAmount / stats.total).toFixed(2) : '0.00'}
-          </p>
+    <div className="max-w-5xl mx-auto px-4 py-6 sm:py-8">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-900">杂费统计</h1>
+        <div className="flex gap-2">
+          <Link href="/expenses/upload" className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-xl hover:bg-blue-700 transition-colors min-h-[44px] inline-flex items-center">
+            + 上传单据
+          </Link>
+          <Link href="/expenses/review" className="px-4 py-2 border border-gray-200 text-sm text-gray-600 rounded-xl hover:bg-gray-50 transition-colors min-h-[44px] inline-flex items-center">
+            待审核
+          </Link>
         </div>
       </div>
 
-      {/* Category Breakdown */}
-      {Object.keys(stats.byCategory).length > 0 && (
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6">
-          <h2 className="text-sm font-semibold text-gray-700 mb-3">分类汇总</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {Object.entries(stats.byCategory).map(([cat, amount]) => (
-              <div key={cat} className="flex items-center justify-between px-3 py-2 bg-gray-50 rounded-lg">
-                <span className="text-sm text-gray-600">{cat}</span>
-                <span className="text-sm font-semibold text-gray-800">HK$ {amount.toFixed(2)}</span>
-              </div>
-            ))}
+      {/* Month selector */}
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 mb-4">
+        <div className="flex items-center gap-3">
+          <span className="text-sm text-gray-500">月份</span>
+          <select
+            value={year}
+            onChange={(e) => { setYear(parseInt(e.target.value)); setPage(1); }}
+            className="px-3 py-2 border border-gray-200 rounded-lg text-sm"
+          >
+            {years.map((y) => <option key={y} value={y}>{y}年</option>)}
+          </select>
+          <select
+            value={month}
+            onChange={(e) => { setMonth(parseInt(e.target.value)); setPage(1); }}
+            className="px-3 py-2 border border-gray-200 rounded-lg text-sm"
+          >
+            {months.map((m) => <option key={m.value} value={m.value}>{m.label}</option>)}
+          </select>
+          <span className="text-lg font-bold text-gray-800 ml-auto">{monthLabel}</span>
+        </div>
+      </div>
+
+      {/* Stats cards */}
+      {stats && (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+          <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
+            <p className="text-xs text-gray-500">{monthLabel} 总金额</p>
+            <p className="text-2xl font-bold text-blue-600 mt-1">HK$ {stats.totalAmount.toFixed(2)}</p>
+          </div>
+          <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
+            <p className="text-xs text-gray-500">{monthLabel} 总笔数</p>
+            <p className="text-2xl font-bold text-gray-800 mt-1">{stats.totalCount} 笔</p>
+          </div>
+          <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
+            <p className="text-xs text-gray-500">分类数</p>
+            <p className="text-2xl font-bold text-gray-800 mt-1">{Object.keys(stats.byCategory).length}</p>
+          </div>
+          <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
+            <p className="text-xs text-gray-500">平均每笔</p>
+            <p className="text-2xl font-bold text-purple-600 mt-1">
+              HK$ {stats.totalCount > 0 ? (stats.totalAmount / stats.totalCount).toFixed(2) : '0.00'}
+            </p>
           </div>
         </div>
       )}
 
-      {/* Filter */}
-      <div className="flex gap-2 mb-4">
-        {[
-          { value: 'all', label: '全部' },
-          { value: 'true', label: '已确认' },
-          { value: 'false', label: '待确认' },
-        ].map((f) => (
-          <button
-            key={f.value}
-            onClick={() => { setFilterConfirmed(f.value); setPage(1); }}
-            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-              filterConfirmed === f.value ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 border border-gray-200'
-            }`}
-          >
-            {f.label}
-          </button>
-        ))}
-      </div>
+      {/* Category breakdown */}
+      {stats && Object.keys(stats.byCategory).length > 0 && (
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6 mb-4">
+          <h2 className="text-sm font-semibold text-gray-700 mb-3">{monthLabel} 分类汇总</h2>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
+            {Object.entries(stats.byCategory).map(([cat, data]) => (
+              <div key={cat} className="flex items-center justify-between px-3 py-2 bg-gray-50 rounded-lg">
+                <div>
+                  <p className="text-sm text-gray-600">{cat}</p>
+                  <p className="text-xs text-gray-400">{data.count} 笔</p>
+                </div>
+                <span className="text-sm font-semibold text-gray-800">HK$ {data.total.toFixed(2)}</span>
+              </div>
+            ))}
+          </div>
 
-      {/* Expense List */}
+          {/* Copy for boss report */}
+          <div className="mt-3 p-3 bg-blue-50 rounded-lg">
+            <p className="text-xs text-gray-500 mb-1">📋 老板汇报文案（点击复制）</p>
+            <p
+              className="text-sm text-gray-800 cursor-pointer hover:text-blue-600"
+              onClick={() => {
+                const text = `${monthLabel}杂费汇报：
+总支出：HK$ ${stats.totalAmount.toFixed(2)}（${stats.totalCount} 笔）
+${Object.entries(stats.byCategory).map(([cat, d]) => `${cat}：HK$ ${d.total.toFixed(2)}（${d.count} 笔）`).join('\n')}`;
+                navigator.clipboard.writeText(text);
+                alert('已复制到剪贴板！');
+              }}
+            >
+              📋 点击复制月报摘要
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Expense list */}
       {fetching ? (
         <div className="text-center py-12"><div className="w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto" /></div>
       ) : expenses.length === 0 ? (
         <div className="text-center py-16 bg-white rounded-2xl border border-gray-100">
-          <svg className="w-16 h-16 text-gray-200 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-          </svg>
-          <p className="text-gray-400">暂无账单记录</p>
-          <Link href="/expenses/upload" className="mt-2 inline-block text-sm text-blue-600 hover:text-blue-700">
-            上传第一张单据 →
-          </Link>
+          <p className="text-gray-400">{monthLabel} 没有已确认的账单</p>
+          <Link href="/expenses/upload" className="mt-2 inline-block text-sm text-blue-600">上传新单据 →</Link>
         </div>
       ) : (
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
           <div className="divide-y divide-gray-100">
             {expenses.map((item) => (
-              <div key={item._id} className="p-4 sm:p-5 hover:bg-gray-50 transition-colors">
-                <div className="flex items-start gap-4">
+              <div key={item._id} className="p-4 hover:bg-gray-50 transition-colors">
+                <div className="flex items-start gap-3">
                   {item.imageUrl && (
-                    <img src={item.imageUrl} alt="" className="w-16 h-16 rounded-lg object-cover bg-gray-100 flex-shrink-0" />
+                    <img src={item.imageUrl} alt="" className="w-14 h-14 rounded-lg object-cover bg-gray-100 flex-shrink-0" />
                   )}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <span className="text-xs px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 font-medium">
-                        {item.category}
-                      </span>
-                      {item.confirmed && (
-                        <span className="text-xs text-green-500">✓ 已确认</span>
-                      )}
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 font-medium">{item.category}</span>
                     </div>
-                    <p className="mt-1 font-semibold text-gray-800">{item.merchant || '未命名'}</p>
-                    <p className="text-xs text-gray-400 mt-0.5">{item.billDate}{item.description ? ` · ${item.description}` : ''}</p>
+                    <p className="mt-0.5 font-semibold text-gray-800">{item.merchant || '未命名'}</p>
+                    <p className="text-xs text-gray-400 mt-0.5">
+                      {item.billDate || '日期未知'}
+                      {item.description ? ` · ${item.description}` : ''}
+                    </p>
                   </div>
                   <div className="text-right flex-shrink-0">
                     <p className="text-lg font-bold text-blue-600">HK$ {item.amount.toFixed(2)}</p>
-                    <button
-                      onClick={() => deleteExpense(item._id)}
-                      className="text-xs text-red-400 hover:text-red-600 mt-1"
-                    >
-                      删除
-                    </button>
+                    <button onClick={() => deleteExpense(item._id)} className="text-xs text-red-400 hover:text-red-600 mt-1">删除</button>
                   </div>
                 </div>
               </div>
             ))}
           </div>
-        </div>
-      )}
-
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="mt-6 flex justify-center gap-2">
-          {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-            <button
-              key={p}
-              onClick={() => setPage(p)}
-              className={`w-10 h-10 rounded-lg text-sm font-medium ${
-                page === p ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
-              }`}
-            >
-              {p}
-            </button>
-          ))}
         </div>
       )}
     </div>
