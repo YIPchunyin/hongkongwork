@@ -4,7 +4,6 @@ import { findDistrict, getHkoWeatherIcon, psrToPercent } from '@/lib/weather';
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
-// GET /api/weather?lat=22.3193&lng=114.1694
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -13,7 +12,7 @@ export async function GET(request: NextRequest) {
 
     // Fetch main HKO weather data
     const [hkoRes, radarRes] = await Promise.all([
-      fetch('https://www.hko.gov.hk/wxinfo/json/one_json.xml', {
+      fetch('https://www.hko.gov.hk/wxinfo/json/one_json_uc.xml', {
         next: { revalidate: 0 },
         headers: { 'Accept': 'application/json' },
       }),
@@ -185,11 +184,11 @@ export async function GET(request: NextRequest) {
         hourly: hourlyForecast,
         daily: dailyForecast,
         forecast: {
-          generalSituation: flw.GeneralSituation || '',
-          forecastDesc: flw.ForecastDesc || '',
-          forecastPeriod: flw.ForecastPeriod || '',
-          outlook: flw.OutlookContent || '',
-          tcInfo: flw.TCInfo || null,
+          generalSituation: stripHtml(flw.GeneralSituation) || '',
+          forecastDesc: stripHtml(flw.ForecastDesc) || '',
+          forecastPeriod: stripHtml(flw.ForecastPeriod) || '',
+          outlook: stripHtml(flw.OutlookContent) || '',
+          tcInfo: stripHtml(flw.TCInfo) || null,
         },
         lightning: lightningInfo,
         radar: {
@@ -205,8 +204,11 @@ export async function GET(request: NextRequest) {
       { success: false, error: '获取天气数据失败，请稍后重试' },
       { status: 500 }
     );
+
   }
+function stripHtml(html: string): string { return html.replace(/<[^>]*>/g, "").trim(); }
 }
+function stripHtml(html: string): string { return html.replace(/<[^>]*>/g, "").trim(); }
 
 function extractWindSpeed(windText: string): number {
   const match = windText.match(/force\s*(\d+)/i);
