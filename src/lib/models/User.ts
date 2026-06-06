@@ -2,7 +2,8 @@
 
 export interface IUser extends Document {
   username: string;
-  email: string;
+  name: string;
+  email?: string;
   password: string;
   avatar?: string;
   createdAt: Date;
@@ -19,13 +20,18 @@ const UserSchema = new Schema<IUser>(
       minlength: [2, '用户名至少2个字符'],
       maxlength: [20, '用户名最多20个字符'],
     },
+    name: {
+      type: String,
+      required: [true, '姓名不能为空'],
+      trim: true,
+      maxlength: [30, '姓名最多30个字符'],
+    },
     email: {
       type: String,
-      required: [true, '邮箱不能为空'],
       unique: true,
+      sparse: true,
       trim: true,
       lowercase: true,
-      match: [/^\S+@\S+\.\S+$/, '请输入有效的邮箱地址'],
     },
     password: {
       type: String,
@@ -42,7 +48,6 @@ const UserSchema = new Schema<IUser>(
   }
 );
 
-// 返回用户信息时不要返回密码
 UserSchema.set('toJSON', {
   transform: (_doc, ret) => {
     delete ret.password;

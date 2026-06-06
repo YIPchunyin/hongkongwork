@@ -6,16 +6,15 @@ import { comparePassword, signToken } from '@/lib/auth';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { email, password } = body;
+    const { username, password } = body;
 
-    if (!email || !password) {
+    if (!username || !password) {
       return NextResponse.json(
-        { success: false, error: '邮箱和密码不能为空' },
+        { success: false, error: '用户名和密码不能为空' },
         { status: 400 }
       );
     }
 
-    // 连接数据库（带超时错误提示）
     try {
       await connectDB();
     } catch (dbError) {
@@ -27,11 +26,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Find user by email
-    const user = await User.findOne({ email: email.toLowerCase() });
+    // Find user by username
+    const user = await User.findOne({ username });
     if (!user) {
       return NextResponse.json(
-        { success: false, error: '邮箱或密码错误' },
+        { success: false, error: '用户名或密码错误' },
         { status: 401 }
       );
     }
@@ -40,7 +39,7 @@ export async function POST(request: NextRequest) {
     const isMatch = await comparePassword(password, user.password);
     if (!isMatch) {
       return NextResponse.json(
-        { success: false, error: '邮箱或密码错误' },
+        { success: false, error: '用户名或密码错误' },
         { status: 401 }
       );
     }
@@ -49,7 +48,7 @@ export async function POST(request: NextRequest) {
     const token = signToken({
       _id: String(user._id),
       username: user.username,
-      email: user.email,
+      email: user.email || '',
     });
 
     const response = NextResponse.json({
@@ -59,12 +58,12 @@ export async function POST(request: NextRequest) {
         user: {
           id: String(user._id),
           username: user.username,
-          email: user.email,
+          name: user.name,
+          email: user.email || '',
         },
       },
     });
 
-    // Set HTTP-only cookie
     response.cookies.set('token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
@@ -78,7 +77,7 @@ export async function POST(request: NextRequest) {
     console.error('登录失败:', error);
     const message = error instanceof Error ? error.message : '未知错误';
     return NextResponse.json(
-      { success: false, error: `登录失败: ${message}` },
+      { success: false, error: '登录失败: ' + message },
       { status: 500 }
     );
   }

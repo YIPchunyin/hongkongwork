@@ -1,11 +1,9 @@
-﻿import { NextRequest, NextResponse } from 'next/server';
+﻿import { NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import User from '@/lib/models/User';
-import { getTokenFromRequest, verifyToken } from '@/lib/auth';
+import { verifyToken, getTokenFromRequest } from '@/lib/auth';
 
-export const dynamic = 'force-dynamic';
-
-export async function GET(request: NextRequest) {
+export async function GET(request: Request) {
   try {
     const token = getTokenFromRequest(request);
 
@@ -19,7 +17,7 @@ export async function GET(request: NextRequest) {
     const payload = verifyToken(token);
     if (!payload) {
       return NextResponse.json(
-        { success: false, error: '登录已过期，请重新登录' },
+        { success: false, error: '登录已过期' },
         { status: 401 }
       );
     }
@@ -39,9 +37,9 @@ export async function GET(request: NextRequest) {
       data: {
         id: String(user._id),
         username: user.username,
-        email: user.email,
-        avatar: user.avatar,
-        createdAt: user.createdAt,
+        name: user.name || user.username,
+        email: user.email || '',
+        avatar: user.avatar || '',
       },
     });
   } catch (error) {

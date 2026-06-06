@@ -32,12 +32,15 @@ export default function SettingsPage() {
           <h2 className="text-lg font-semibold text-gray-800 mb-4">个人信息</h2>
           <div className="space-y-3">
             <div className="flex items-center space-x-3">
-              <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center text-white text-lg font-bold">
-                {user.username.charAt(0).toUpperCase()}
+              <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-xl font-bold shadow-md">
+                {user.name?.charAt(0).toUpperCase() || user.username.charAt(0).toUpperCase()}
               </div>
               <div>
-                <p className="font-medium text-gray-900">{user.username}</p>
-                <p className="text-sm text-gray-500">{user.email}</p>
+                <p className="font-semibold text-gray-900 text-lg">{user.name || user.username}</p>
+                <p className="text-sm text-gray-500">@{user.username}</p>
+                {user.email && (
+                  <p className="text-sm text-gray-400 mt-0.5">{user.email}</p>
+                )}
               </div>
             </div>
           </div>
@@ -175,3 +178,7 @@ function ChangePasswordForm() {
     </section>
   );
 }
+
+
+
+

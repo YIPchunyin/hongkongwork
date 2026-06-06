@@ -6,15 +6,16 @@ import { useRouter } from 'next/navigation';
 export interface User {
   id: string;
   username: string;
-  email: string;
+  name?: string;
+  email?: string;
   avatar?: string;
 }
 
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
-  register: (username: string, email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  login: (username: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  register: (username: string, name: string, password: string, email?: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
   changePassword: (currentPassword: string, newPassword: string) => Promise<{ success: boolean; error?: string }>;
@@ -47,12 +48,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     refreshUser();
   }, [refreshUser]);
 
-  const login = useCallback(async (email: string, password: string) => {
+  const login = useCallback(async (username: string, password: string) => {
     try {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ username, password }),
       });
       const json = await res.json();
 
@@ -68,12 +69,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [router]);
 
-  const register = useCallback(async (username: string, email: string, password: string) => {
+  const register = useCallback(async (username: string, name: string, password: string, email?: string) => {
     try {
+      const body: any = { username, name, password };
+      if (email) body.email = email;
+
       const res = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, email, password }),
+        body: JSON.stringify(body),
       });
       const json = await res.json();
 
@@ -92,9 +96,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = useCallback(async () => {
     try {
       await fetch('/api/auth/logout', { method: 'POST' });
-    } catch {
-      // ignore
-    }
+    } catch { /* ignore */ }
     setUser(null);
     router.push('/');
     router.refresh();
@@ -108,10 +110,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         body: JSON.stringify({ currentPassword, newPassword }),
       });
       const json = await res.json();
-
-      if (json.success) {
-        return { success: true };
-      }
+      if (json.success) return { success: true };
       return { success: false, error: json.error || '修改密码失败' };
     } catch {
       return { success: false, error: '网络错误，请稍后重试' };

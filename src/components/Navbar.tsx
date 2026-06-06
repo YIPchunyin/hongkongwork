@@ -88,7 +88,7 @@ export default function Navbar() {
                     <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-50">
                       <div className="px-4 py-2 border-b border-gray-100">
                         <p className="text-sm font-medium text-gray-900">{user.username}</p>
-                        <p className="text-xs text-gray-500">{user.email}</p>
+                        {user.email && <p className="text-xs text-gray-500">{user.email}</p>}
                       </div>
                       <Link
                         href="/settings"
@@ -152,3 +152,4 @@ export default function Navbar() {
     </>
   );
 }
+

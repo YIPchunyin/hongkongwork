@@ -6,11 +6,11 @@ import { hashPassword, signToken } from '@/lib/auth';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { username, email, password } = body;
+    const { username, name, email, password } = body;
 
-    if (!username || !email || !password) {
+    if (!username || !name || !password) {
       return NextResponse.json(
-        { success: false, error: '用户名、邮箱和密码不能为空' },
+        { success: false, error: '用户名、姓名和密码不能为空' },
         { status: 400 }
       );
     }
@@ -33,32 +33,44 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check if username or email already exists
-    const existingUser = await User.findOne({
-      $or: [{ username }, { email: email.toLowerCase() }],
-    });
-
+    // Check if username already exists
+    const existingUser = await User.findOne({ username });
     if (existingUser) {
-      const field = existingUser.username === username ? '用户名' : '邮箱';
       return NextResponse.json(
-        { success: false, error: `该${field}已被注册` },
+        { success: false, error: '该用户名已被注册' },
         { status: 409 }
       );
     }
 
+    // If email provided, check if it's taken
+    if (email) {
+      const emailUser = await User.findOne({ email: email.toLowerCase() });
+      if (emailUser) {
+        return NextResponse.json(
+          { success: false, error: '该邮箱已被注册' },
+          { status: 409 }
+        );
+      }
+    }
+
     // Hash password and create user
     const hashedPassword = await hashPassword(password);
-    const user = await User.create({
+    const userData: any = {
       username,
-      email: email.toLowerCase(),
+      name,
       password: hashedPassword,
-    });
+    };
+    if (email) {
+      userData.email = email.toLowerCase();
+    }
+
+    const user = await User.create(userData);
 
     // Sign JWT token
     const token = signToken({
       _id: String(user._id),
       username: user.username,
-      email: user.email,
+      email: user.email || '',
     });
 
     const response = NextResponse.json(
@@ -69,7 +81,8 @@ export async function POST(request: NextRequest) {
           user: {
             id: String(user._id),
             username: user.username,
-            email: user.email,
+            name: user.name,
+            email: user.email || '',
           },
         },
       },
@@ -89,7 +102,7 @@ export async function POST(request: NextRequest) {
     console.error('注册失败:', error);
     const message = error instanceof Error ? error.message : '未知错误';
     return NextResponse.json(
-      { success: false, error: `注册失败: ${message}` },
+      { success: false, error: '注册失败: ' + message },
       { status: 500 }
     );
   }
