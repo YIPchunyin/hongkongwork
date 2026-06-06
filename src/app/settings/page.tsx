@@ -46,10 +46,115 @@ export default function SettingsPage() {
           </div>
         </section>
 
+        {/* Edit Profile */}
+        <EditProfileSection />
+
         {/* Change Password */}
         <ChangePasswordForm />
       </div>
     </div>
+  );
+}
+
+function EditProfileSection() {
+  const { user, updateProfile } = useAuth();
+  const [username, setUsername] = useState(user?.username || '');
+  const [name, setName] = useState(user?.name || '');
+  const [editing, setEditing] = useState(false);
+  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setMessage(null);
+
+    if (!username || !name) {
+      setMessage({ type: 'error', text: '用户名和姓名不能为空' });
+      return;
+    }
+    if (username.length < 2 || username.length > 20) {
+      setMessage({ type: 'error', text: '用户名长度2-20个字符' });
+      return;
+    }
+
+    setSubmitting(true);
+    const result = await updateProfile(username, name);
+    setSubmitting(false);
+
+    if (result.success) {
+      setMessage({ type: 'success', text: '个人信息更新成功！' });
+      setEditing(false);
+    } else {
+      setMessage({ type: 'error', text: result.error || '更新失败' });
+    }
+  };
+
+  const handleCancel = () => {
+    setUsername(user?.username || '');
+    setName(user?.name || '');
+    setEditing(false);
+    setMessage(null);
+  };
+
+  if (!editing) {
+    return (
+      <section className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold text-gray-800">编辑资料</h2>
+          <button onClick={() => setEditing(true)}
+            className="px-4 py-2 text-sm font-medium text-blue-600 hover:bg-blue-50 rounded-lg transition-colors min-h-[44px]">
+            编辑
+          </button>
+        </div>
+        <div className="space-y-2">
+          <div>
+            <span className="text-sm text-gray-500">用户名</span>
+            <p className="text-gray-900">{user?.username}</p>
+          </div>
+          <div>
+            <span className="text-sm text-gray-500">姓名</span>
+            <p className="text-gray-900">{user?.name || user?.username}</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+      <h2 className="text-lg font-semibold text-gray-800 mb-4">编辑资料</h2>
+
+      {message && (
+        <div className={'mb-4 p-3 rounded-lg text-sm ' + (message.type === 'success' ? 'bg-green-50 border border-green-200 text-green-700' : 'bg-red-50 border border-red-200 text-red-600')}>
+          {message.text}
+        </div>
+      )}
+
+      <form onSubmit={handleSave} className="space-y-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">用户名</label>
+          <input type="text" value={username} onChange={(e) => setUsername(e.target.value)}
+            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
+            required minLength={2} maxLength={20} />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">姓名</label>
+          <input type="text" value={name} onChange={(e) => setName(e.target.value)}
+            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
+            required maxLength={30} />
+        </div>
+        <div className="flex space-x-3">
+          <button type="submit" disabled={submitting}
+            className="px-6 py-2.5 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+            {submitting ? '保存中...' : '保存'}
+          </button>
+          <button type="button" onClick={handleCancel}
+            className="px-6 py-2.5 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200 transition-colors">
+            取消
+          </button>
+        </div>
+      </form>
+    </section>
   );
 }
 
