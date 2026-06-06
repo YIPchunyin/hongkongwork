@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { WMO_CODES, WMO_ICONS, getWindDirection, getUVLevel } from '@/lib/weather';
+import { getHkoIconEmoji, getHkoWeatherDesc } from '@/lib/weather';
 import WeatherRadar from '@/components/WeatherRadar';
 
 interface HourlyItem {
@@ -22,23 +23,23 @@ interface DailyItem {
   tempMax: number;
   tempMin: number;
   weatherCode: number;
+  weatherIcon: string;
+  weatherDesc: string;
+  weatherText: string;
   rainProb: number;
-  windSpeed: number;
-  windDir: number;
-  uvIndex: number;
-  sunrise: string;
-  sunset: string;
+  psrRating: string;
+  wind: string;
+  humidity: { max: number; min: number };
 }
 
 interface WeatherData {
-  location: { district: string; lat: number; lng: number; elevation: number };
+  location: { district: string; lat: number; lng: number };
   current: {
     temperature: number;
     feelsLike: number;
     humidity: number;
     weatherCode: number;
     windSpeed: number;
-    windGusts: number;
     windDirection: number;
     pressure: number;
     cloudCover: number;
@@ -48,6 +49,16 @@ interface WeatherData {
   next3Hours: { time: string; prob: number }[];
   hourly: HourlyItem[];
   daily: DailyItem[];
+  forecast: {
+    generalSituation: string;
+    forecastDesc: string;
+    forecastPeriod: string;
+    outlook: string;
+    tcInfo: string | null;
+  };
+  lightning: { date: string; time: string; color: string }[];
+  radar: { images: string[]; baseUrl: string };
+  source: string;
 }
 
 export default function WeatherPage() {
@@ -66,7 +77,7 @@ export default function WeatherPage() {
         params.set('lat', String(lat));
         params.set('lng', String(lng));
       }
-      const res = await fetch(`/api/weather?${params}`);
+      const res = await fetch('/api/weather?' + params.toString());
       const json = await res.json();
       if (json.success) {
         setWeather(json.data);
@@ -104,17 +115,24 @@ export default function WeatherPage() {
   };
 
   const formatTime = (iso: string) => {
+    if (!iso) return '--';
     const d = new Date(iso);
     return d.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
   };
 
   const getDayName = (dateStr: string) => {
     const days = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
-    const d = new Date(dateStr);
-    const today = new Date().toISOString().split('T')[0];
-    const tomorrow = new Date(Date.now() + 86400000).toISOString().split('T')[0];
-    if (dateStr === today) return '今天';
-    if (dateStr === tomorrow) return '明天';
+    const d = new Date(dateStr.substring(0,4) + '-' + dateStr.substring(4,6) + '-' + dateStr.substring(6,8));
+    const today = new Date();
+    const todayStr = today.getFullYear().toString() +
+      (today.getMonth() + 1).toString().padStart(2, '0') +
+      today.getDate().toString().padStart(2, '0');
+    const tomorrow = new Date(today.getTime() + 86400000);
+    const tomorrowStr = tomorrow.getFullYear().toString() +
+      (tomorrow.getMonth() + 1).toString().padStart(2, '0') +
+      tomorrow.getDate().toString().padStart(2, '0');
+    if (dateStr === todayStr) return '今天';
+    if (dateStr === tomorrowStr) return '明天';
     return days[d.getDay()];
   };
 
@@ -139,8 +157,8 @@ export default function WeatherPage() {
     );
   }
 
-  const { current, location, next3Hours, hourly, daily } = weather;
-  const todayHourly = hourly.filter((h) => h.date === daily[0]?.date);
+  const { current, location, next3Hours, hourly, daily, forecast, lightning, source } = weather;
+  const todayHourly = hourly.filter((h) => h.date === (daily[0]?.date || ''));
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-6 sm:py-8">
@@ -148,9 +166,18 @@ export default function WeatherPage() {
       <div className="flex items-center justify-between mb-5">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold text-gray-900">香港天气</h1>
-          <p className="text-sm text-gray-500 mt-0.5">{location.district} · 海拔 {location.elevation}m</p>
+          <p className="text-sm text-gray-500 mt-0.5">{location.district} · 📡 {source}</p>
         </div>
         <div className="flex gap-2">
+          <button
+            onClick={handleRefresh}
+            className="flex items-center gap-1 px-3 py-2 bg-white border border-gray-200 rounded-xl text-sm text-gray-600 hover:bg-gray-50 transition-colors min-h-[44px]"
+          >
+            <svg className={'w-4 h-4 ' + (refreshing ? 'animate-spin' : '')} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            刷新
+          </button>
           <Link
             href="/"
             className="flex items-center gap-1 px-3 py-2 bg-white border border-gray-200 rounded-xl text-sm text-gray-600 hover:bg-gray-50 transition-colors min-h-[44px]"
@@ -158,130 +185,95 @@ export default function WeatherPage() {
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
             </svg>
-            <span className="hidden sm:inline">返回</span>
+            返回
           </Link>
-          <button
-            onClick={handleRefresh}
-            disabled={refreshing}
-            className="flex items-center gap-1 px-3 py-2 bg-white border border-gray-200 rounded-xl text-sm text-gray-600 hover:bg-gray-50 transition-colors min-h-[44px]"
-          >
-            <svg className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-            </svg>
-            <span className="hidden sm:inline">{refreshing ? '刷新中' : '刷新'}</span>
-          </button>
         </div>
       </div>
 
-      {/* Current Weather Hero */}
-      <div className="bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-700 rounded-2xl p-5 sm:p-6 text-white shadow-lg mb-4">
+      {/* Current Weather Card */}
+      <div className="bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-700 rounded-2xl p-6 sm:p-8 text-white shadow-lg mb-4">
         <div className="flex items-start justify-between">
           <div>
-            <p className="text-blue-200 text-xs sm:text-sm font-medium">现在天气</p>
-            <p className="text-4xl sm:text-5xl font-bold mt-1">
-              {Math.round(current.temperature)}°C
+            <p className="text-blue-100 text-sm font-medium">{location.district}</p>
+            <p className="text-5xl sm:text-6xl font-bold mt-2">
+              {current.temperature !== undefined ? Math.round(current.temperature) + '°' : '--'}
             </p>
-            <p className="text-base sm:text-lg mt-0.5 text-blue-100">
-              {WMO_ICONS[current.weatherCode]} {WMO_CODES[current.weatherCode] || '未知'}
+            <p className="text-blue-100 text-lg mt-1">
+              {WMO_ICONS[current.weatherCode]} {WMO_CODES[current.weatherCode] || ''}
             </p>
-            <p className="text-blue-200 text-xs sm:text-sm mt-0.5">
-              体感 {Math.round(current.feelsLike)}°C
-            </p>
+            <p className="text-blue-200 text-sm mt-1">体感 {Math.round(current.feelsLike)}°C</p>
           </div>
-          <div className="text-right text-4xl sm:text-5xl">
+          <div className="text-6xl sm:text-7xl">
             {WMO_ICONS[current.weatherCode]}
           </div>
         </div>
 
-        {/* Quick Stats - 2 cols on mobile, 4 on desktop */}
-        <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">
-          <div className="bg-white/15 rounded-xl p-2.5 sm:p-3 backdrop-blur">
+        {/* Stats row */}
+        <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div className="bg-white/15 rounded-xl px-3 py-2.5 backdrop-blur">
             <p className="text-blue-200 text-xs">湿度</p>
-            <p className="font-semibold text-base sm:text-lg">{current.humidity}%</p>
+            <p className="font-semibold text-lg">{current.humidity}%</p>
           </div>
-          <div className="bg-white/15 rounded-xl p-2.5 sm:p-3 backdrop-blur">
-            <p className="text-blue-200 text-xs">风速</p>
-            <p className="font-semibold text-base sm:text-lg">{current.windSpeed} km/h</p>
-            <p className="text-blue-200 text-xs">{getWindDirection(current.windDirection)}风</p>
+          <div className="bg-white/15 rounded-xl px-3 py-2.5 backdrop-blur">
+            <p className="text-blue-200 text-xs">風速</p>
+            <p className="font-semibold text-lg">{current.windSpeed} km/h</p>
           </div>
-          <div className="bg-white/15 rounded-xl p-2.5 sm:p-3 backdrop-blur">
-            <p className="text-blue-200 text-xs">气压</p>
-            <p className="font-semibold text-base sm:text-lg">{current.pressure} hPa</p>
-          </div>
-          <div className="bg-white/15 rounded-xl p-2.5 sm:p-3 backdrop-blur">
+          <div className="bg-white/15 rounded-xl px-3 py-2.5 backdrop-blur">
             <p className="text-blue-200 text-xs">紫外线</p>
-            <p className="font-semibold text-base sm:text-lg">{current.uvIndex.toFixed(1)}</p>
-            <p className="text-blue-200 text-xs">{getUVLevel(current.uvIndex)}</p>
+            <p className="font-semibold text-lg">{current.uvIndex.toFixed(1)}</p>
+          </div>
+          <div className="bg-white/15 rounded-xl px-3 py-2.5 backdrop-blur">
+            <p className="text-blue-200 text-xs">更新</p>
+            <p className="font-semibold text-lg">{formatTime(current.updateTime)}</p>
           </div>
         </div>
+      </div>
 
-        {/* 3-hour Rain */}
-        {next3Hours.length > 0 && (
-          <div className="mt-3 bg-white/15 rounded-xl p-2.5 sm:p-3 backdrop-blur">
-            <p className="text-blue-200 text-xs mb-1.5">近3小时降雨概率</p>
-            <div className="flex gap-3 sm:gap-4">
-              {next3Hours.map((h) => (
-                <div key={h.time} className="text-center">
-                  <p className="text-xs text-blue-200">{h.time}</p>
-                  <p className={`font-bold text-base sm:text-lg ${h.prob > 50 ? 'text-yellow-300' : ''}`}>{h.prob}%</p>
+      {/* Next 3 Hours Rain Probability */}
+      {next3Hours && next3Hours.length > 0 && (
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6 mb-4">
+          <h2 className="text-base sm:text-lg font-semibold text-gray-800 mb-3">近3小时降雨概率</h2>
+          <div className="flex gap-4 justify-around">
+            {next3Hours.map((h, i) => (
+              <div key={i} className="text-center">
+                <p className="text-sm text-gray-400">{h.time}</p>
+                <p className="text-2xl font-bold mt-1" style={{ color: h.prob > 50 ? '#f59e0b' : h.prob > 30 ? '#3b82f6' : '#6b7280' }}>
+                  {h.prob}%
+                </p>
+                <div className="w-full bg-gray-100 rounded-full h-2 mt-2 w-20 mx-auto">
+                  <div
+                    className="h-2 rounded-full transition-all"
+                    style={{
+                      width: h.prob + '%',
+                      backgroundColor: h.prob > 70 ? '#ef4444' : h.prob > 50 ? '#f59e0b' : h.prob > 30 ? '#3b82f6' : '#9ca3af'
+                    }}
+                  />
                 </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        <p className="text-blue-200 text-xs mt-3">
-          更新于 {formatTime(current.updateTime)} · 數據來源：Open-Meteo
-        </p>
-      </div>
-
-      {/* ===== WEATHER RADAR MAP ===== */}
-      <div className="mb-4">
-        <h2 className="text-base sm:text-lg font-semibold text-gray-800 mb-2 flex items-center gap-2">
-          <svg className="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
-          </svg>
-          香港天气雷达
-        </h2>
-        <WeatherRadar />
-      </div>
-
-      {/* Today Hourly */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6 mb-4">
-        <h2 className="text-base sm:text-lg font-semibold text-gray-800 mb-3">今日逐小时预报</h2>
-        <div className="overflow-x-auto -mx-4 sm:-mx-6 hide-scrollbar">
-          <div className="inline-flex gap-1 sm:gap-1.5 px-4 sm:px-6 min-w-full">
-            {todayHourly.map((h, i) => (
-              <div key={i} className="flex flex-col items-center gap-1 py-2 sm:py-3 px-1.5 sm:px-2 min-w-[52px] sm:min-w-[60px] rounded-xl bg-gray-50 hover:bg-blue-50 transition-colors">
-                <span className="text-[10px] sm:text-xs text-gray-400">{h.time}</span>
-                <span className="text-base sm:text-lg">{WMO_ICONS[h.weatherCode] || '🌤️'}</span>
-                <span className="text-xs sm:text-sm font-semibold text-gray-800">{Math.round(h.temp)}°</span>
-                <span className="text-[10px] sm:text-xs text-blue-500">{h.rainProb}%</span>
-                <span className="text-[10px] text-gray-400 hidden sm:block">{h.windSpeed}km/h</span>
               </div>
             ))}
           </div>
         </div>
-      </div>
+      )}
 
-      {/* 7-Day Forecast */}
+      {/* 9-Day Forecast */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6 mb-4">
-        <h2 className="text-base sm:text-lg font-semibold text-gray-800 mb-3">7日天气预测</h2>
+        <h2 className="text-base sm:text-lg font-semibold text-gray-800 mb-3">9日天气预测</h2>
         <div className="space-y-1">
           {daily.map((d, i) => (
             <div
               key={i}
-              className={`flex items-center gap-2 sm:gap-4 p-2.5 sm:p-3 rounded-xl transition-colors cursor-pointer ${
-                activeDay === i ? 'bg-blue-50 border border-blue-100' : 'hover:bg-gray-50'
-              }`}
+              className={'flex items-center gap-2 sm:gap-4 p-2.5 sm:p-3 rounded-xl transition-colors cursor-pointer ' +
+                (activeDay === i ? 'bg-blue-50 border border-blue-100' : 'hover:bg-gray-50')}
               onClick={() => setActiveDay(i)}
             >
               <div className="w-10 sm:w-12 text-xs sm:text-sm font-medium text-gray-700">
                 {getDayName(d.date)}
               </div>
-              <div className="text-xl sm:text-2xl w-8 sm:w-10 text-center">{WMO_ICONS[d.weatherCode]}</div>
+              <div className="text-xl sm:text-2xl w-8 sm:w-10 text-center">
+                {getHkoIconEmoji(d.weatherIcon)}
+              </div>
               <div className="hidden sm:block flex-1 text-xs sm:text-sm text-gray-500 truncate">
-                {WMO_CODES[d.weatherCode] || ''}
+                {d.weatherDesc || ''}
               </div>
               <div className="text-xs sm:text-sm">
                 <span className="font-semibold text-gray-800">{Math.round(d.tempMax)}°</span>
@@ -295,49 +287,121 @@ export default function WeatherPage() {
 
         {daily[activeDay] && (
           <div className="mt-3 p-3 sm:p-4 bg-blue-50 rounded-xl">
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 text-xs sm:text-sm">
+            <p className="text-sm text-gray-700 font-medium mb-2">
+              {getHkoIconEmoji(daily[activeDay].weatherIcon)} {getDayName(daily[activeDay].date)} 天气
+            </p>
+            <p className="text-sm text-gray-600 leading-relaxed">{daily[activeDay].weatherText}</p>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-3">
               <div>
-                <p className="text-gray-500">日出</p>
-                <p className="font-semibold text-gray-800">{formatTime(daily[activeDay].sunrise)}</p>
+                <p className="text-gray-500 text-xs">温度范围</p>
+                <p className="font-semibold text-sm">{Math.round(daily[activeDay].tempMin)}°C ~ {Math.round(daily[activeDay].tempMax)}°C</p>
               </div>
               <div>
-                <p className="text-gray-500">日落</p>
-                <p className="font-semibold text-gray-800">{formatTime(daily[activeDay].sunset)}</p>
+                <p className="text-gray-500 text-xs">湿度</p>
+                <p className="font-semibold text-sm">{daily[activeDay].humidity.min}% ~ {daily[activeDay].humidity.max}%</p>
               </div>
               <div>
-                <p className="text-gray-500">紫外线</p>
-                <p className="font-semibold text-gray-800">{daily[activeDay].uvIndex?.toFixed(1)} {getUVLevel(daily[activeDay].uvIndex || 0)}</p>
+                <p className="text-gray-500 text-xs">降雨概率</p>
+                <p className="font-semibold text-sm">{daily[activeDay].rainProb}% ({daily[activeDay].psrRating})</p>
               </div>
               <div>
-                <p className="text-gray-500">风向</p>
-                <p className="font-semibold text-gray-800">{getWindDirection(daily[activeDay].windDir)}</p>
+                <p className="text-gray-500 text-xs">风向风力</p>
+                <p className="font-semibold text-sm">{daily[activeDay].wind}</p>
               </div>
             </div>
           </div>
         )}
       </div>
 
+      {/* Hourly Forecast for Today */}
+      {todayHourly.length > 0 && (
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6 mb-4">
+          <h2 className="text-base sm:text-lg font-semibold text-gray-800 mb-3">今日逐时预报</h2>
+          <div className="overflow-x-auto -mx-4 sm:-mx-6">
+            <div className="flex gap-1 sm:gap-2 px-4 sm:px-6 min-w-full">
+              {todayHourly.map((h, i) => (
+                <div key={i} className="flex flex-col items-center gap-1 py-2 sm:py-3 px-1.5 sm:px-2 min-w-[52px] sm:min-w-[60px] rounded-xl bg-gray-50 hover:bg-blue-50 transition-colors">
+                  <span className="text-[10px] sm:text-xs text-gray-400">{h.time}</span>
+                  <span className="text-base sm:text-lg">{WMO_ICONS[h.weatherCode] || '🌤️'}</span>
+                  <span className="text-xs sm:text-sm font-semibold text-gray-800">{Math.round(h.temp)}°</span>
+                  <span className="text-[10px] sm:text-xs text-blue-500">{h.rainProb}%</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* General Situation & Forecast Description from HKO */}
+      {forecast && (
+        <>
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6 mb-4">
+            <h2 className="text-base sm:text-lg font-semibold text-gray-800 mb-2">天气概况</h2>
+            <p className="text-sm text-gray-600 leading-relaxed">{forecast.generalSituation}</p>
+          </div>
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6 mb-4">
+            <h2 className="text-base sm:text-lg font-semibold text-gray-800 mb-2">天气预报</h2>
+            <p className="text-sm text-gray-600">{forecast.forecastPeriod}</p>
+            <p className="text-sm text-gray-600 mt-2 leading-relaxed">{forecast.forecastDesc}</p>
+          </div>
+          {forecast.outlook && (
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6 mb-4">
+              <h2 className="text-base sm:text-lg font-semibold text-gray-800 mb-2">展望</h2>
+              <p className="text-sm text-gray-600 leading-relaxed">{forecast.outlook}</p>
+            </div>
+          )}
+          {forecast.tcInfo && (
+            <div className="bg-amber-50 rounded-2xl border border-amber-200 p-4 sm:p-6 mb-4">
+              <h2 className="text-base sm:text-lg font-semibold text-amber-800 mb-2">🌀 热带气旋信息</h2>
+              <p className="text-sm text-amber-700 leading-relaxed">{forecast.tcInfo}</p>
+            </div>
+          )}
+        </>
+      )}
+
+      {/* Lightning Info */}
+      {lightning && lightning.length > 0 && (
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6 mb-4">
+          <h2 className="text-base sm:text-lg font-semibold text-gray-800 mb-3">⚡ 闪电监测</h2>
+          <div className="flex flex-wrap gap-2">
+            {lightning.map((l, i) => (
+              <div key={i} className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 rounded-lg text-xs">
+                <span className="w-3 h-3 rounded-full" style={{ backgroundColor: l.color }} />
+                <span>{l.date} {l.time}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Detailed Stats */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6">
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6 mb-4">
         <h2 className="text-base sm:text-lg font-semibold text-gray-800 mb-3">详细天气数据</h2>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3 text-xs sm:text-sm">
           {[
-            { label: '温度', value: `${current.temperature}°C` },
-            { label: '体感温度', value: `${current.feelsLike}°C` },
-            { label: '湿度', value: `${current.humidity}%` },
-            { label: '风速', value: `${current.windSpeed} km/h` },
-            { label: '阵风', value: `${current.windGusts || '-'} km/h` },
-            { label: '风向', value: `${getWindDirection(current.windDirection)} (${current.windDirection}°)` },
-            { label: '气压', value: `${current.pressure} hPa` },
-            { label: '云量', value: `${current.cloudCover}%` },
-            { label: '紫外线指数', value: `${current.uvIndex.toFixed(1)} (${getUVLevel(current.uvIndex)})` },
+            { label: '温度', value: current.temperature + '°C' },
+            { label: '体感温度', value: current.feelsLike + '°C' },
+            { label: '湿度', value: current.humidity + '%' },
+            { label: '风速', value: current.windSpeed + ' km/h' },
+            { label: '风向', value: getWindDirection(current.windDirection) + ' (' + current.windDirection + '°)' },
+            { label: '云量', value: current.cloudCover + '%' },
+            { label: '紫外线指数', value: current.uvIndex.toFixed(1) + ' (' + getUVLevel(current.uvIndex) + ')' },
+            { label: '气压实测', value: '1013 hPa', desc: '天文台标准值' },
+            { label: '数据来源', value: source || '香港天文台' },
           ].map((item) => (
             <div key={item.label} className="p-2.5 sm:p-3 bg-gray-50 rounded-xl">
               <p className="text-gray-500 mb-0.5">{item.label}</p>
               <p className="font-semibold text-gray-800">{item.value}</p>
+              {item.desc && <p className="text-gray-400 text-[10px] mt-0.5">{item.desc}</p>}
             </div>
           ))}
         </div>
+      </div>
+
+      {/* Radar Map */}
+      <div className="mb-4">
+        <h2 className="text-base sm:text-lg font-semibold text-gray-800 mb-3">雷达图 & 卫星云图</h2>
+        <WeatherRadar />
       </div>
 
       <div className="mt-5 text-center">

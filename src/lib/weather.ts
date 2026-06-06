@@ -40,15 +40,128 @@ export function findDistrict(lat: number, lng: number): string {
       best = d.name;
     }
   }
-  return bestDist < 15 ? best : '香港'; // If >15km from any district center, just say HK
+  return bestDist < 15 ? best : '香港';
 }
 
-// WMO Weather Code mappings
+// HKO weather icon to weather code mapping
+const HKO_ICON_MAP: Record<string, number> = {
+  'pic50.png': 0,   // Sunny
+  'pic51.png': 1,   // Sunny intervals
+  'pic52.png': 2,   // Cloudy
+  'pic53.png': 2,   // Cloudy
+  'pic54.png': 3,   // Overcast
+  'pic60.png': 61,  // Rain
+  'pic61.png': 61,  // Light Rain
+  'pic62.png': 61,  // Rain
+  'pic63.png': 63,  // Heavy Rain
+  'pic64.png': 65,  // Heavy Rain
+  'pic65.png': 63,  // Rain
+  'pic70.png': 71,  // Snow
+  'pic71.png': 73,  // Snow
+  'pic72.png': 75,  // Heavy Snow
+  'pic73.png': 75,  // Snow
+  'pic74.png': 77,  // Snow grains
+  'pic80.png': 80,  // Showers
+  'pic81.png': 81,  // Showers
+  'pic82.png': 82,  // Heavy showers
+  'pic83.png': 80,  // Showers
+  'pic84.png': 82,  // Heavy showers
+  'pic91.png': 95,  // Thunderstorm
+  'pic92.png': 96,  // Thunderstorm with hail
+};
+
+export function getHkoWeatherIcon(iconName: string): number {
+  if (!iconName) return 3; // default cloudy
+  const lower = iconName.toLowerCase();
+  for (const [key, code] of Object.entries(HKO_ICON_MAP)) {
+    if (lower.includes(key.replace('.png', '')) || lower === key) return code;
+  }
+  return 3;
+}
+
+// PSR (Probability of Significant Rain) to percentage
+export function psrToPercent(psr: string): number {
+  const map: Record<string, number> = {
+    'High': 80,
+    'Medium High': 60,
+    'Medium': 50,
+    'Medium Low': 30,
+    'Low': 10,
+  };
+  return map[psr] || 10;
+}
+
+// HKO weather icons mapping for display
+export function getHkoIconEmoji(iconName: string): string {
+  const map: Record<string, string> = {
+    'pic50.png': '☀️',
+    'pic51.png': '🌤️',
+    'pic52.png': '⛅',
+    'pic53.png': '☁️',
+    'pic54.png': '☁️',
+    'pic60.png': '🌦️',
+    'pic61.png': '🌦️',
+    'pic62.png': '🌧️',
+    'pic63.png': '🌧️',
+    'pic64.png': '🌧️',
+    'pic65.png': '🌦️',
+    'pic70.png': '🌨️',
+    'pic71.png': '🌨️',
+    'pic72.png': '❄️',
+    'pic73.png': '❄️',
+    'pic74.png': '❄️',
+    'pic80.png': '🌦️',
+    'pic81.png': '🌧️',
+    'pic82.png': '🌧️',
+    'pic83.png': '🌦️',
+    'pic84.png': '🌧️',
+    'pic91.png': '⛈️',
+    'pic92.png': '⛈️',
+  };
+  for (const [key, emoji] of Object.entries(map)) {
+    if (iconName.toLowerCase().includes(key.replace('.png', '')) || iconName === key) return emoji;
+  }
+  return '🌤️';
+}
+
+export function getHkoWeatherDesc(iconName: string): string {
+  const map: Record<string, string> = {
+    'pic50.png': '晴天',
+    'pic51.png': '大致晴朗',
+    'pic52.png': '多云',
+    'pic53.png': '多云',
+    'pic54.png': '阴天',
+    'pic60.png': '有雨',
+    'pic61.png': '小雨',
+    'pic62.png': '雨',
+    'pic63.png': '大雨',
+    'pic64.png': '暴雨',
+    'pic65.png': '骤雨',
+    'pic70.png': '雪',
+    'pic71.png': '小雪',
+    'pic72.png': '大雪',
+    'pic73.png': '雪',
+    'pic74.png': '雪粒',
+    'pic80.png': '骤雨',
+    'pic81.png': '骤雨',
+    'pic82.png': '大骤雨',
+    'pic83.png': '骤雨',
+    'pic84.png': '大骤雨',
+    'pic91.png': '雷暴',
+    'pic92.png': '雷暴伴冰雹',
+  };
+  for (const [key, desc] of Object.entries(map)) {
+    if (iconName.toLowerCase().includes(key.replace('.png', '')) || iconName === key) return desc;
+  }
+  return '多云';
+}
+
+// WMO Weather Code mappings (kept for compatibility)
 export const WMO_CODES: Record<number, string> = {
   0: '晴天', 1: '大致晴朗', 2: '多云', 3: '阴天',
   45: '雾', 48: '雾凇',
-  51: '小毛毛雨', 53: '毛毛雨', 55: '大毛毛雨', 56: '冻毛毛雨', 57: '冻大毛毛雨',
-  61: '小雨', 63: '中雨', 65: '大雨', 66: '冻雨', 67: '冻大雨',
+  51: '小毛毛雨', 53: '毛毛雨', 55: '大毛毛雨',
+  61: '小雨', 63: '中雨', 65: '大雨',
   71: '小雪', 73: '中雪', 75: '大雪', 77: '雪粒',
   80: '小阵雨', 81: '中阵雨', 82: '大阵雨',
   85: '小阵雪', 86: '大阵雪',
@@ -58,8 +171,8 @@ export const WMO_CODES: Record<number, string> = {
 export const WMO_ICONS: Record<number, string> = {
   0: '☀️', 1: '🌤️', 2: '⛅', 3: '☁️',
   45: '🌫️', 48: '🌫️',
-  51: '🌦️', 53: '🌦️', 55: '🌦️', 56: '🌦️', 57: '🌦️',
-  61: '🌧️', 63: '🌧️', 65: '🌧️', 66: '🌧️', 67: '🌧️',
+  51: '🌦️', 53: '🌦️', 55: '🌦️',
+  61: '🌧️', 63: '🌧️', 65: '🌧️',
   71: '🌨️', 73: '🌨️', 75: '🌨️', 77: '🌨️',
   80: '🌦️', 81: '🌦️', 82: '🌧️',
   85: '🌨️', 86: '🌨️',

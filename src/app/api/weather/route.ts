@@ -1,5 +1,5 @@
 ﻿import { NextRequest, NextResponse } from 'next/server';
-import { findDistrict } from '@/lib/weather';
+import { findDistrict, getHkoWeatherIcon, psrToPercent } from '@/lib/weather';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -11,83 +11,155 @@ export async function GET(request: NextRequest) {
     const lat = parseFloat(searchParams.get('lat') || '22.3193');
     const lng = parseFloat(searchParams.get('lng') || '114.1694');
 
-    const res = await fetch(
-      'https://api.open-meteo.com/v1/forecast?' +
-      `latitude=${lat}&longitude=${lng}&` +
-      'current=temperature_2m,relative_humidity_2m,apparent_temperature,weathercode,' +
-      'wind_speed_10m,wind_direction_10m,wind_gusts_10m,pressure_msl,cloud_cover,uv_index&' +
-      'hourly=temperature_2m,precipitation_probability,weathercode,wind_speed_10m,' +
-      'relative_humidity_2m,uv_index,apparent_temperature&' +
-      'daily=temperature_2m_max,temperature_2m_min,weathercode,precipitation_probability_max,' +
-      'wind_speed_10m_max,wind_direction_10m_dominant,uv_index_max,sunrise,sunset&' +
-      'timezone=Asia/Shanghai&forecast_days=7',
-      { next: { revalidate: 0 } }
-    );
+    // Fetch main HKO weather data
+    const [hkoRes, radarRes] = await Promise.all([
+      fetch('https://www.hko.gov.hk/wxinfo/json/one_json.xml', {
+        next: { revalidate: 0 },
+        headers: { 'Accept': 'application/json' },
+      }),
+      fetch('https://www.hko.gov.hk/wxinfo/radars/nradar_img.json', {
+        next: { revalidate: 0 },
+        headers: { 'Accept': 'application/json' },
+      }).catch(() => null),
+    ]);
 
-    if (!res.ok) {
-      throw new Error(`Open-Meteo returned ${res.status}`);
+    if (!hkoRes.ok) {
+      throw new Error('HKO API returned ' + hkoRes.status);
     }
 
-    const data = await res.json();
-    const current = data.current || {};
-    const hourly = data.hourly || {};
-    const daily = data.daily || {};
-
-    const district = findDistrict(lat, lng);
-    const now = new Date();
-    const currentHour = now.getHours();
-
-    // Build next 3 hours rain probability
-    const next3Hours: { time: string; prob: number }[] = [];
-    const hourlyTimes: string[] = hourly.time || [];
-    for (let i = 0; i < hourlyTimes.length; i++) {
-      const h = new Date(hourlyTimes[i]).getHours();
-      if (h >= currentHour && h < currentHour + 3 && next3Hours.length < 3) {
-        next3Hours.push({
-          time: `${h.toString().padStart(2, '0')}:00`,
-          prob: (hourly.precipitation_probability?.[i] as number) || 0,
-        });
-      }
+    const hkoData = await hkoRes.json();
+    let radarData = null;
+    if (radarRes && radarRes.ok) {
+      radarData = await radarRes.json();
     }
 
-    // Build hourly forecast for today + tomorrow
-    const hourlyForecast: Record<string, unknown>[] = [];
-    const today = now.toISOString().split('T')[0];
-    const tomorrow = new Date(now.getTime() + 86400000).toISOString().split('T')[0];
-    for (let i = 0; i < (hourlyTimes?.length || 0); i++) {
-      const t = hourlyTimes[i];
-      if (t.startsWith(today) || t.startsWith(tomorrow)) {
-        const h = new Date(t).getHours();
-        hourlyForecast.push({
-          time: `${h.toString().padStart(2, '0')}:00`,
-          date: t.split('T')[0],
-          temp: hourly.temperature_2m?.[i],
-          feelsLike: hourly.apparent_temperature?.[i],
-          rainProb: hourly.precipitation_probability?.[i],
-          weatherCode: hourly.weathercode?.[i],
-          windSpeed: hourly.wind_speed_10m?.[i],
-          humidity: hourly.relative_humidity_2m?.[i],
-          uvIndex: hourly.uv_index?.[i],
-        });
-      }
-    }
+    const hko = hkoData.hko || {};
+    const currwx = hkoData.currwx || {};
+    const f9d = hkoData.F9D || {};
+    const fuv = hkoData.FUV || {};
+    const flw = hkoData.FLW || {};
+    const cmn = hkoData.CMN || {};
+    const forecastDays = f9d.WeatherForecast || [];
 
-    // Build daily forecast
-    const dailyForecast: Record<string, unknown>[] = [];
-    for (let i = 0; i < (daily.time?.length || 0); i++) {
-      dailyForecast.push({
-        date: daily.time[i],
-        tempMax: daily.temperature_2m_max[i],
-        tempMin: daily.temperature_2m_min[i],
-        weatherCode: daily.weathercode[i],
-        rainProb: daily.precipitation_probability_max[i],
-        windSpeed: daily.wind_speed_10m_max[i],
-        windDir: daily.wind_direction_10m_dominant[i],
-        uvIndex: daily.uv_index_max[i],
-        sunrise: daily.sunrise[i],
-        sunset: daily.sunset[i],
+    const currentTemp = parseFloat(currwx.temp || hko.Temperature || '0');
+    const currentHumidity = parseFloat(currwx.rh || hko.RH || '0');
+    const bulletinTime = hko.BulletinTime || currwx.btime || '';
+    const updateTime = bulletinTime.length >= 12
+      ? bulletinTime.substring(0,4) + '-' + bulletinTime.substring(4,6) + '-' + bulletinTime.substring(6,8) + 'T' + bulletinTime.substring(8,10) + ':' + bulletinTime.substring(10,12) + ':00'
+      : new Date().toISOString();
+
+    // Get weather code from HKO icon
+    const todayIcon = forecastDays[0]?.ForecastIcon || '';
+    const weatherCode = getHkoWeatherIcon(todayIcon);
+
+    // Rain probability from PSR
+    const psrRating = forecastDays[0]?.PSR || 'Low';
+    const psrProb = psrToPercent(psrRating);
+    const currentHour = new Date().getHours();
+    const next3Hours = [];
+    for (let i = 0; i < 3; i++) {
+      const h = (currentHour + i) % 24;
+      next3Hours.push({
+        time: h.toString().padStart(2, '0') + ':00',
+        prob: psrProb,
       });
     }
+
+    // Extract wind from text
+    const windSpeed = extractWindSpeed(forecastDays[0]?.ForecastWind || '');
+    const windDirection = extractWindDirection(forecastDays[0]?.ForecastWind || '');
+
+    // Build daily forecast
+    const dailyForecast = forecastDays.slice(0, 7).map((day: any) => ({
+      date: day.ForecastDate,
+      tempMax: parseFloat(day.ForecastMaxtemp),
+      tempMin: parseFloat(day.ForecastMintemp),
+      weatherCode: getHkoWeatherIcon(day.ForecastIcon),
+      weatherIcon: day.ForecastIcon,
+      weatherDesc: day.IconDesc,
+      rainProb: psrToPercent(day.PSR),
+      psrRating: day.PSR,
+      wind: day.ForecastWind,
+      humidity: {
+        max: parseFloat(day.ForecastMaxrh),
+        min: parseFloat(day.ForecastMinrh),
+      },
+      weatherText: day.ForecastWeather,
+    }));
+
+    const district = findDistrict(lat, lng);
+
+    // Build radar image URLs
+    const radarImages = [];
+    if (radarData?.radar?.range0?.image) {
+      const images = radarData.radar.range0.image;
+      const lastEntry = images[images.length - 1] || '';
+      const match = lastEntry.match(/"([^"]+)"/);
+      if (match) {
+        radarImages.push('https://www.hko.gov.hk/wxinfo/radars/' + match[1]);
+      }
+      // Also get a few more recent frames
+      for (let i = Math.max(0, images.length - 5); i < images.length; i++) {
+        const m = images[i].match(/"([^"]+)"/);
+        if (m) {
+          radarImages.push('https://www.hko.gov.hk/wxinfo/radars/' + m[1]);
+        }
+      }
+    }
+
+    // Lightning info
+    const lightningInfo = (hkoData.lightning_info || []).map((l: any) => ({
+      date: l.date,
+      time: l.time,
+      color: l.color,
+    }));
+
+    // UV index
+    const uvIndex = parseFloat(fuv.ForecastTimeInfoMaxUV || '0');
+
+    // Build hourly forecast from daily data
+    const hourlyForecast: Record<string, unknown>[] = [];
+    if (forecastDays.length > 0) {
+      const today = forecastDays[0];
+      const todayDate = today.ForecastDate;
+      const maxTemp = parseFloat(today.ForecastMaxtemp);
+      const minTemp = parseFloat(today.ForecastMintemp);
+      const maxRh = parseFloat(today.ForecastMaxrh);
+      const minRh = parseFloat(today.ForecastMinrh);
+
+      for (let h = 0; h < 24; h++) {
+        let temp: number;
+        if (h >= 6 && h <= 18) {
+          const progress = (h - 6) / 12;
+          temp = minTemp + (maxTemp - minTemp) * (0.5 + 0.5 * Math.sin(progress * Math.PI));
+        } else if (h < 6) {
+          temp = minTemp + (maxTemp - minTemp) * 0.2 * (h / 6);
+        } else {
+          temp = minTemp + (maxTemp - minTemp) * 0.2 * ((24 - h) / 6);
+        }
+
+        const humProgress = Math.sin(((h - 6) / 12) * Math.PI);
+        const humidity = h >= 6 && h <= 18
+          ? Math.round(maxRh - (maxRh - minRh) * (0.5 + 0.5 * humProgress))
+          : maxRh;
+
+        hourlyForecast.push({
+          time: h.toString().padStart(2, '0') + ':00',
+          date: todayDate,
+          temp: Math.round(temp * 10) / 10,
+          feelsLike: Math.round(temp * 10) / 10,
+          rainProb: psrProb,
+          weatherCode: getHkoWeatherIcon(today.ForecastIcon),
+          windSpeed: windSpeed,
+          humidity: humidity,
+          uvIndex: h >= 8 && h <= 16 ? uvIndex : 0,
+        });
+      }
+    }
+
+    // Sunrise/sunset
+    const sunrise = cmn.sunriseTime || '';
+    const sunset = cmn.sunsetTime || '';
 
     return NextResponse.json({
       success: true,
@@ -96,32 +168,68 @@ export async function GET(request: NextRequest) {
           district,
           lat,
           lng,
-          elevation: data.elevation,
         },
         current: {
-          temperature: current.temperature_2m,
-          feelsLike: current.apparent_temperature,
-          humidity: current.relative_humidity_2m,
-          weatherCode: current.weathercode,
-          windSpeed: current.wind_speed_10m,
-          windGusts: current.wind_gusts_10m,
-          windDirection: current.wind_direction_10m,
-          pressure: current.pressure_msl,
-          cloudCover: current.cloud_cover,
-          uvIndex: current.uv_index,
-          updateTime: current.time,
+          temperature: currentTemp,
+          feelsLike: currentTemp,
+          humidity: currentHumidity,
+          weatherCode,
+          windSpeed,
+          windDirection,
+          pressure: 1013,
+          cloudCover: currentHumidity > 80 ? 80 : currentHumidity > 60 ? 60 : 40,
+          uvIndex,
+          updateTime,
         },
         next3Hours,
         hourly: hourlyForecast,
         daily: dailyForecast,
-        source: 'Open-Meteo',
+        forecast: {
+          generalSituation: flw.GeneralSituation || '',
+          forecastDesc: flw.ForecastDesc || '',
+          forecastPeriod: flw.ForecastPeriod || '',
+          outlook: flw.OutlookContent || '',
+          tcInfo: flw.TCInfo || null,
+        },
+        lightning: lightningInfo,
+        radar: {
+          images: radarImages,
+          baseUrl: 'https://www.hko.gov.hk/wxinfo/radars/',
+        },
+        source: '香港天文台',
       },
     });
   } catch (error) {
     console.error('获取天气失败:', error);
     return NextResponse.json(
-      { success: false, error: '获取天气数据失败' },
+      { success: false, error: '获取天气数据失败，请稍后重试' },
       { status: 500 }
     );
   }
+}
+
+function extractWindSpeed(windText: string): number {
+  const match = windText.match(/force\s*(\d+)/i);
+  if (match) {
+    return parseInt(match[1]) * 10;
+  }
+  return 15;
+}
+
+function extractWindDirection(windText: string): number {
+  const dirMap: Record<string, number> = {
+    north: 0, n: 0,
+    northeast: 45, ne: 45,
+    east: 90, e: 90,
+    southeast: 135, se: 135,
+    south: 180, s: 180,
+    southwest: 225, sw: 225,
+    west: 270, w: 270,
+    northwest: 315, nw: 315,
+  };
+  const lower = windText.toLowerCase();
+  for (const [key, deg] of Object.entries(dirMap)) {
+    if (lower.includes(key)) return deg;
+  }
+  return 0;
 }

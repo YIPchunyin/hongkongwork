@@ -16,12 +16,12 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "云相册 - 你的云端记忆",
-  description: "一个支持图片和视频上传、标签管理和智能搜索的云相册应用",
+  title: "随手HK - 香港生活助手",
+  description: "香港天气、港铁到站、实时汇率、上班打卡、杂费AI识别、相册管理 — 一站式香港生活工具",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "云相册",
+    title: "随手HK",
   },
 };
 
@@ -40,9 +40,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="zh-CN" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
+    <html lang="zh-HK" className={'  h-full antialiased'}>
       <head>
-        {/* Prevent auto-zoom on iOS inputs */}
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="format-detection" content="telephone=no" />
       </head>
@@ -55,7 +54,7 @@ export default function RootLayout({
           <MobileNav />
           <footer className="hidden md:block bg-white border-t border-gray-200 py-6">
             <div className="max-w-7xl mx-auto px-4 text-center text-sm text-gray-400">
-              <p>云相册 &copy; {new Date().getFullYear()} &mdash; 安全存储你的每一刻</p>
+              <p>随手HK &copy; {new Date().getFullYear()} &mdash; 香港生活一站式工具</p>
             </div>
           </footer>
         </AuthProvider>

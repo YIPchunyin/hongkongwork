@@ -23,6 +23,7 @@ interface WeatherInfo {
     updateTime: string;
   };
   next3Hours: RainHour[];
+  source: string;
 }
 
 export default function WeatherWidget() {
@@ -41,7 +42,7 @@ export default function WeatherWidget() {
         params.set('lat', String(lat));
         params.set('lng', String(lng));
       }
-      const res = await fetch(`/api/weather?${params}`);
+      const res = await fetch('/api/weather?' + params.toString());
       const json = await res.json();
       if (json.success && json.data) {
         setWeather(json.data);
@@ -85,10 +86,11 @@ export default function WeatherWidget() {
       params.set('lat', String(userLat));
       params.set('lng', String(userLng));
     }
-    router.push(`/weather${params.toString() ? `?${params}` : ''}`);
+    router.push('/weather' + (params.toString() ? '?' + params.toString() : ''));
   };
 
   const formatTime = (iso: string) => {
+    if (!iso) return '--';
     const d = new Date(iso);
     return d.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
   };
@@ -115,7 +117,7 @@ export default function WeatherWidget() {
     );
   }
 
-  const { current, location, next3Hours } = weather;
+  const { current, location, next3Hours, source } = weather;
 
   return (
     <div
@@ -128,7 +130,7 @@ export default function WeatherWidget() {
             🇭🇰 {location.district}
           </p>
           <p className="text-3xl sm:text-4xl font-bold mt-1">
-            {current.temperature !== undefined ? `${Math.round(current.temperature)}°C` : '--'}
+            {current.temperature !== undefined ? Math.round(current.temperature) + '°C' : '--'}
           </p>
           <p className="text-blue-100 text-sm mt-1">
             {WMO_ICONS[current.weatherCode]} {WMO_CODES[current.weatherCode] || ''}
@@ -138,6 +140,9 @@ export default function WeatherWidget() {
               体感 {Math.round(current.feelsLike)}°C
             </p>
           )}
+          <p className="text-blue-200 text-[10px] mt-0.5">
+            📡 {source || '香港天文台'}
+          </p>
         </div>
         <div className="flex flex-col items-end gap-1">
           <button
@@ -145,7 +150,7 @@ export default function WeatherWidget() {
             className="p-1.5 rounded-full bg-white/20 hover:bg-white/30 transition-colors opacity-0 group-hover:opacity-100"
             title="刷新天气数据"
           >
-            <svg className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <svg className={'w-4 h-4 ' + (refreshing ? 'animate-spin' : '')} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
             </svg>
           </button>
@@ -177,7 +182,7 @@ export default function WeatherWidget() {
               {next3Hours.map((h) => (
                 <div key={h.time} className="text-center">
                   <p className="text-[10px] text-blue-200">{h.time}</p>
-                  <p className={`font-semibold text-sm ${h.prob > 50 ? 'text-yellow-300' : ''}`}>
+                  <p className={'font-semibold text-sm ' + (h.prob > 50 ? 'text-yellow-300' : '')}>
                     {h.prob}%
                   </p>
                 </div>
