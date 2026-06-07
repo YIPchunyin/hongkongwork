@@ -346,7 +346,7 @@ function AnnualReportContent() {
         {/* Additional Analysis Cards */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
           {/* Most Worked Weekday */}
-          <div className="bg-gradient-to-br from-indigo-50 to-blue-50 rounded-xl p-3 sm:p-4 border border-indigo-100 shadow-sm">
+          <div className="rounded-xl p-3 sm:p-4 shadow-lg bg-gradient-to-br from-indigo-500 to-blue-600 text-white">
             <p className="text-[10px] text-indigo-500 font-medium">📅 最常工作日</p>
             {(function() {
               const maxCount = Math.max(...stats.weekdayCounts);
@@ -354,31 +354,31 @@ function AnnualReportContent() {
               const names = ['周日','周一','周二','周三','周四','周五','周六'];
               const totalWork = stats.weekdayCounts.reduce((a,b) => a+b, 0);
               return <>
-                <p className="text-lg font-extrabold text-indigo-700 mt-0.5">{names[idx]}</p>
-                <p className="text-[10px] text-indigo-400 mt-0.5">{maxCount}次 ({totalWork > 0 ? (maxCount/totalWork*100).toFixed(0) : 0}%)</p>
+                <p className="text-lg font-extrabold text-white mt-0.5">{names[idx]}</p>
+                <p className="text-[10px] text-white/70 mt-0.5">{maxCount}次 ({totalWork > 0 ? (maxCount/totalWork*100).toFixed(0) : 0}%)</p>
               </>;
             })()}
           </div>
 
           {/* Best Month */}
-          <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl p-3 sm:p-4 border border-amber-100 shadow-sm">
+          <div className="rounded-xl p-3 sm:p-4 shadow-lg bg-gradient-to-br from-amber-500 to-orange-600 text-white">
             <p className="text-[10px] text-amber-500 font-medium">🏆 最高收入月</p>
-            <p className="text-lg font-extrabold text-amber-700 mt-0.5">{stats.bestMonth}</p>
-            <p className="text-[10px] text-amber-400 mt-0.5">HK$ {stats.bestMonthIncome.toLocaleString()}</p>
+            <p className="text-lg font-extrabold text-white mt-0.5">{stats.bestMonth}</p>
+            <p className="text-[10px] text-white/70 mt-0.5">HK$ {stats.bestMonthIncome.toLocaleString()}</p>
           </div>
 
           {/* Total Records */}
-          <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-3 sm:p-4 border border-green-100 shadow-sm">
+          <div className="rounded-xl p-3 sm:p-4 shadow-lg bg-gradient-to-br from-green-500 to-emerald-600 text-white">
             <p className="text-[10px] text-green-500 font-medium">📋 总记录数</p>
-            <p className="text-lg font-extrabold text-green-700 mt-0.5">{stats.totalRecords}</p>
-            <p className="text-[10px] text-green-400 mt-0.5">笔收入记录</p>
+            <p className="text-lg font-extrabold text-white mt-0.5">{stats.totalRecords}</p>
+            <p className="text-[10px] text-white/70 mt-0.5">笔收入记录</p>
           </div>
 
           {/* Rest rate trend */}
-          <div className="bg-gradient-to-br from-rose-50 to-pink-50 rounded-xl p-3 sm:p-4 border border-rose-100 shadow-sm">
+          <div className="rounded-xl p-3 sm:p-4 shadow-lg bg-gradient-to-br from-rose-500 to-pink-600 text-white">
             <p className="text-[10px] text-rose-500 font-medium">🌙 年休息率</p>
-            <p className="text-lg font-extrabold text-rose-700 mt-0.5">{stats.restDays}天</p>
-            <p className="text-[10px] text-rose-400 mt-0.5">休息率 {((1 - stats.workRate/100)*100).toFixed(0)}%</p>
+            <p className="text-lg font-extrabold text-white mt-0.5">{stats.restDays}天</p>
+            <p className="text-[10px] text-white/70 mt-0.5">休息率 {((1 - stats.workRate/100)*100).toFixed(0)}%</p>
           </div>
         </div>
 

@@ -60,7 +60,7 @@ export default function IncomePage() {
   const [formCompany, setFormCompany] = useState('国益');
   const [saving, setSaving] = useState(false);
   const [selectedDay, setSelectedDay] = useState<any>(null);
-  const [showAmount, setShowAmount] = useState(true);
+  const [showAmount, setShowAmount] = useState(false);
 
   const companyColor = (com: string) => {
     const colors: Record<string, string> = {
@@ -194,7 +194,7 @@ export default function IncomePage() {
   if (!loading && !user) return <div className="text-center py-20 text-gray-500">请先登录</div>;
 
   const statCards = stats ? [
-    { label: '💰 ' + monthLabel + ' 收入', value: 'HK$ ' + stats.totalIncome.toFixed(2), color: 'text-green-600' },
+    { label: '💰 ' + monthLabel + ' 收入', value: 'HK$ ' + stats.totalIncome.toFixed(2), color: 'text-white' },
     { label: '⏱️ ' + monthLabel + ' 工时', value: stats.totalHours.toFixed(1) + ' h', color: 'text-blue-600' },
     { label: '📋 ' + monthLabel + ' 笔数', value: stats.totalRecords + ' 笔', color: 'text-gray-800' },
 
@@ -222,18 +222,18 @@ export default function IncomePage() {
       </div>
 
       {/* Month selector */}
-      <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl border border-green-100 p-2.5 sm:p-3 mb-2 shadow-sm">
+      <div className="rounded-2xl p-2.5 sm:p-3 mb-2 shadow-lg bg-gradient-to-r from-green-500 to-emerald-600 text-white">
         <div className="flex items-center justify-between">
           <button onClick={prevMonth} className={'p-2 hover:bg-white/70 rounded-xl transition-all hover:shadow-sm active:scale-90' + (month === null ? ' opacity-30 pointer-events-none' : '')}>
-            <svg className="w-5 h-5 sm:w-6 sm:h-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
+            <svg className="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
           </button>
           <div className="flex items-center gap-2">
-            <span className="text-base sm:text-xl font-bold text-green-800">{monthLabel}</span>
-            <button onClick={() => router.push('/income/annual?year=' + year)} className={"text-xs px-2.5 py-1 rounded-full font-medium transition-all " + (month === null ? "bg-green-600 text-white shadow-sm" : "bg-green-100 text-green-600 hover:bg-green-200")}>&#x5168;&#x5e74;</button>
+            <span className="text-base sm:text-xl font-bold text-white">{monthLabel}</span>
+            <button onClick={() => router.push('/income/annual?year=' + year)} className={"text-xs px-2.5 py-1 rounded-full font-medium transition-all " + (month === null ? "bg-green-600 text-white shadow-sm" : "bg-white/20 text-white hover:bg-white/30")}>&#x5168;&#x5e74;</button>
 
           </div>
           <button onClick={nextMonth} className={'p-2 hover:bg-white/70 rounded-xl transition-all hover:shadow-sm active:scale-90' + (month === null ? ' opacity-30 pointer-events-none' : '')}>
-            <svg className="w-5 h-5 sm:w-6 sm:h-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
+            <svg className="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
           </button>
         </div>
       </div>
@@ -251,8 +251,8 @@ export default function IncomePage() {
             return (
               <>
                 <div className="rounded-xl p-3 sm:p-4 shadow-lg card-hover bg-gradient-to-r from-green-500 to-emerald-500 text-white">
-                  <p className="text-[10px] sm:text-xs text-white/80 font-medium uppercase tracking-wide">{statCards[0].label}</p>
-                  <p className="text-lg sm:text-2xl font-black mt-0.5 text-white">{statCards[0].value}</p>
+                  <p className="text-[10px] sm:text-xs text-white/80 font-medium uppercase tracking-wide">{showAmount ? statCards[0].label : statCards[0].label.replace('收入', '')}</p>
+                  <p className="text-lg sm:text-2xl font-black mt-0.5 text-white">{showAmount ? statCards[0].value : '💪 做牛做马中...'}</p>
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   {statCards.slice(1).map((card, i) => (
@@ -283,15 +283,15 @@ export default function IncomePage() {
               if (key) dailyTotals[key] = (dailyTotals[key] || 0) + i.amount;
             });
             return <>
-              <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-3 border border-purple-100 shadow-sm">
-                <p className="text-[10px] text-purple-500 font-medium">💼 工作天数</p>
-                <p className="text-lg font-extrabold text-purple-700 mt-0.5">{adjustedWorkDays}<span className="text-xs font-medium text-purple-400"> / {totalDays}天</span></p>
-                <p className="text-[10px] text-purple-400 mt-0.5">出勤率 {workRate}%</p>
+              <div className="rounded-xl p-3 shadow-lg bg-gradient-to-br from-indigo-500 to-purple-600 text-white">
+                <p className="text-[10px] text-white/80 font-medium">💼 工作天数</p>
+                <p className="text-lg font-extrabold text-white mt-0.5">{adjustedWorkDays}<span className="text-xs font-medium text-white/60"> / {totalDays}天</span></p>
+                <p className="text-[10px] text-white/70 mt-0.5">出勤率 {workRate}%</p>
               </div>
-              <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl p-3 border border-amber-100 shadow-sm">
-                <p className="text-[10px] text-amber-500 font-medium">🌙 放假天数</p>
-                <p className="text-lg font-extrabold text-amber-700 mt-0.5">{restDays}<span className="text-xs font-medium text-amber-400"> 天</span></p>
-                <p className="text-[10px] text-amber-400 mt-0.5">{'☾'.repeat(Math.min(Math.max(restDays, 0), 5))}{restDays > 5 ? '...' : ''}</p>
+              <div className="bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl p-3 shadow-lg text-white">
+                <p className="text-[10px] text-white/80 font-medium">🌙 放假天数</p>
+                <p className="text-lg font-extrabold text-white mt-0.5">{restDays}<span className="text-xs font-medium text-white/60"> 天</span></p>
+                <p className="text-[10px] text-white/70 mt-0.5">{'☾'.repeat(Math.min(Math.max(restDays, 0), 5))}{restDays > 5 ? '...' : ''}</p>
               </div>
 
             </>
@@ -308,7 +308,7 @@ export default function IncomePage() {
           <div className="flex items-center justify-end mb-1 px-0.5">
             <button onClick={() => setShowAmount(!showAmount)}
               className="text-xs px-2 py-1 rounded-lg font-medium transition-all flex items-center gap-1 hover:bg-gray-100 active:scale-95"
-              title={showAmount ? '显示公司名' : '显示金额'}>
+              title={showAmount ? '隐藏金额' : '显示金额'}>
               <svg className="w-3.5 h-3.5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 {showAmount ? (
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -331,11 +331,33 @@ export default function IncomePage() {
                 if (!day) return <div key={di} className="min-h-[60px] sm:min-h-[80px]" />;
                 const { dateNum, records } = day;
                 const hasData = records.length > 0;
-                // Group by company for proportional bars
-                const compGroups = {} as Record<string, number>;
-                records.forEach((r: any) => { const k = r.company || '其他'; compGroups[k] = (compGroups[k] || 0) + r.amount; });
-                const sortedComp = Object.entries(compGroups).sort((a: any, b: any) => b[1] - a[1]);
+                // Group by shift, then by company
+                const morningRecs = records.filter((r: any) => r.shift === '早班' || r.shift === '日班');
+                const nightRecs = records.filter((r: any) => r.shift === '晚班');
+                const otherRecs = records.filter((r: any) => r.shift !== '早班' && r.shift !== '日班' && r.shift !== '晚班');
                 const maxAmt = maxAmountInMonth > 0 ? maxAmountInMonth : 1;
+                const groupByCompany = (recs: any[]) => {
+                  const g = {} as Record<string, number>;
+                  recs.forEach((r: any) => { const k = r.company || '其他'; g[k] = (g[k] || 0) + r.amount; });
+                  return Object.entries(g).sort((a: any, b: any) => b[1] - a[1]);
+                };
+                const morningComps = groupByCompany(morningRecs);
+                const nightComps = groupByCompany(nightRecs);
+                const otherComps = groupByCompany(otherRecs);
+                const renderBars = (comps: [string, number][], fromTop: boolean) => {
+                  let cumPct = 0;
+                  return comps.map(([com, amt]) => {
+                    const pct = Math.min((amt / maxAmt) * 100, 100);
+                    if (pct <= 0) return null;
+                    const topPct = 100 - cumPct - pct;
+                    cumPct += pct;
+                    return (
+                      <div key={com} className="absolute left-0 right-0 transition-all duration-300" style={{ top: fromTop ? cumPct - pct + '%' : 'auto', bottom: fromTop ? 'auto' : cumPct - pct + '%', height: pct + '%', backgroundColor: companyColor(com), minHeight: '4px' }}>
+                        <span className="absolute inset-0 flex items-center justify-center text-[8px] sm:text-[9px] font-bold leading-tight" style={{ color: 'white', textShadow: '0 1px 3px rgba(0,0,0,0.7)' }}>{showAmount ? ('+' + amt.toFixed(0)) : com}</span>
+                      </div>
+                    );
+                  });
+                };
                 return (
                   <button key={di}
                     onClick={() => hasData && setSelectedDay(day)}
@@ -343,15 +365,13 @@ export default function IncomePage() {
                   >
                     <span className={'absolute top-0.5 left-0.5 z-20 text-sm sm:text-base font-black ' + (hasData ? 'text-gray-900' : 'text-gray-300')} style={{ textShadow: hasData ? '0 0 6px rgba(255,255,255,0.9)' : 'none' }}>{dateNum}</span>
                     {hasData && (
-                      <div className="absolute inset-0 flex flex-col-reverse overflow-hidden rounded-lg">
-                        {sortedComp.map(([com, amt]: [string, number]) => {
-                          const pct = Math.min((amt / maxAmt) * 100, 100);
-                          return pct > 0 ? (
-                            <div key={com} className="w-full transition-all duration-300 relative flex-shrink-0" style={{ height: pct + '%', backgroundColor: companyColor(com), minHeight: '4px' }}>
-                              <span className="absolute inset-0 flex items-center justify-center text-[8px] sm:text-[9px] font-bold leading-tight" style={{ color: 'white', textShadow: '0 1px 3px rgba(0,0,0,0.7)' }}>{showAmount ? ('+' + amt.toFixed(0)) : com}</span>
-                            </div>
-                          ) : null;
-                        })}
+                      <div className="absolute inset-0 overflow-hidden rounded-lg">
+                        {/* 早班 从顶部开始 */}
+                        {renderBars(morningComps, true)}
+                        {/* 晚班 从底部开始 */}
+                        {renderBars(nightComps, false)}
+                        {/* 其他 从底部开始 */}
+                        {renderBars(otherComps, false)}
                       </div>
                     )}
                   </button>
@@ -380,7 +400,7 @@ export default function IncomePage() {
               </button>
             </div>
             <div className="text-right mb-3">
-              <span className="text-2xl font-bold text-green-600">HK$ {selectedDay.total.toFixed(2)}</span>
+              <span className="text-2xl font-bold text-white">HK$ {selectedDay.total.toFixed(2)}</span>
               <span className="text-sm text-gray-400 ml-2">{selectedDay.records.length} 笔</span>
             </div>
             <div className="space-y-2 divide-y divide-gray-100">
@@ -676,6 +696,9 @@ export default function IncomePage() {
     </div>
   );
 }
+
+
+
 
 
 
