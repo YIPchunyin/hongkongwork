@@ -126,29 +126,6 @@ export default function Navbar() {
         </div>
       </nav>
 
-      {/* Mobile top bar - minimal */}
-      <div className="md:hidden flex items-center justify-between h-12 px-4 bg-white/90 backdrop-blur-lg sticky top-0 z-50 border-b border-gray-100">
-        <Link href="/" className="flex items-center space-x-2">
-          <LogoIcon size={28} />
-          <span className="text-lg font-bold text-gray-800">随手HK</span>
-        </Link>
-        <div className="flex items-center space-x-2">
-          <Link href="/weather" className="p-2 text-gray-500 hover:text-blue-600 transition-colors" aria-label="天气">
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
-            </svg>
-          </Link>
-          {user ? (
-            <Link href="/settings" className="w-7 h-7 bg-blue-600 rounded-full flex items-center justify-center text-white text-xs font-medium">
-              {user.username.charAt(0).toUpperCase()}
-            </Link>
-          ) : (
-            <Link href="/login" className="px-3 py-1.5 bg-blue-600 text-white text-xs font-medium rounded-lg">
-              登录
-            </Link>
-          )}
-        </div>
-      </div>
     </>
   );
 }
