@@ -34,10 +34,11 @@ export async function GET(request: NextRequest) {
       Income.countDocuments(query),
     ]);
 
-    const allIncomes = await Income.find({ userId: payload.userId }).lean();
+    // Stats based on current filter range, not all records
+    const filteredIncomes = await Income.find(query).lean();
     let totalIncome = 0, totalHours = 0;
     const industryTotals: Record<string, number> = {}, companyTotals: Record<string, number> = {}, shiftTotals: Record<string, number> = {}, categoryTotals: Record<string, number> = {}, monthlyTotals: Record<string, number> = {};
-    allIncomes.forEach(r => {
+    filteredIncomes.forEach(r => {
       const amt = r.amount || 0; const hrs = r.hours || 0;
       totalIncome += amt; totalHours += hrs;
       const ind = r.industry || '其他'; industryTotals[ind] = (industryTotals[ind] || 0) + amt;
@@ -57,7 +58,7 @@ export async function GET(request: NextRequest) {
         total, page, limit,
         totalPages: Math.ceil(total / limit),
         stats: {
-          totalIncome, totalHours, totalRecords: allIncomes.length,
+          totalIncome, totalHours, totalRecords: filteredIncomes.length,
           industries, companies,
           industryTotals,
           companyTotals,

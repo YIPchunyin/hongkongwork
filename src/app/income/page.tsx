@@ -40,7 +40,7 @@ export default function IncomePage() {
   const { user, loading } = useAuth();
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
-  const [month, setMonth] = useState(now.getMonth() + 1);
+  const [month, setMonth] = useState<number | null>(now.getMonth() + 1);
   const [incomes, setIncomes] = useState<IncomeItem[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
   const [fetching, setFetching] = useState(true);
@@ -65,7 +65,7 @@ export default function IncomePage() {
   const fetchIncomes = useCallback(async () => {
     setFetching(true);
     try {
-      const res = await fetch('/api/income?year=' + year + '&month=' + month + '&page=' + page + '&limit=100');
+      const res = await fetch('/api/income?year=' + (year || '') + '&month=' + (month ? String(month) : '') + '&page=' + page + '&limit=100');
       const json = await res.json();
       if (json.success) {
         setIncomes(json.data.items);
@@ -141,15 +141,15 @@ export default function IncomePage() {
   };
 
   // Month navigation
-  const prevMonth = () => { if (month === 1) { setYear(year - 1); setMonth(12); } else { setMonth(month - 1); } setPage(1); };
-  const nextMonth = () => { if (month === 12) { setYear(year + 1); setMonth(1); } else { setMonth(month + 1); } setPage(1); };
+  const prevMonth = () => { if (month === null) return; if (month === 1) { setYear(year - 1); setMonth(12); } else { setMonth(month - 1); } setPage(1); };
+  const nextMonth = () => { if (month === null) return; if (month === 12) { setYear(year + 1); setMonth(1); } else { setMonth(month + 1); } setPage(1); };
 
   if (!loading && !user) return <div className="text-center py-20 text-gray-500">请先登录</div>;
 
   const statCards = stats ? [
-    { label: monthLabel + ' 总收入', value: 'HK$ ' + stats.totalIncome.toFixed(2), color: 'text-green-600' },
-    { label: monthLabel + ' 总工时', value: stats.totalHours.toFixed(1) + ' h', color: 'text-blue-600' },
-    { label: monthLabel + ' 总笔数', value: stats.totalRecords + ' 笔', color: 'text-gray-800' },
+    { label: monthLabel + ' 收入', value: 'HK$ ' + stats.totalIncome.toFixed(2), color: 'text-green-600' },
+    { label: monthLabel + ' 工时', value: stats.totalHours.toFixed(1) + ' h', color: 'text-blue-600' },
+    { label: monthLabel + ' 笔数', value: stats.totalRecords + ' 笔', color: 'text-gray-800' },
     { label: '时薪', value: stats.totalHours > 0 ? 'HK$ ' + (stats.totalIncome / stats.totalHours).toFixed(2) : '-', color: 'text-purple-600' },
   ] : [];
 
