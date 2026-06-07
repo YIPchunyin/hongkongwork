@@ -61,8 +61,13 @@ export default function IncomePage() {
   const [selectedDay, setSelectedDay] = useState<any>(null);
 
   const companyColor = (com: string) => {
-    const colors: Record<string, string> = { '国益': '#3B82F6', '煌府': '#F59E0B', '益哥': '#8B5CF6' };
-    return colors[com] || '#9CA3AF';
+    const colors: Record<string, string> = {
+      '国益': '#DC2626',   // 红色 - 最鲜艳
+      '煌府': '#2563EB',   // 蓝色
+      '益哥': '#16A34A',   // 绿色
+      '司': '#D97706',         // 橙色 - 公司
+    };
+    return colors[com] || '#9333EA';  // 紫色 - 默认
   };
 
   const buildCalendarDays = (yr: number, mo: number, items: IncomeItem[]) => {
@@ -278,7 +283,7 @@ export default function IncomePage() {
               {selectedDay.records.map((item: any) => (
                 <div key={item._id} className="pt-2 first:pt-0">
                   <div className="flex items-center gap-2">
-                    <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: companyColor(item.company) }} />
+                    <span className="w-3 h-3 rounded-sm flex-shrink-0" style={{ backgroundColor: companyColor(item.company), boxShadow: '0 1px 3px rgba(0,0,0,0.3)' }} />
                     <span className="text-xs px-1.5 py-0.5 rounded bg-green-50 text-green-700 font-medium">{item.category || '未分类'}</span>
                     {item.shift && <span className="text-xs text-gray-400">{item.shift}</span>}
                     {item.company && <span className="text-xs text-gray-400">{item.company}</span>}
