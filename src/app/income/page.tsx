@@ -249,6 +249,49 @@ export default function IncomePage() {
         </div>
       )}
 
+      {/* Advanced Analytics */}
+      {stats && month && year && (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 mb-3">
+          {(() => {
+            const daysInMonth = new Date(year, month, 0).getDate();
+            const workDays = incomes.length > 0 ? new Set(incomes.map((i: any) => parseInt(i.date?.substring(8, 10)) || 0)).size : 0;
+            const restDays = daysInMonth - workDays;
+            const avgDaily = workDays > 0 ? stats.totalIncome / workDays : 0;
+            const workRate = daysInMonth > 0 ? (workDays / daysInMonth * 100).toFixed(0) : '0';
+            const dailyTotals: Record<number, number> = {};
+            incomes.forEach((i: any) => {
+              if (i.date?.substring(0, 7) === year + '-' + String(month).padStart(2, '0')) {
+                const d = parseInt(i.date.substring(8, 10));
+                dailyTotals[d] = (dailyTotals[d] || 0) + i.amount;
+              }
+            });
+            const bestDay = Object.values(dailyTotals).length > 0 ? Math.max(...Object.values(dailyTotals)) : 0;
+            return <>
+              <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-3 border border-purple-100 shadow-sm">
+                <p className="text-[10px] text-purple-500 font-medium">工作天数</p>
+                <p className="text-lg font-extrabold text-purple-700 mt-0.5">{workDays}<span className="text-xs font-medium text-purple-400"> / {daysInMonth}天</span></p>
+                <p className="text-[10px] text-purple-400 mt-0.5">出勤率 {workRate}%</p>
+              </div>
+              <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl p-3 border border-amber-100 shadow-sm">
+                <p className="text-[10px] text-amber-500 font-medium">放假天数</p>
+                <p className="text-lg font-extrabold text-amber-700 mt-0.5">{restDays}<span className="text-xs font-medium text-amber-400"> 天</span></p>
+                <p className="text-[10px] text-amber-400 mt-0.5">{'☾'.repeat(Math.min(restDays, 5))}{restDays > 5 ? '...' : ''}</p>
+              </div>
+              <div className="rounded-xl p-3 border shadow-sm bg-gradient-to-br from-blue-50 to-cyan-50 border-blue-100">
+                <p className="text-[10px] text-blue-500 font-medium">日均收入</p>
+                <p className="text-lg font-extrabold text-blue-700 mt-0.5">HK$ {avgDaily.toFixed(0)}</p>
+                <p className="text-[10px] text-blue-400 mt-0.5">每工作日</p>
+              </div>
+              <div className="rounded-xl p-3 border shadow-sm bg-gradient-to-br from-green-50 to-emerald-50 border-green-100">
+                <p className="text-[10px] text-green-500 font-medium">最佳日</p>
+                <p className="text-lg font-extrabold text-green-700 mt-0.5">HK$ {bestDay}</p>
+                <p className="text-[10px] text-green-400 mt-0.5">单日最高</p>
+              </div>
+            </>;
+          })()}
+        </div>
+      )}
+
       {/* Calendar View */}
       {fetching ? (
         <div className="text-center py-12"><div className="w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto" /></div>
