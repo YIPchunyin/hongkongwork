@@ -7,12 +7,12 @@ import { Bar, Doughnut, Line } from 'react-chartjs-2';
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement, PointElement, LineElement);
 import Link from 'next/link';
 import { useAuth } from '@/components/AuthProvider';
+import QuickAddCards from '@/components/QuickAddCards';
 
 interface IncomeItem {
   _id: string;
   date: string;
   amount: number;
-  category: string;
   note: string;
   shift: string;
   hours: number;
@@ -51,7 +51,6 @@ export default function IncomePage() {
   const [editItem, setEditItem] = useState<IncomeItem | null>(null);
   const [formDate, setFormDate] = useState('');
   const [formAmount, setFormAmount] = useState('');
-  const [formCategory, setFormCategory] = useState('地盘');
   const [formNote, setFormNote] = useState('');
   const [formShift, setFormShift] = useState('早班');
   const [formHours, setFormHours] = useState('');
@@ -127,7 +126,6 @@ export default function IncomePage() {
     setEditItem(null);
     setFormDate(new Date().toISOString().slice(0, 16).replace('T', ' '));
     setFormAmount('');
-    setFormCategory('地盘');
     setFormNote('');
     setFormShift('早班');
     setFormHours('');
@@ -140,7 +138,6 @@ export default function IncomePage() {
     setEditItem(item);
     setFormDate(item.date);
     setFormAmount(String(item.amount));
-    setFormCategory(item.category);
     setFormNote(item.note);
     setFormShift(item.shift);
     setFormHours(String(item.hours));
@@ -156,7 +153,7 @@ export default function IncomePage() {
     try {
       const body = {
         date: formDate, amount: parseFloat(formAmount),
-        category: formCategory, note: formNote,
+        note: formNote,
         shift: formShift, hours: formHours ? parseFloat(formHours) : 0,
         industry: formIndustry, company: formCompany,
       };
@@ -383,6 +380,19 @@ export default function IncomePage() {
         </div>
       )}
 
+      {/* Quick Add - Recent Patterns */}
+      <QuickAddCards incomes={incomes} onSelect={(item) => {
+        setFormDate(item.date || '');
+        setFormAmount(item.amount ? String(item.amount) : '');
+        setFormShift(item.shift || '早班');
+        setFormHours(item.hours ? String(item.hours) : '');
+        setFormIndustry(item.industry || '地盘');
+        setFormCompany(item.company || '国益');
+        setFormNote(item.note || '');
+        setEditItem(null);
+        setShowModal(true);
+      }} />
+
       {/* Charts & Analysis */}
       {stats && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 mb-4 w-full max-w-full">
@@ -444,26 +454,6 @@ export default function IncomePage() {
                 </div>
               );
             })}
-          </div>
-
-          {/* Category Breakdown */}
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden p-4 sm:p-5">
-            <h3 className="text-sm font-semibold text-gray-700 mb-3">分类分析</h3>
-            {Object.keys(stats.categoryTotals).length > 0 && (
-              <div className="space-y-2.5">
-                {Object.entries(stats.categoryTotals).sort((a, b) => b[1] - a[1]).map(([cat, total], i) => (
-                  <div key={cat}>
-                    <div className="flex justify-between text-sm mb-1">
-                      <span className="text-gray-600">{cat}</span>
-                      <span className="font-medium text-gray-800">HK$ {Number(total).toFixed(2)}</span>
-                    </div>
-                    <div className="w-full h-2.5 bg-gray-100 rounded-full overflow-hidden">
-                      <div className="h-full rounded-full transition-all duration-500" style={{ width: (Number(total) / Math.max(...Object.values(stats.categoryTotals)) * 100).toFixed(1) + "%", backgroundColor: chartColors[i % chartColors.length] }} />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
           </div>
 
           {/* Hourly Rate Trend */}
@@ -622,17 +612,6 @@ export default function IncomePage() {
                   </select>
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">二级分类</label>
-                  <select value={formCategory} onChange={e => setFormCategory(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 outline-none">
-                    <option>地盘</option>
-                    <option>其他</option>
-                    <option>补贴</option>
-                    <option>半工地盤</option>
-                  </select>
-                </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">班次</label>
                   <select value={formShift} onChange={e => setFormShift(e.target.value)}
@@ -643,7 +622,6 @@ export default function IncomePage() {
                     <option>日班</option>
                     <option>补贴</option>
                   </select>
-                </div>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">备注</label>
