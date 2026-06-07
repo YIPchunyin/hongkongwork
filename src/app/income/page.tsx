@@ -215,14 +215,11 @@ export default function IncomePage() {
             <p className="text-xs sm:text-sm text-gray-400">📊 记录每一笔收入 · 轻松掌控财务</p>
           </div>
         </div>
-        <button onClick={openAdd} className="px-5 py-2.5 bg-gradient-to-r from-green-500 to-emerald-600 text-white text-sm font-bold rounded-xl hover:shadow-lg hover:shadow-green-200/50 hover:scale-105 active:scale-95 transition-all duration-200 min-h-[44px] inline-flex items-center gap-1.5 shadow-md">
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
-          ✨ 新增收入
-        </button>
+
       </div>
 
       {/* Month selector */}
-      <div className="rounded-2xl p-2.5 sm:p-3 mb-2 shadow-lg bg-gradient-to-r from-green-500 to-emerald-600 text-white">
+      <div className="rounded-2xl p-2.5 sm:p-3 mb-2 shadow-lg bg-gradient-to-r from-green-600 to-emerald-700 text-white">
         <div className="flex items-center justify-between">
           <button onClick={prevMonth} className={'p-2 hover:bg-white/70 rounded-xl transition-all hover:shadow-sm active:scale-90' + (month === null ? ' opacity-30 pointer-events-none' : '')}>
             <svg className="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
@@ -244,13 +241,13 @@ export default function IncomePage() {
           {/* First card full width */}
           {(() => {
             const bgClasses = [
-              'bg-gradient-to-r from-green-500 to-emerald-500 text-white',
-              'bg-gradient-to-r from-blue-500 to-cyan-500 text-white',
-              'bg-gradient-to-r from-purple-500 to-pink-500 text-white',
+              'bg-gradient-to-r from-green-600 to-emerald-700 text-white',
+              'bg-gradient-to-r from-blue-600 to-cyan-700 text-white',
+              'bg-gradient-to-r from-purple-600 to-pink-700 text-white',
             ];
             return (
               <>
-                <div className="rounded-xl p-3 sm:p-4 shadow-lg card-hover bg-gradient-to-r from-green-500 to-emerald-500 text-white">
+                <div className="rounded-xl p-3 sm:p-4 shadow-lg card-hover bg-gradient-to-r from-green-600 to-emerald-700 text-white">
                   <p className="text-[10px] sm:text-xs text-white/80 font-medium uppercase tracking-wide">{showAmount ? statCards[0].label : statCards[0].label.replace('收入', '')}</p>
                   <p className="text-lg sm:text-2xl font-black mt-0.5 text-white">{showAmount ? statCards[0].value : '💪 做牛做马中...'}</p>
                 </div>
@@ -283,12 +280,12 @@ export default function IncomePage() {
               if (key) dailyTotals[key] = (dailyTotals[key] || 0) + i.amount;
             });
             return <>
-              <div className="rounded-xl p-3 shadow-lg bg-gradient-to-br from-indigo-500 to-purple-600 text-white">
+              <div className="rounded-xl p-3 shadow-lg bg-gradient-to-br from-indigo-600 to-purple-700 text-white">
                 <p className="text-[10px] text-white/80 font-medium">💼 工作天数</p>
                 <p className="text-lg font-extrabold text-white mt-0.5">{adjustedWorkDays}<span className="text-xs font-medium text-white/60"> / {totalDays}天</span></p>
                 <p className="text-[10px] text-white/70 mt-0.5">出勤率 {workRate}%</p>
               </div>
-              <div className="bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl p-3 shadow-lg text-white">
+              <div className="bg-gradient-to-br from-amber-600 to-orange-700 rounded-xl p-3 shadow-lg text-white">
                 <p className="text-[10px] text-white/80 font-medium">🌙 放假天数</p>
                 <p className="text-lg font-extrabold text-white mt-0.5">{restDays}<span className="text-xs font-medium text-white/60"> 天</span></p>
                 <p className="text-[10px] text-white/70 mt-0.5">{'☾'.repeat(Math.min(Math.max(restDays, 0), 5))}{restDays > 5 ? '...' : ''}</p>
@@ -354,9 +351,17 @@ export default function IncomePage() {
                     return (
                       <div key={com} className="absolute left-0 right-0 transition-all duration-300" style={{ top: fromTop ? cumPct - pct + '%' : 'auto', bottom: fromTop ? 'auto' : cumPct - pct + '%', height: pct + '%', backgroundColor: companyColor(com), minHeight: '4px' }}>
                         <span className="absolute inset-0 flex items-center justify-center text-[8px] sm:text-[9px] font-bold leading-tight" style={{ color: 'white', textShadow: '0 1px 3px rgba(0,0,0,0.7)' }}>{showAmount ? ('+' + amt.toFixed(0)) : com}</span>
-                      </div>
-                    );
-                  });
+                        {/* FAB */}
+      <button onClick={openAdd}
+        className="fixed bottom-20 md:bottom-6 right-6 z-40 w-14 h-14 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-full shadow-2xl hover:shadow-green-400/50 hover:scale-110 active:scale-95 transition-all duration-200 flex items-center justify-center"
+        style={{ boxShadow: '0 4px 20px rgba(16,185,129,0.4)' }}>
+        <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+        </svg>
+      </button>
+    </div>
+  );
+});
                 };
                 return (
                   <button key={di}
@@ -490,9 +495,17 @@ export default function IncomePage() {
                   <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
                     <div className="h-full rounded-full transition-all" style={{ width: pct.toFixed(1) + '%', backgroundColor: chartColors[i % chartColors.length] }} />
                   </div>
-                </div>
-              );
-            })}
+                  {/* FAB */}
+      <button onClick={openAdd}
+        className="fixed bottom-20 md:bottom-6 right-6 z-40 w-14 h-14 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-full shadow-2xl hover:shadow-green-400/50 hover:scale-110 active:scale-95 transition-all duration-200 flex items-center justify-center"
+        style={{ boxShadow: '0 4px 20px rgba(16,185,129,0.4)' }}>
+        <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+        </svg>
+      </button>
+    </div>
+  );
+})}
           </div>
 
           {/* Hourly Rate Trend */}
@@ -530,9 +543,17 @@ export default function IncomePage() {
                       }]
                     }} options={{ responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { callback: (v) => "HK$" + v } } } }} />
                   ) : <p className="text-sm text-gray-400 text-center py-4">暂无工时数据</p>}
-                </div>
-              );
-            })()}
+                  {/* FAB */}
+      <button onClick={openAdd}
+        className="fixed bottom-20 md:bottom-6 right-6 z-40 w-14 h-14 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-full shadow-2xl hover:shadow-green-400/50 hover:scale-110 active:scale-95 transition-all duration-200 flex items-center justify-center"
+        style={{ boxShadow: '0 4px 20px rgba(16,185,129,0.4)' }}>
+        <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+        </svg>
+      </button>
+    </div>
+  );
+})()}
           </div>
 
           {/* Weekday Analysis */}
@@ -562,9 +583,17 @@ export default function IncomePage() {
                       borderRadius: 4,
                     }]
                   }} options={{ responsive: true, plugins: { legend: { display: false }, tooltip: { callbacks: { label: (ctx) => "HK$ " + ctx.raw + " (" + weekdayCounts[ctx.dataIndex] + "次)" } } }, scales: { y: { beginAtZero: true, ticks: { callback: (v) => "HK$" + v } } } }} />
-                </div>
-              );
-            })()}
+                  {/* FAB */}
+      <button onClick={openAdd}
+        className="fixed bottom-20 md:bottom-6 right-6 z-40 w-14 h-14 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-full shadow-2xl hover:shadow-green-400/50 hover:scale-110 active:scale-95 transition-all duration-200 flex items-center justify-center"
+        style={{ boxShadow: '0 4px 20px rgba(16,185,129,0.4)' }}>
+        <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+        </svg>
+      </button>
+    </div>
+  );
+})()}
           </div>
 
           {/* Top Paying Days */}
@@ -597,9 +626,17 @@ export default function IncomePage() {
                   ))
           }
                   {topDays.length === 0 && <p className="text-sm text-gray-400 text-center py-4">暂无数据</p>}
-                </div>
-              );
-            })()}
+                  {/* FAB */}
+      <button onClick={openAdd}
+        className="fixed bottom-20 md:bottom-6 right-6 z-40 w-14 h-14 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-full shadow-2xl hover:shadow-green-400/50 hover:scale-110 active:scale-95 transition-all duration-200 flex items-center justify-center"
+        style={{ boxShadow: '0 4px 20px rgba(16,185,129,0.4)' }}>
+        <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+        </svg>
+      </button>
+    </div>
+  );
+})()}
           </div>
         </div>
       )}
@@ -693,9 +730,20 @@ export default function IncomePage() {
           </div>
         </div>
       )}
+      {/* FAB */}
+      <button onClick={openAdd}
+        className="fixed bottom-20 md:bottom-6 right-6 z-40 w-14 h-14 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-full shadow-2xl hover:shadow-green-400/50 hover:scale-110 active:scale-95 transition-all duration-200 flex items-center justify-center"
+        style={{ boxShadow: '0 4px 20px rgba(16,185,129,0.4)' }}>
+        <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+        </svg>
+      </button>
     </div>
   );
 }
+
+
+
 
 
 

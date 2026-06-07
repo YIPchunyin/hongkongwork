@@ -346,7 +346,7 @@ function AnnualReportContent() {
         {/* Additional Analysis Cards */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
           {/* Most Worked Weekday */}
-          <div className="rounded-xl p-3 sm:p-4 shadow-lg bg-gradient-to-br from-indigo-500 to-blue-600 text-white">
+          <div className="rounded-xl p-3 sm:p-4 shadow-lg bg-gradient-to-br from-indigo-600 to-blue-700 text-white">
             <p className="text-[10px] text-indigo-500 font-medium">📅 最常工作日</p>
             {(function() {
               const maxCount = Math.max(...stats.weekdayCounts);
@@ -361,14 +361,14 @@ function AnnualReportContent() {
           </div>
 
           {/* Best Month */}
-          <div className="rounded-xl p-3 sm:p-4 shadow-lg bg-gradient-to-br from-amber-500 to-orange-600 text-white">
+          <div className="rounded-xl p-3 sm:p-4 shadow-lg bg-gradient-to-br from-amber-600 to-orange-700 text-white">
             <p className="text-[10px] text-amber-500 font-medium">🏆 最高收入月</p>
             <p className="text-lg font-extrabold text-white mt-0.5">{stats.bestMonth}</p>
             <p className="text-[10px] text-white/70 mt-0.5">HK$ {stats.bestMonthIncome.toLocaleString()}</p>
           </div>
 
           {/* Total Records */}
-          <div className="rounded-xl p-3 sm:p-4 shadow-lg bg-gradient-to-br from-green-500 to-emerald-600 text-white">
+          <div className="rounded-xl p-3 sm:p-4 shadow-lg bg-gradient-to-br from-green-600 to-emerald-700 text-white">
             <p className="text-[10px] text-green-500 font-medium">📋 总记录数</p>
             <p className="text-lg font-extrabold text-white mt-0.5">{stats.totalRecords}</p>
             <p className="text-[10px] text-white/70 mt-0.5">笔收入记录</p>
