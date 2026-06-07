@@ -380,19 +380,6 @@ export default function IncomePage() {
         </div>
       )}
 
-      {/* Quick Add - Recent Patterns */}
-      <QuickAddCards incomes={incomes} onSelect={(item) => {
-        setFormDate(item.date || '');
-        setFormAmount(item.amount ? String(item.amount) : '');
-        setFormShift(item.shift || '早班');
-        setFormHours(item.hours ? String(item.hours) : '');
-        setFormIndustry(item.industry || '地盘');
-        setFormCompany(item.company || '国益');
-        setFormNote(item.note || '');
-        setEditItem(null);
-        setShowModal(true);
-      }} />
-
       {/* Charts & Analysis */}
       {stats && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 mb-4 w-full max-w-full">
@@ -575,6 +562,17 @@ export default function IncomePage() {
               <h2 className="text-lg font-bold text-gray-900">{editItem ? '编辑收入' : '新增收入'}</h2>
             </div>
             <form onSubmit={handleSave} className="space-y-4">
+              <QuickAddCards incomes={incomes} onSelect={(item) => {
+                setFormDate(item.date || '');
+                setFormAmount(item.amount ? String(item.amount) : '');
+                setFormShift(item.shift || '早班');
+                setFormHours(item.hours ? String(item.hours) : '');
+                setFormIndustry(item.industry || '地盘');
+                setFormCompany(item.company || '国益');
+                setFormNote(item.note || '');
+                setEditItem(null);
+              }} />
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">日期时间</label>
                 <input type="datetime-local" value={formDate.replace(' ', 'T')} onChange={e => setFormDate(e.target.value.replace('T', ' '))}

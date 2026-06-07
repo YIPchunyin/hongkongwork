@@ -7,6 +7,7 @@ interface PatternItem {
   company: string;
   shift: string;
   hours: number;
+  amount: number;
   count: number;
   latestDate: string;
 }
@@ -41,13 +42,14 @@ export default function QuickAddCards({ incomes, onSelect }: QuickAddCardsProps)
           company: i.company || '',
           shift: i.shift || '',
           hours: i.hours || 0,
+          amount: i.amount || 0,
           count: 0,
           latestDate: i.date || '',
         });
       }
       const p = patternMap.get(key)!;
       p.count++;
-      if (i.date > p.latestDate) p.latestDate = i.date;
+      if (i.date > p.latestDate) { p.latestDate = i.date; p.amount = i.amount || 0; }
     });
 
     // Sort by count desc, limit to 6
@@ -87,7 +89,7 @@ export default function QuickAddCards({ incomes, onSelect }: QuickAddCardsProps)
                 company: p.company,
                 shift: p.shift,
                 hours: p.hours,
-                amount: 0,
+                amount: p.amount,
                 note: '',
                 date: new Date().toISOString().slice(0, 16).replace('T', ' '),
               });
@@ -121,3 +123,4 @@ export default function QuickAddCards({ incomes, onSelect }: QuickAddCardsProps)
     </div>
   );
 }
+
