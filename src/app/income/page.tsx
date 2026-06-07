@@ -353,8 +353,8 @@ export default function IncomePage() {
                         <span className="absolute inset-0 flex items-center justify-center text-[8px] sm:text-[9px] font-bold leading-tight" style={{ color: 'white', textShadow: '0 1px 3px rgba(0,0,0,0.7)' }}>{showAmount ? ('+' + amt.toFixed(0)) : com}</span>
                         {/* FAB */}
       <button onClick={openAdd}
-        className="fixed bottom-20 md:bottom-6 right-4 z-40 w-12 h-12 md:w-14 md:h-14 bg-emerald-600 text-white rounded-full shadow-lg hover:bg-emerald-700 hover:scale-110 active:scale-95 transition-all duration-200 flex items-center justify-center"
-        style={{ boxShadow: '0 4px 20px rgba(16,185,129,0.4)' }}>
+        className="fixed bottom-20 md:bottom-6 right-4 z-40 w-10 h-10 md:w-12 md:h-12 bg-emerald-600 text-white rounded-full hover:bg-emerald-700 active:scale-95 transition-all duration-200 flex items-center justify-center"
+        >
         <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
         </svg>
@@ -497,8 +497,8 @@ export default function IncomePage() {
                   </div>
                   {/* FAB */}
       <button onClick={openAdd}
-        className="fixed bottom-20 md:bottom-6 right-4 z-40 w-12 h-12 md:w-14 md:h-14 bg-emerald-600 text-white rounded-full shadow-lg hover:bg-emerald-700 hover:scale-110 active:scale-95 transition-all duration-200 flex items-center justify-center"
-        style={{ boxShadow: '0 4px 20px rgba(16,185,129,0.4)' }}>
+        className="fixed bottom-20 md:bottom-6 right-4 z-40 w-10 h-10 md:w-12 md:h-12 bg-emerald-600 text-white rounded-full hover:bg-emerald-700 active:scale-95 transition-all duration-200 flex items-center justify-center"
+        >
         <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
         </svg>
@@ -545,8 +545,8 @@ export default function IncomePage() {
                   ) : <p className="text-sm text-gray-400 text-center py-4">暂无工时数据</p>}
                   {/* FAB */}
       <button onClick={openAdd}
-        className="fixed bottom-20 md:bottom-6 right-4 z-40 w-12 h-12 md:w-14 md:h-14 bg-emerald-600 text-white rounded-full shadow-lg hover:bg-emerald-700 hover:scale-110 active:scale-95 transition-all duration-200 flex items-center justify-center"
-        style={{ boxShadow: '0 4px 20px rgba(16,185,129,0.4)' }}>
+        className="fixed bottom-20 md:bottom-6 right-4 z-40 w-10 h-10 md:w-12 md:h-12 bg-emerald-600 text-white rounded-full hover:bg-emerald-700 active:scale-95 transition-all duration-200 flex items-center justify-center"
+        >
         <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
         </svg>
@@ -585,8 +585,8 @@ export default function IncomePage() {
                   }} options={{ responsive: true, plugins: { legend: { display: false }, tooltip: { callbacks: { label: (ctx) => "HK$ " + ctx.raw + " (" + weekdayCounts[ctx.dataIndex] + "次)" } } }, scales: { y: { beginAtZero: true, ticks: { callback: (v) => "HK$" + v } } } }} />
                   {/* FAB */}
       <button onClick={openAdd}
-        className="fixed bottom-20 md:bottom-6 right-4 z-40 w-12 h-12 md:w-14 md:h-14 bg-emerald-600 text-white rounded-full shadow-lg hover:bg-emerald-700 hover:scale-110 active:scale-95 transition-all duration-200 flex items-center justify-center"
-        style={{ boxShadow: '0 4px 20px rgba(16,185,129,0.4)' }}>
+        className="fixed bottom-20 md:bottom-6 right-4 z-40 w-10 h-10 md:w-12 md:h-12 bg-emerald-600 text-white rounded-full hover:bg-emerald-700 active:scale-95 transition-all duration-200 flex items-center justify-center"
+        >
         <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
         </svg>
@@ -628,8 +628,8 @@ export default function IncomePage() {
                   {topDays.length === 0 && <p className="text-sm text-gray-400 text-center py-4">暂无数据</p>}
                   {/* FAB */}
       <button onClick={openAdd}
-        className="fixed bottom-20 md:bottom-6 right-4 z-40 w-12 h-12 md:w-14 md:h-14 bg-emerald-600 text-white rounded-full shadow-lg hover:bg-emerald-700 hover:scale-110 active:scale-95 transition-all duration-200 flex items-center justify-center"
-        style={{ boxShadow: '0 4px 20px rgba(16,185,129,0.4)' }}>
+        className="fixed bottom-20 md:bottom-6 right-4 z-40 w-10 h-10 md:w-12 md:h-12 bg-emerald-600 text-white rounded-full hover:bg-emerald-700 active:scale-95 transition-all duration-200 flex items-center justify-center"
+        >
         <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
         </svg>
@@ -732,8 +732,8 @@ export default function IncomePage() {
       )}
       {/* FAB */}
       <button onClick={openAdd}
-        className="fixed bottom-20 md:bottom-6 right-4 z-40 w-12 h-12 md:w-14 md:h-14 bg-emerald-600 text-white rounded-full shadow-lg hover:bg-emerald-700 hover:scale-110 active:scale-95 transition-all duration-200 flex items-center justify-center"
-        style={{ boxShadow: '0 4px 20px rgba(16,185,129,0.4)' }}>
+        className="fixed bottom-20 md:bottom-6 right-4 z-40 w-10 h-10 md:w-12 md:h-12 bg-emerald-600 text-white rounded-full hover:bg-emerald-700 active:scale-95 transition-all duration-200 flex items-center justify-center"
+        >
         <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
         </svg>
@@ -741,6 +741,9 @@ export default function IncomePage() {
     </div>
   );
 }
+
+
+
 
 
 
