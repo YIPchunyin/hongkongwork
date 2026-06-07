@@ -106,8 +106,8 @@ export default function IncomePage() {
       </div>
     ));
   };
-  const monthKey = year + '-' + String(month).padStart(2, '0');
-  const monthLabel = year + '\u5e74' + String(month).padStart(2, '0') + '\u6708';
+  const monthKey = month ? year + '-' + String(month).padStart(2, '0') : String(year);
+  const monthLabel = month ? year + "年" + String(month).padStart(2, "0") + "月" : year + "年 (全年)";
 
   const fetchIncomes = useCallback(async () => {
     setFetching(true);
@@ -224,14 +224,15 @@ export default function IncomePage() {
       {/* Month selector */}
       <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl border border-green-100 p-3 sm:p-4 mb-3 shadow-sm">
         <div className="flex items-center justify-between">
-          <button onClick={prevMonth} className="p-2 hover:bg-white/70 rounded-xl transition-all hover:shadow-sm active:scale-90">
+          <button onClick={prevMonth} className={'p-2 hover:bg-white/70 rounded-xl transition-all hover:shadow-sm active:scale-90' + (month === null ? ' opacity-30 pointer-events-none' : '')}>
             <svg className="w-5 h-5 sm:w-6 sm:h-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
           </button>
           <div className="flex items-center gap-2">
             <span className="text-base sm:text-xl font-bold text-green-800">{monthLabel}</span>
-            {stats && <span className="text-xs sm:text-sm font-medium text-green-500 bg-green-100 px-2.5 py-1 rounded-full">HK$ {stats.totalIncome.toFixed(0)}</span>}
+            <button onClick={() => { setMonth(month === null ? new Date().getMonth() + 1 : null); setPage(1); }} className={"text-xs px-2.5 py-1 rounded-full font-medium transition-all " + (month === null ? "bg-green-600 text-white shadow-sm" : "bg-green-100 text-green-600 hover:bg-green-200")}>&#x5168;&#x5e74;</button>
+
           </div>
-          <button onClick={nextMonth} className="p-2 hover:bg-white/70 rounded-xl transition-all hover:shadow-sm active:scale-90">
+          <button onClick={nextMonth} className={'p-2 hover:bg-white/70 rounded-xl transition-all hover:shadow-sm active:scale-90' + (month === null ? ' opacity-30 pointer-events-none' : '')}>
             <svg className="w-5 h-5 sm:w-6 sm:h-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
           </button>
         </div>
@@ -253,23 +254,22 @@ export default function IncomePage() {
       {stats && month && year && (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 mb-3">
           {(() => {
-            const daysInMonth = new Date(year, month, 0).getDate();
-            const workDays = incomes.length > 0 ? new Set(incomes.map((i: any) => parseInt(i.date?.substring(8, 10)) || 0)).size : 0;
-            const restDays = daysInMonth - workDays;
-            const avgDaily = workDays > 0 ? stats.totalIncome / workDays : 0;
-            const workRate = daysInMonth > 0 ? (workDays / daysInMonth * 100).toFixed(0) : '0';
-            const dailyTotals: Record<number, number> = {};
-            incomes.forEach((i: any) => {
-              if (i.date?.substring(0, 7) === year + '-' + String(month).padStart(2, '0')) {
-                const d = parseInt(i.date.substring(8, 10));
-                dailyTotals[d] = (dailyTotals[d] || 0) + i.amount;
-              }
+            const totalDays = month === null ? (year % 400 === 0 || (year % 4 === 0 && year % 100 !== 0) ? 366 : 365) : new Date(year, month, 0).getDate();
+            const workDates = new Set(incomes.map((i) => i.date?.substring(0, 10)).filter(Boolean));
+            const adjustedWorkDays = workDates.size;
+            const restDays = totalDays - adjustedWorkDays;
+            const avgDaily = adjustedWorkDays > 0 ? stats.totalIncome / adjustedWorkDays : 0;
+            const workRate = totalDays > 0 ? (adjustedWorkDays / totalDays * 100).toFixed(0) : '0';
+            const dailyTotals: Record<string, number> = {};
+            incomes.forEach((i) => {
+              const key = i.date?.substring(0, 10);
+              if (key) dailyTotals[key] = (dailyTotals[key] || 0) + i.amount;
             });
             const bestDay = Object.values(dailyTotals).length > 0 ? Math.max(...Object.values(dailyTotals)) : 0;
             return <>
               <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-3 border border-purple-100 shadow-sm">
                 <p className="text-[10px] text-purple-500 font-medium">工作天数</p>
-                <p className="text-lg font-extrabold text-purple-700 mt-0.5">{workDays}<span className="text-xs font-medium text-purple-400"> / {daysInMonth}天</span></p>
+                <p className="text-lg font-extrabold text-purple-700 mt-0.5">{adjustedWorkDays}<span className="text-xs font-medium text-purple-400"> / {totalDays}天</span></p>
                 <p className="text-[10px] text-purple-400 mt-0.5">出勤率 {workRate}%</p>
               </div>
               <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl p-3 border border-amber-100 shadow-sm">
