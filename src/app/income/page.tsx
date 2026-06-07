@@ -446,17 +446,6 @@ export default function IncomePage() {
             })}
           </div>
 
-          {/* Shift Analysis */}
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden p-4 sm:p-5">
-            <h3 className="text-sm font-semibold text-gray-700 mb-3">班次分析</h3>
-            {Object.keys(stats.shiftTotals).length > 0 && (
-              <div className="space-y-2">
-                {Object.entries(stats.shiftTotals).sort((a: any, b: any) => b[1] - a[1]).map(([sh, total], i) => (
-                  <div key={sh} className="flex items-center justify-between px-3 py-2 bg-gray-50 rounded-lg">
-                    <div className="flex items-center gap-2">
-                      <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: chartColors[i % chartColors.length] }} />
-                      <span className="text-sm text-gray-600">{sh}</span>
-            
           {/* Category Breakdown */}
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden p-4 sm:p-5">
             <h3 className="text-sm font-semibold text-gray-700 mb-3">分类分析</h3>
@@ -581,12 +570,6 @@ export default function IncomePage() {
                 </div>
               );
             })()}
-          </div>        </div>
-                    <span className="text-sm font-medium">HK$ {Number(total).toFixed(2)}</span>
-                  </div>
-                ))}
-              </div>
-            )}
           </div>
         </div>
       )}
