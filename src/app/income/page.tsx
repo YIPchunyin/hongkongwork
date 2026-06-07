@@ -385,10 +385,10 @@ export default function IncomePage() {
 
       {/* Charts & Analysis */}
       {stats && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 mb-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 mb-4 w-full max-w-full">
           {/* Monthly Trend */}
           {Object.keys(stats.monthlyTotals).length > 1 && (
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-3 sm:p-5 card-hover">
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden p-3 sm:p-5 card-hover">
               <h3 className="text-xs sm:text-sm font-bold text-gray-700 mb-2 sm:mb-3 flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-green-500" />
                 月度收入趋势
@@ -401,7 +401,7 @@ export default function IncomePage() {
           )}
 
           {/* Industry Distribution */}
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-5">
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden p-4 sm:p-5">
             <h3 className="text-sm font-semibold text-gray-700 mb-3">行业分布</h3>
             {Object.keys(stats.industryTotals).length > 0 && (
               <div className="flex items-center gap-4">
@@ -427,7 +427,7 @@ export default function IncomePage() {
           </div>
 
           {/* Company Breakdown */}
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-5">
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden p-4 sm:p-5">
             <h3 className="text-sm font-semibold text-gray-700 mb-3">公司收入</h3>
             {Object.keys(stats.companyTotals).sort().map((com, i) => {
               const amt = stats.companyTotals[com];
@@ -447,7 +447,7 @@ export default function IncomePage() {
           </div>
 
           {/* Shift Analysis */}
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-5">
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden p-4 sm:p-5">
             <h3 className="text-sm font-semibold text-gray-700 mb-3">班次分析</h3>
             {Object.keys(stats.shiftTotals).length > 0 && (
               <div className="space-y-2">
@@ -458,7 +458,7 @@ export default function IncomePage() {
                       <span className="text-sm text-gray-600">{sh}</span>
             
           {/* Category Breakdown */}
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-5">
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden p-4 sm:p-5">
             <h3 className="text-sm font-semibold text-gray-700 mb-3">分类分析</h3>
             {Object.keys(stats.categoryTotals).length > 0 && (
               <div className="space-y-2.5">
@@ -478,7 +478,7 @@ export default function IncomePage() {
           </div>
 
           {/* Hourly Rate Trend */}
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-5">
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden p-4 sm:p-5">
             <h3 className="text-sm font-semibold text-gray-700 mb-3">时薪走势</h3>
             {(function() {
               const dailyRates: Record<string, { income: number; hours: number }> = {};
@@ -518,7 +518,7 @@ export default function IncomePage() {
           </div>
 
           {/* Weekday Analysis */}
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-5">
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden p-4 sm:p-5">
             <h3 className="text-sm font-semibold text-gray-700 mb-3">星期分布</h3>
             {(function() {
               const weekdayNames = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"];
@@ -550,7 +550,7 @@ export default function IncomePage() {
           </div>
 
           {/* Top Paying Days */}
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-5">
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden p-4 sm:p-5">
             <h3 className="text-sm font-semibold text-gray-700 mb-3">最高收入日</h3>
             {(function() {
               const dayTotals: Record<string, { amount: number; count: number; companies: string[] }> = {};

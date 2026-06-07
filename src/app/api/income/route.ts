@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+﻿import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import Income from '@/lib/models/Income';
 import { getTokenFromRequest, verifyToken } from '@/lib/auth';
@@ -22,9 +22,13 @@ export async function GET(request: NextRequest) {
     await connectDB();
 
     const query: Record<string, unknown> = { userId: payload.userId };
-    if (year && month) {
-      const prefix = year + '-' + month.padStart(2, '0');
-      query.date = { '\x24regex': '^' + prefix };
+    if (year) {
+      if (month) {
+        const prefix = year + '-' + month.padStart(2, '0');
+        query.date = { '\x24regex': '^' + prefix };
+      } else {
+        query.date = { '\x24regex': '^' + year };
+      }
     }
     if (industry) query.industry = industry;
 
@@ -45,7 +49,6 @@ export async function GET(request: NextRequest) {
       const com = r.company || '其他'; companyTotals[com] = (companyTotals[com] || 0) + amt;
       const sh = r.shift || '其他'; shiftTotals[sh] = (shiftTotals[sh] || 0) + amt;
       const cat = r.category || '未分类'; categoryTotals[cat] = (categoryTotals[cat] || 0) + amt;
-      if (r.date) { const ym = r.date.substring(0, 7); monthlyTotals[ym] = (monthlyTotals[ym] || 0) + amt; }
     });
 
     const industries = Object.keys(industryTotals).sort();
@@ -54,7 +57,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       success: true,
       data: {
-        items: items.map(i => ({ ...i, _id: String(i._id), category: i.category || "未分类", note: i.note || "", shift: i.shift || "", company: i.company || "", industry: i.industry || "" })),
+        items: items.map(i => ({ ...i, _id: String(i._id), category: i.category || "", note: i.note || "", shift: i.shift || "", company: i.company || "", industry: i.industry || "" })),
         total, page, limit,
         totalPages: Math.ceil(total / limit),
         stats: {
