@@ -79,7 +79,7 @@ export default function ExpensesPage() {
       </div>
 
       {/* Month selector */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 mb-4">
+      <div className="apple-card p-4 mb-4">
         <div className="flex items-center gap-3">
           <span className="text-sm text-gray-500">月份</span>
           <select
@@ -103,19 +103,19 @@ export default function ExpensesPage() {
       {/* Stats cards */}
       {stats && (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
-          <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
+          <div className="apple-card p-4">
             <p className="text-xs text-gray-500">{monthLabel} 总金额</p>
             <p className="text-2xl font-bold text-blue-600 mt-1">HK$ {stats.totalAmount.toFixed(2)}</p>
           </div>
-          <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
+          <div className="apple-card p-4">
             <p className="text-xs text-gray-500">{monthLabel} 总笔数</p>
             <p className="text-2xl font-bold text-gray-800 mt-1">{stats.totalCount} 笔</p>
           </div>
-          <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
+          <div className="apple-card p-4">
             <p className="text-xs text-gray-500">分类数</p>
             <p className="text-2xl font-bold text-gray-800 mt-1">{Object.keys(stats.byCategory).length}</p>
           </div>
-          <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
+          <div className="apple-card p-4">
             <p className="text-xs text-gray-500">平均每笔</p>
             <p className="text-2xl font-bold text-purple-600 mt-1">
               HK$ {stats.totalCount > 0 ? (stats.totalAmount / stats.totalCount).toFixed(2) : '0.00'}
@@ -126,7 +126,7 @@ export default function ExpensesPage() {
 
       {/* Category breakdown */}
       {stats && Object.keys(stats.byCategory).length > 0 && (
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6 mb-4">
+        <div className="apple-card p-4 sm:p-6 mb-4">
           <h2 className="text-sm font-semibold text-gray-700 mb-3">{monthLabel} 分类汇总</h2>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
             {Object.entries(stats.byCategory).map(([cat, data]) => (
@@ -163,12 +163,12 @@ ${Object.entries(stats.byCategory).map(([cat, d]) => `${cat}：HK$ ${d.total.toF
       {fetching ? (
         <div className="text-center py-12"><div className="w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto" /></div>
       ) : expenses.length === 0 ? (
-        <div className="text-center py-16 bg-white rounded-2xl border border-gray-100">
+        <div className="text-center py-16 apple-card">
           <p className="text-gray-400">{monthLabel} 没有已确认的账单</p>
           <Link href="/expenses/upload" className="mt-2 inline-block text-sm text-blue-600">上传新单据 →</Link>
         </div>
       ) : (
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className="apple-card overflow-hidden">
           <div className="divide-y divide-gray-100">
             {expenses.map((item) => (
               <div key={item._id} className="p-4 hover:bg-gray-50 transition-colors">

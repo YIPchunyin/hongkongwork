@@ -218,3 +218,59 @@ body {
 .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 .hide-scrollbar::-webkit-scrollbar { display: none; }
 .overflow-x-auto { overscroll-behavior-x: contain; }
+
+/* ========== APPLE INPUT STYLES ========== */
+.apple-input {
+  width: 100%;
+  padding: 0.625rem 1rem;
+  border: 1px solid #d1d5db;
+  border-radius: 12px;
+  font-size: 0.875rem;
+  outline: none;
+  transition: all 0.2s ease;
+  background: rgba(255,255,255,0.8);
+}
+.apple-input:focus {
+  border-color: #007AFF;
+  box-shadow: 0 0 0 3px rgba(0,122,255,0.15);
+}
+.apple-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.625rem 1.5rem;
+  background: #007AFF;
+  color: white;
+  font-weight: 600;
+  border-radius: 12px;
+  transition: all 0.2s ease;
+  min-height: 44px;
+}
+.apple-btn-primary:hover {
+  background: #0066D6;
+}
+.apple-btn-primary:active {
+  transform: scale(0.97);
+}
+.apple-btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.apple-btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.625rem 1.5rem;
+  background: rgba(0,0,0,0.04);
+  color: #1d1d1f;
+  font-weight: 500;
+  border-radius: 12px;
+  transition: all 0.2s ease;
+  min-height: 44px;
+}
+.apple-btn-secondary:hover {
+  background: rgba(0,0,0,0.08);
+}
+.apple-divider {
+  border-bottom: 0.5px solid rgba(0,0,0,0.06);
+}

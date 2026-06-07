@@ -28,7 +28,7 @@ export default function SettingsPage() {
         <h1 className="text-2xl font-bold text-gray-900">账号设置</h1>
 
         {/* Profile Info */}
-        <section className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+        <section className="apple-card p-6">
           <h2 className="text-lg font-semibold text-gray-800 mb-4">个人信息</h2>
           <div className="space-y-3">
             <div className="flex items-center space-x-3">
@@ -98,11 +98,11 @@ function EditProfileSection() {
 
   if (!editing) {
     return (
-      <section className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+      <section className="apple-card p-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold text-gray-800">编辑资料</h2>
           <button onClick={() => setEditing(true)}
-            className="px-4 py-2 text-sm font-medium text-blue-600 hover:bg-blue-50 rounded-lg transition-colors min-h-[44px]">
+            className="px-4 py-2 text-sm font-medium text-blue-600 hover:bg-blue-50 rounded-xl transition-colors min-h-[44px]">
             编辑
           </button>
         </div>
@@ -121,11 +121,11 @@ function EditProfileSection() {
   }
 
   return (
-    <section className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+    <section className="apple-card p-6">
       <h2 className="text-lg font-semibold text-gray-800 mb-4">编辑资料</h2>
 
       {message && (
-        <div className={'mb-4 p-3 rounded-lg text-sm ' + (message.type === 'success' ? 'bg-green-50 border border-green-200 text-green-700' : 'bg-red-50 border border-red-200 text-red-600')}>
+        <div className={'mb-4 p-3 rounded-xl text-sm ' + (message.type === 'success' ? 'bg-green-50 border border-green-200 text-green-700' : 'bg-red-50 border border-red-200 text-red-600')}>
           {message.text}
         </div>
       )}
@@ -134,22 +134,22 @@ function EditProfileSection() {
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">用户名</label>
           <input type="text" value={username} onChange={(e) => setUsername(e.target.value)}
-            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
+            className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#007AFF]/30 focus:border-[#007AFF] outline-none transition-colors"
             required minLength={2} maxLength={20} />
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">姓名</label>
           <input type="text" value={name} onChange={(e) => setName(e.target.value)}
-            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
+            className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#007AFF]/30 focus:border-[#007AFF] outline-none transition-colors"
             required maxLength={30} />
         </div>
         <div className="flex space-x-3">
           <button type="submit" disabled={submitting}
-            className="px-6 py-2.5 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+            className="px-6 py-2.5 bg-[#007AFF] text-white font-medium rounded-xl hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
             {submitting ? '保存中...' : '保存'}
           </button>
           <button type="button" onClick={handleCancel}
-            className="px-6 py-2.5 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200 transition-colors">
+            className="px-6 py-2.5 bg-gray-100 text-gray-700 font-medium rounded-xl hover:bg-gray-200 transition-colors">
             取消
           </button>
         </div>
@@ -209,12 +209,12 @@ function ChangePasswordForm() {
   };
 
   return (
-    <section className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+    <section className="apple-card p-6">
       <h2 className="text-lg font-semibold text-gray-800 mb-4">修改密码</h2>
 
       {message && (
         <div
-          className={`mb-4 p-3 rounded-lg text-sm ${
+          className={`mb-4 p-3 rounded-xl text-sm ${
             message.type === 'success'
               ? 'bg-green-50 border border-green-200 text-green-700'
               : 'bg-red-50 border border-red-200 text-red-600'
@@ -235,7 +235,7 @@ function ChangePasswordForm() {
             value={currentPassword}
             onChange={(e) => setCurrentPassword(e.target.value)}
             placeholder="输入当前密码"
-            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
+            className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#007AFF]/30 focus:border-[#007AFF] outline-none transition-colors"
             required
           />
         </div>
@@ -250,7 +250,7 @@ function ChangePasswordForm() {
             value={newPassword}
             onChange={(e) => setNewPassword(e.target.value)}
             placeholder="至少6个字符"
-            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
+            className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#007AFF]/30 focus:border-[#007AFF] outline-none transition-colors"
             required
             minLength={6}
           />
@@ -266,7 +266,7 @@ function ChangePasswordForm() {
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
             placeholder="再次输入新密码"
-            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
+            className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#007AFF]/30 focus:border-[#007AFF] outline-none transition-colors"
             required
             minLength={6}
           />
@@ -275,7 +275,7 @@ function ChangePasswordForm() {
         <button
           type="submit"
           disabled={submitting}
-          className="w-full sm:w-auto px-6 py-2.5 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="w-full sm:w-auto px-6 py-2.5 bg-[#007AFF] text-white font-medium rounded-xl hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           {submitting ? '修改中...' : '修改密码'}
         </button>
