@@ -24,26 +24,19 @@ export default function ExchangeRateWidget() {
 
   if (loading) {
     return (
-      <div className="apple-card p-5 sm:p-6 h-full animate-pulse">
-        <div className="h-4 w-28 bg-gray-200 rounded mb-3" />
-        <div className="h-8 w-36 bg-gray-200 rounded mb-2" />
-        <div className="h-4 w-24 bg-gray-100 rounded" />
+      <div className="bg-gradient-to-br from-emerald-500 to-teal-700 rounded-2xl p-5 sm:p-6 text-white shadow-lg animate-pulse cursor-pointer" onClick={() => router.push('/exchange-rate')}>
+        <div className="h-5 w-28 bg-white/20 rounded mb-3" />
+        <div className="h-8 w-36 bg-white/20 rounded mb-2" />
+        <div className="h-4 w-24 bg-white/10 rounded" />
       </div>
     );
   }
 
   if (!rate) {
     return (
-      <div className="apple-card p-5 sm:p-6 h-full group cursor-pointer" onClick={() => router.push('/exchange-rate')}>
-        <div className="flex items-center gap-2 mb-2">
-          <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center">
-            <svg className="w-4 h-4 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          </div>
-          <p className="text-sm font-semibold apple-text-primary">港币兑人民币</p>
-        </div>
-        <p className="text-xs apple-text-secondary">暂无法获取汇率</p>
+      <div className="bg-gradient-to-br from-emerald-500 to-teal-700 rounded-2xl p-5 sm:p-6 text-white shadow-lg card-hover" onClick={() => router.push('/exchange-rate')}>
+        <p className="text-emerald-100 text-sm font-medium">💱 港币兑人民币</p>
+        <p className="text-white/60 text-sm mt-2">暂无法获取汇率</p>
       </div>
     );
   }
@@ -52,41 +45,29 @@ export default function ExchangeRateWidget() {
 
   return (
     <div
-      className="apple-card p-5 sm:p-6 h-full group cursor-pointer relative overflow-hidden"
+      className="relative bg-gradient-to-br from-emerald-500 via-emerald-600 to-teal-700 rounded-2xl p-5 sm:p-6 text-white shadow-lg card-hover cursor-pointer overflow-hidden group"
       onClick={() => router.push('/exchange-rate')}
     >
-      {/* Top accent bar */}
-      <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-400 to-emerald-600" />
-
-      {/* Decorative green orb */}
-      <div className="absolute -top-8 -right-8 w-28 h-28 bg-emerald-50/80 rounded-full blur-2xl" />
+      {/* Decorative */}
+      <div className="absolute -top-8 left-1/2 w-24 h-24 bg-emerald-300/10 rounded-full animate-float pointer-events-none" />
+      <div className="absolute -bottom-6 -right-6 w-16 h-16 bg-emerald-300/10 rounded-full animate-float-slow pointer-events-none" style={{ animationDelay: '1.5s' }} />
 
       <div className="relative">
-        <div className="flex items-center gap-2 mb-3">
-          <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center">
-            <svg className="w-4 h-4 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          </div>
-          <p className="text-sm font-semibold apple-text-primary">港币兑人民币</p>
+        <p className="text-emerald-100 text-xs font-medium mb-1">💱 港币兑人民币</p>
+        <div className="flex flex-col items-center mt-1 space-y-0.5">
+          <span className="text-xl sm:text-2xl font-bold">HK$100</span>
+          <span className="text-base sm:text-lg text-emerald-200 font-medium">=</span>
+          <span className="text-xl sm:text-2xl font-bold">¥<span className="text-yellow-200 inline-block animate-bounce-in">{cny100}</span></span>
         </div>
-
-        <div className="flex flex-col items-center py-2">
-          <div className="flex flex-col items-center space-y-1">
-            <span className="text-xl sm:text-2xl font-bold apple-text-primary tracking-tight">HK</span>
-            <div className="w-8 h-px bg-gray-200" />
-            <span className="text-base sm:text-lg apple-text-secondary font-medium">=</span>
-            <div className="w-8 h-px bg-gray-200" />
-            <span className="text-2xl sm:text-3xl font-bold text-emerald-600 tracking-tight">¥<span className="inline-block animate-bounce-in">{cny100}</span></span>
-          </div>
-          <p className="text-xs apple-text-secondary mt-2">1 HKD = {rate.hkdToCny.toFixed(4)} CNY</p>
+        <div className="flex items-baseline gap-3 mt-1">
+          <p className="text-emerald-200 text-xs">1 HKD = {rate.hkdToCny.toFixed(4)} CNY</p>
+          <span className="w-1 h-1 rounded-full bg-emerald-300/50 animate-sparkle" />
         </div>
-
-        <div className="mt-2 flex items-center justify-between">
-          <p className="text-[10px] apple-text-secondary">更新 {rate.updateTime}</p>
-          <span className="text-xs text-emerald-500 font-medium opacity-0 group-hover:opacity-100 transition-all flex items-center gap-0.5">
-            走势
-            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <div className="mt-3 flex items-center justify-between">
+          <p className="text-emerald-200 text-[10px]">更新 {rate.updateTime}</p>
+          <span className="text-emerald-200 text-xs group-hover:text-white transition-colors flex items-center gap-1">
+            查看走势
+            <svg className="w-3 h-3 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
             </svg>
           </span>

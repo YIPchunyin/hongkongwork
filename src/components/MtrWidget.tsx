@@ -49,33 +49,32 @@ export default function MtrWidget() {
     router.push('/mtr' + (p.toString() ? '?' + p.toString() : ''));
   };
 
+  const fmtTime = (s: string) => {
+    if (!s) return '--';
+    const d = new Date(s);
+    return d.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+  };
+
   if (loading) {
     return (
-      <div className="apple-card p-5 sm:p-6 h-full animate-pulse">
-        <div className="h-4 w-24 bg-gray-200 rounded mb-3" />
-        <div className="h-8 w-36 bg-gray-200 rounded mb-2" />
-        <div className="h-4 w-40 bg-gray-100 rounded" />
+      <div className="bg-gradient-to-br from-orange-500 to-red-600 rounded-2xl p-5 sm:p-6 text-white shadow-lg animate-pulse cursor-pointer" onClick={handleClick}>
+        <div className="h-5 w-24 bg-white/20 rounded mb-3" />
+        <div className="h-8 w-32 bg-white/20 rounded mb-2" />
+        <div className="h-4 w-48 bg-white/10 rounded" />
       </div>
     );
   }
 
   if (error || !data) {
     return (
-      <div className="apple-card p-5 sm:p-6 h-full group cursor-pointer" onClick={handleClick}>
-        <div className="flex items-center gap-2 mb-2">
-          <div className="w-8 h-8 rounded-lg bg-orange-50 flex items-center justify-center">
-            <svg className="w-4 h-4 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-            </svg>
-          </div>
-          <p className="text-sm font-semibold apple-text-primary">最近地铁站</p>
-        </div>
-        <p className="text-xs apple-text-secondary">定位获取中...</p>
+      <div className="bg-gradient-to-br from-orange-500 to-red-600 rounded-2xl p-5 sm:p-6 text-white shadow-lg card-hover" onClick={handleClick}>
+        <p className="text-orange-100 text-sm font-medium">🚇 最近地铁站</p>
+        <p className="text-white/60 text-sm mt-2">定位获取中...</p>
       </div>
     );
   }
 
-  const { station, lines, distanceKm } = data;
+  const { station, lines, distanceKm, sysTime } = data;
   const allTrains: { lineName: string; lineCode: string; dest: string; ttnt: number; plat: string; time: string; direction: string }[] = [];
   for (const line of lines) {
     for (const t of line.up) allTrains.push({ lineName: line.lineName, lineCode: line.line, dest: t.dest, ttnt: t.ttnt, plat: t.plat, time: t.time, direction: '上行' });
@@ -86,56 +85,51 @@ export default function MtrWidget() {
 
   return (
     <div
-      className="apple-card p-5 sm:p-6 h-full group cursor-pointer relative overflow-hidden"
+      className="relative bg-gradient-to-br from-orange-500 via-orange-600 to-red-600 rounded-2xl p-5 sm:p-6 text-white shadow-lg card-hover cursor-pointer overflow-hidden group"
       onClick={handleClick}
     >
-      {/* Top accent bar */}
-      <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-orange-400 to-orange-600" />
-
-      {/* Decorative orange orb */}
-      <div className="absolute -top-8 -right-8 w-28 h-28 bg-orange-50/80 rounded-full blur-2xl" />
+      {/* Decorative */}
+      <div className="absolute top-0 right-0 w-32 h-32 bg-orange-400/10 rounded-full -translate-y-1/2 translate-x-1/2 animate-float pointer-events-none" />
+      <div className="absolute -bottom-8 -left-8 w-20 h-20 bg-red-400/10 rounded-full animate-float-slow pointer-events-none" style={{ animationDelay: '2s' }} />
 
       <div className="relative">
-        <div className="flex items-start justify-between mb-3">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-orange-50 flex items-center justify-center">
-              <svg className="w-4 h-4 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-              </svg>
-            </div>
-            <div>
-              <p className="text-sm font-semibold apple-text-primary">{station.nameTc}</p>
-              <p className="text-[10px] apple-text-secondary">
-                {distanceKm < 1 ? (distanceKm * 1000).toFixed(0) + 'm' : distanceKm.toFixed(1) + 'km'} ·
-                {station.lines.map(l => l.code).join(' / ')}
-              </p>
-            </div>
+        <div className="flex items-start justify-between mb-2">
+          <div>
+            <p className="text-orange-100 text-sm font-medium">🚇 {station.nameTc}</p>
+            <p className="text-orange-200 text-[10px]">
+              {distanceKm < 1 ? (distanceKm * 1000).toFixed(0) + 'm' : distanceKm.toFixed(1) + 'km'}
+            </p>
+          </div>
+          <div className="flex gap-1">
+            {station.lines.slice(0, 2).map((l) => (
+              <span key={l.code} className="text-[10px] px-1.5 py-0.5 rounded font-medium backdrop-blur" style={{ backgroundColor: getLineColor(l.code) + '55', color: '#fff' }}>{l.code}</span>
+            ))}
           </div>
         </div>
 
         <div className="space-y-1.5">
           {next3.length > 0 ? next3.map((t, i) => (
-            <div key={i} className="flex items-center justify-between bg-gray-50 rounded-xl px-3 py-2 border border-gray-100/50">
+            <div key={i} className="flex items-center justify-between bg-white/15 backdrop-blur rounded-lg px-3 py-2 card-hover border border-white/10">
               <div className="flex items-center gap-2">
-                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded text-white" style={{ backgroundColor: getLineColor(t.lineCode) }}>{t.lineCode}</span>
-                <span className="text-xs font-medium apple-text-primary">{t.dest}</span>
+                <span className="text-[10px] font-bold px-1 py-0.5 rounded" style={{ backgroundColor: getLineColor(t.lineCode) }}>{t.lineCode}</span>
+                <span className="text-xs">{t.dest}</span>
               </div>
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] apple-text-secondary border border-gray-200 rounded px-1.5 py-0.5">{t.direction}</span>
-                <span className="text-[10px] apple-text-secondary">{t.plat}号月台</span>
-                <span className={'text-sm font-bold tabular-nums ' + (t.ttnt <= 1 ? 'text-[#FF3B30]' : 'text-[#007AFF]')}>{t.ttnt}分</span>
+              <div className="flex items-center gap-3">
+                <span className="text-[10px] text-orange-200 border border-orange-200/30 rounded px-1.5 py-0.5">{t.direction}</span>
+                <span className="text-[10px] text-orange-200">🖥 {t.plat}号</span>
+                <span className={'text-sm font-bold tabular-nums ' + (t.ttnt <= 1 ? 'text-yellow-300' : 'text-white')}>{t.ttnt}分</span>
               </div>
             </div>
           )) : (
-            <p className="text-xs apple-text-secondary text-center py-2">收车时段，暂无列车数据</p>
+            <p className="text-orange-200 text-xs text-center py-2">收车时段，暂无列车数据</p>
           )}
         </div>
 
         <div className="mt-2 flex items-center justify-between">
-          <p className="text-[10px] apple-text-secondary">🔄 每30秒自动刷新</p>
-          <span className="text-xs text-[#FF9500] font-medium opacity-0 group-hover:opacity-100 transition-all flex items-center gap-0.5">
+          <p className="text-orange-200 text-[10px]">🔄 每30秒刷新</p>
+          <span className="text-orange-200 text-xs group-hover:text-white transition-colors flex items-center gap-1">
             全部班次
-            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <svg className="w-3 h-3 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
             </svg>
           </span>

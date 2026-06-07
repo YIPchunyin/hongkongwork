@@ -43,14 +43,14 @@ export default function RegisterPage() {
   return (
     <div className="min-h-[calc(100vh-8rem)] flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-md">
-        <div className="apple-card p-8">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
           <div className="text-center mb-8">
             <h1 className="text-2xl font-bold text-gray-900">创建账号</h1>
             <p className="mt-2 text-sm text-gray-500">注册随手HK，开始使用</p>
           </div>
 
           {error && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-600">{error}</div>
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600">{error}</div>
           )}
 
           <form onSubmit={handleSubmit} className="space-y-5">
@@ -58,13 +58,13 @@ export default function RegisterPage() {
               <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-1">用户名 *</label>
               <input id="username" type="text" value={username} onChange={(e) => setUsername(e.target.value)}
                 placeholder="例如: john2024"
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#007AFF]/30 focus:border-[#007AFF] outline-none transition-colors" required />
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors" required />
             </div>
             <div>
               <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">姓名 *</label>
               <input id="name" type="text" value={name} onChange={(e) => setName(e.target.value)}
                 placeholder="请输入您的姓名"
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#007AFF]/30 focus:border-[#007AFF] outline-none transition-colors" required />
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors" required />
             </div>
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
@@ -72,29 +72,29 @@ export default function RegisterPage() {
               </label>
               <input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)}
                 placeholder="选填，用于找回密码"
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#007AFF]/30 focus:border-[#007AFF] outline-none transition-colors" />
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors" />
             </div>
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">密码</label>
               <input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)}
                 placeholder="至少6个字符"
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#007AFF]/30 focus:border-[#007AFF] outline-none transition-colors" required minLength={6} />
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors" required minLength={6} />
             </div>
             <div>
               <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">确认密码</label>
               <input id="confirmPassword" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="再次输入密码"
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#007AFF]/30 focus:border-[#007AFF] outline-none transition-colors" required minLength={6} />
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors" required minLength={6} />
             </div>
             <button type="submit" disabled={submitting}
-              className="w-full py-2.5 bg-[#007AFF] text-white font-medium rounded-xl hover:bg-[#0066D6] disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+              className="w-full py-2.5 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
               {submitting ? '注册中...' : '注册'}
             </button>
           </form>
 
           <p className="mt-6 text-center text-sm text-gray-500">
             已有账号？{' '}
-            <Link href="/login" className="text-[#007AFF] hover:text-[#0066D6] font-medium">立即登录</Link>
+            <Link href="/login" className="text-blue-600 hover:text-blue-700 font-medium">立即登录</Link>
           </p>
         </div>
       </div>

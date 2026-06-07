@@ -205,7 +205,7 @@ export default function IncomePage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-[#007AFF] rounded-xl flex items-center justify-center shadow-sm">
+          <div className="w-10 h-10 bg-gradient-to-br from-green-400 to-emerald-600 rounded-xl flex items-center justify-center shadow-lg shadow-green-200/50">
             <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
@@ -215,23 +215,23 @@ export default function IncomePage() {
             <p className="text-xs sm:text-sm text-gray-400">记录每一笔收入</p>
           </div>
         </div>
-        <button onClick={openAdd} className="px-5 py-2.5 bg-[#007AFF] text-white text-sm font-semibold rounded-xl hover:bg-[#0066D6] active:scale-[0.97] transition-all duration-200 min-h-[44px] inline-flex items-center gap-1.5 shadow-sm">
+        <button onClick={openAdd} className="px-5 py-2.5 bg-gradient-to-r from-green-500 to-emerald-600 text-white text-sm font-bold rounded-xl hover:shadow-lg hover:shadow-green-200/50 hover:scale-105 active:scale-95 transition-all duration-200 min-h-[44px] inline-flex items-center gap-1.5 shadow-md">
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
           新增收入
         </button>
       </div>
 
       {/* Month selector */}
-      <div className="apple-card p-3 sm:p-4 mb-3">
+      <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl border border-green-100 p-3 sm:p-4 mb-3 shadow-sm">
         <div className="flex items-center justify-between">
-          <button onClick={prevMonth} className="p-2 hover:bg-black/5 rounded-xl transition-all active:scale-90">
+          <button onClick={prevMonth} className="p-2 hover:bg-white/70 rounded-xl transition-all hover:shadow-sm active:scale-90">
             <svg className="w-5 h-5 sm:w-6 sm:h-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
           </button>
           <div className="flex items-center gap-2">
             <span className="text-base sm:text-xl font-bold text-green-800">{monthLabel}</span>
             {stats && <span className="text-xs sm:text-sm font-medium text-green-500 bg-green-100 px-2.5 py-1 rounded-full">HK$ {stats.totalIncome.toFixed(0)}</span>}
           </div>
-          <button onClick={nextMonth} className="p-2 hover:bg-black/5 rounded-xl transition-all active:scale-90">
+          <button onClick={nextMonth} className="p-2 hover:bg-white/70 rounded-xl transition-all hover:shadow-sm active:scale-90">
             <svg className="w-5 h-5 sm:w-6 sm:h-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
           </button>
         </div>
@@ -241,7 +241,7 @@ export default function IncomePage() {
       {stats && (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 mb-3 sm:mb-4">
           {statCards.map((card, i) => (
-            <div key={i} className={'rounded-xl p-3 sm:p-4 border shadow-sm card-hover ' + (i === 0 ? 'apple-card border-green-200/30' : 'apple-card')}>
+            <div key={i} className={'rounded-xl p-3 sm:p-4 border shadow-sm card-hover ' + (i === 0 ? 'bg-gradient-to-br from-green-50 to-emerald-50 border-green-200' : 'bg-white border-gray-100')}>
               <p className="text-[10px] sm:text-xs text-gray-500 font-medium uppercase tracking-wide">{card.label}</p>
               <p className={'text-lg sm:text-2xl font-extrabold mt-1 ' + card.color}>{card.value}</p>
             </div>
@@ -267,22 +267,22 @@ export default function IncomePage() {
             });
             const bestDay = Object.values(dailyTotals).length > 0 ? Math.max(...Object.values(dailyTotals)) : 0;
             return <>
-              <div className="apple-card p-3">
+              <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-3 border border-purple-100 shadow-sm">
                 <p className="text-[10px] text-purple-500 font-medium">工作天数</p>
                 <p className="text-lg font-extrabold text-purple-700 mt-0.5">{workDays}<span className="text-xs font-medium text-purple-400"> / {daysInMonth}天</span></p>
                 <p className="text-[10px] text-purple-400 mt-0.5">出勤率 {workRate}%</p>
               </div>
-              <div className="apple-card p-3">
+              <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl p-3 border border-amber-100 shadow-sm">
                 <p className="text-[10px] text-amber-500 font-medium">放假天数</p>
                 <p className="text-lg font-extrabold text-amber-700 mt-0.5">{restDays}<span className="text-xs font-medium text-amber-400"> 天</span></p>
                 <p className="text-[10px] text-amber-400 mt-0.5">{'☾'.repeat(Math.min(restDays, 5))}{restDays > 5 ? '...' : ''}</p>
               </div>
-              <div className="apple-card p-3">
+              <div className="rounded-xl p-3 border shadow-sm bg-gradient-to-br from-blue-50 to-cyan-50 border-blue-100">
                 <p className="text-[10px] text-blue-500 font-medium">日均收入</p>
                 <p className="text-lg font-extrabold text-blue-700 mt-0.5">HK$ {avgDaily.toFixed(0)}</p>
                 <p className="text-[10px] text-blue-400 mt-0.5">每工作日</p>
               </div>
-              <div className="apple-card p-3">
+              <div className="rounded-xl p-3 border shadow-sm bg-gradient-to-br from-green-50 to-emerald-50 border-green-100">
                 <p className="text-[10px] text-green-500 font-medium">最佳日</p>
                 <p className="text-lg font-extrabold text-green-700 mt-0.5">HK$ {bestDay}</p>
                 <p className="text-[10px] text-green-400 mt-0.5">单日最高</p>
@@ -296,7 +296,7 @@ export default function IncomePage() {
       {fetching ? (
         <div className="text-center py-12"><div className="w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto" /></div>
       ) : (
-        <div className="bg-white apple-card overflow-hidden p-2 sm:p-4">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden p-2 sm:p-4">
           {/* Day headers */}
           <div className="grid grid-cols-7 gap-0.5 sm:gap-1 mb-1">
             {['日','一','二','三','四','五','六'].map(d => (
@@ -338,7 +338,7 @@ export default function IncomePage() {
       {/* Day Detail Popup */}
       {selectedDay && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40" onClick={() => setSelectedDay(null)}>
-          <div className="apple-card w-full max-w-sm p-5 max-h-[70vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-5 max-h-[70vh] overflow-y-auto border border-green-100" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 bg-gradient-to-br from-green-400 to-emerald-600 rounded-xl flex items-center justify-center shadow-md">
@@ -348,7 +348,7 @@ export default function IncomePage() {
                 </div>
                 <h3 className="text-lg font-bold text-gray-900">{year}年{String(month).padStart(2, '0')}月{String(selectedDay.dateNum).padStart(2, '0')}日</h3>
               </div>
-              <button onClick={() => setSelectedDay(null)} className="p-1.5 hover:bg-black/5 rounded-xl transition-colors">
+              <button onClick={() => setSelectedDay(null)} className="p-1.5 hover:bg-red-50 rounded-xl transition-colors">
                 <svg className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
             </div>
@@ -371,8 +371,8 @@ export default function IncomePage() {
                       {item.hours > 0 && <span className="text-xs text-gray-400 ml-2">{item.hours}h</span>}
                     </div>
                     <div className="flex gap-2">
-                      <button onClick={(e) => { e.stopPropagation(); openEdit(item); setSelectedDay(null); }} className="text-xs text-[#007AFF] hover:text-[#0066D6]">编辑</button>
-                      <button onClick={(e) => { e.stopPropagation(); deleteIncome(item._id); setSelectedDay(null); }} className="text-xs text-[#FF3B30] hover:text-[#D70015]">删除</button>
+                      <button onClick={(e) => { e.stopPropagation(); openEdit(item); setSelectedDay(null); }} className="text-xs text-blue-400 hover:text-blue-600">编辑</button>
+                      <button onClick={(e) => { e.stopPropagation(); deleteIncome(item._id); setSelectedDay(null); }} className="text-xs text-red-400 hover:text-red-600">删除</button>
                     </div>
                   </div>
                   {item.note && <p className="text-xs text-gray-400 mt-0.5">{item.note}</p>}
@@ -388,7 +388,7 @@ export default function IncomePage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 mb-4">
           {/* Monthly Trend */}
           {Object.keys(stats.monthlyTotals).length > 1 && (
-            <div className="bg-white apple-card p-3 sm:p-5 card-hover">
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-3 sm:p-5 card-hover">
               <h3 className="text-xs sm:text-sm font-bold text-gray-700 mb-2 sm:mb-3 flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-green-500" />
                 月度收入趋势
@@ -401,7 +401,7 @@ export default function IncomePage() {
           )}
 
           {/* Industry Distribution */}
-          <div className="bg-white apple-card p-4 sm:p-5">
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-5">
             <h3 className="text-sm font-semibold text-gray-700 mb-3">行业分布</h3>
             {Object.keys(stats.industryTotals).length > 0 && (
               <div className="flex items-center gap-4">
@@ -427,7 +427,7 @@ export default function IncomePage() {
           </div>
 
           {/* Company Breakdown */}
-          <div className="bg-white apple-card p-4 sm:p-5">
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-5">
             <h3 className="text-sm font-semibold text-gray-700 mb-3">公司收入</h3>
             {Object.keys(stats.companyTotals).sort().map((com, i) => {
               const amt = stats.companyTotals[com];
@@ -447,7 +447,7 @@ export default function IncomePage() {
           </div>
 
           {/* Shift Analysis */}
-          <div className="bg-white apple-card p-4 sm:p-5">
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-5">
             <h3 className="text-sm font-semibold text-gray-700 mb-3">班次分析</h3>
             {Object.keys(stats.shiftTotals).length > 0 && (
               <div className="space-y-2">
@@ -469,7 +469,7 @@ export default function IncomePage() {
       {/* Add/Edit Modal */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40" onClick={() => setShowModal(false)}>
-          <div className="apple-card w-full max-w-md p-5 max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-5 max-h-[90vh] overflow-y-auto border border-green-100" onClick={e => e.stopPropagation()}>
             <div className="flex items-center gap-2 mb-5">
               <div className="w-8 h-8 bg-gradient-to-br from-green-400 to-emerald-600 rounded-xl flex items-center justify-center shadow-md">
                 <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
@@ -544,11 +544,11 @@ export default function IncomePage() {
               </div>
               <div className="flex gap-3 pt-2">
                 <button type="submit" disabled={saving}
-                  className="flex-1 py-2.5 bg-[#007AFF] text-white font-semibold rounded-xl hover:bg-[#0066D6] disabled:opacity-50 transition-all active:scale-[0.97]">
+                  className="flex-1 py-2.5 bg-green-600 text-white font-medium rounded-xl hover:bg-green-700 disabled:opacity-50 transition-colors">
                   {saving ? '保存中...' : (editItem ? '保存修改' : '添加记录')}
                 </button>
                 <button type="button" onClick={() => setShowModal(false)}
-                  className="px-6 py-2.5 bg-gray-100/80 text-gray-700 font-medium rounded-xl hover:bg-gray-200/80 transition-all">
+                  className="px-6 py-2.5 bg-gray-100 text-gray-700 font-medium rounded-xl hover:bg-gray-200 transition-colors">
                   取消
                 </button>
               </div>

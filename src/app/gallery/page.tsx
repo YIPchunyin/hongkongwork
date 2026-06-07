@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
@@ -20,8 +20,10 @@ export default function GalleryPage() {
       if (type !== 'all') {
         params.set('type', type);
       }
-      const res = await fetch('/api/media?' + params.toString());
+
+      const res = await fetch(`/api/media?${params.toString()}`);
       const data = await res.json();
+
       if (data.success) {
         if (currentPage === 1) {
           setMediaList(data.data.items);
@@ -30,7 +32,11 @@ export default function GalleryPage() {
         }
         setTotalPages(data.data.totalPages);
       }
-    } catch {} finally { setLoading(false); }
+    } catch (error) {
+      console.error('获取媒体列表失败:', error);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   useEffect(() => {
@@ -39,7 +45,7 @@ export default function GalleryPage() {
   }, [filterType, fetchMedia]);
 
   const handleTagClick = useCallback((tag: string) => {
-    router.push('/search?q=' + encodeURIComponent(tag));
+    router.push(`/search?q=${encodeURIComponent(tag)}`);
   }, [router]);
 
   const handleLoadMore = () => {
@@ -50,35 +56,39 @@ export default function GalleryPage() {
 
   const handleDelete = useCallback(async (media: MediaItem) => {
     try {
-      const res = await fetch('/api/media/' + media._id, { method: 'DELETE' });
+      const res = await fetch(`/api/media/${media._id}`, { method: 'DELETE' });
       const data = await res.json();
       if (data.success) {
         setMediaList((prev) => prev.filter((m) => m._id !== media._id));
       }
-    } catch {}
+    } catch (error) {
+      console.error('删除失败:', error);
+    }
   }, []);
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8 sm:py-12">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
-        <div className="animate-fade-in-up">
-          <h1 className="text-2xl sm:text-3xl font-bold apple-text-primary">画廊</h1>
-          <p className="apple-text-secondary text-sm mt-1">浏览所有上传的图片和视频</p>
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">画廊</h1>
+          <p className="text-gray-500 mt-1">浏览所有上传的图片和视频</p>
         </div>
-        <div className="flex gap-2 animate-fade-in-up-d1">
+
+        {/* 类型筛选 */}
+        <div className="flex gap-2">
           {[
-            { value: 'all' as const, label: '全部' },
-            { value: 'image' as const, label: '图片' },
-            { value: 'video' as const, label: '视频' },
+            { value: 'all', label: '全部' },
+            { value: 'image', label: '图片' },
+            { value: 'video', label: '视频' },
           ].map((filter) => (
             <button
               key={filter.value}
-              onClick={() => setFilterType(filter.value)}
-              className={'px-4 py-2 rounded-xl text-sm font-medium transition-all ' + (
+              onClick={() => setFilterType(filter.value as typeof filterType)}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                 filterType === filter.value
-                  ? 'bg-[#007AFF] text-white shadow-sm'
-                  : 'apple-card text-gray-600 hover:bg-gray-50'
-              )}
+                  ? 'bg-blue-600 text-white shadow-sm'
+                  : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
+              }`}
             >
               {filter.label}
             </button>
@@ -86,24 +96,24 @@ export default function GalleryPage() {
         </div>
       </div>
 
-      <div className="animate-fade-in-up-d2">
-        <MediaGrid items={mediaList} loading={loading} onTagClick={handleTagClick} onDelete={handleDelete} />
-      </div>
+      <MediaGrid items={mediaList} loading={loading} onTagClick={handleTagClick} onDelete={handleDelete} />
 
+      {/* 加载更多 */}
       {!loading && page < totalPages && (
-        <div className="mt-8 text-center animate-fade-in-up">
+        <div className="mt-8 text-center">
           <button
             onClick={handleLoadMore}
-            className="px-8 py-3 apple-card text-gray-700 font-medium rounded-xl hover:shadow-md transition-all active:scale-[0.97]"
+            className="px-8 py-3 bg-white text-gray-700 font-medium rounded-xl border border-gray-200 hover:bg-gray-50 hover:border-gray-300 transition-all shadow-sm"
           >
             加载更多
           </button>
         </div>
       )}
 
+      {/* 加载中指示器（加载更多时） */}
       {loading && page > 1 && (
         <div className="mt-8 text-center">
-          <div className="inline-block w-8 h-8 border-4 border-[#007AFF]/20 border-t-[#007AFF] rounded-full animate-spin" />
+          <div className="inline-block w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin" />
         </div>
       )}
     </div>
