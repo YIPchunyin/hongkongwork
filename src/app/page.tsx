@@ -32,16 +32,16 @@ export default function HomePage() {
                 随手HK
               </h1>
             </div>
-            <p className="text-sm text-gray-500 mt-0.5">天气 · 汇率 · 交通</p>
+            <p className="text-sm text-gray-500 mt-0.5">天气 · 交通 · 汇率</p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="animate-fade-in-up-d1 card-hover"><WeatherWidget /></div>
-            <div className="animate-fade-in-up-d2 card-hover"><ExchangeRateWidget /></div>
-            <div className="animate-fade-in-up-d3 card-hover"><MtrWidget /></div>
+            <div className="animate-fade-in-up-d1 card-hover"><WeatherWidget /></div>\n            <div className="animate-fade-in-up-d2 card-hover"><MtrWidget /></div>\n            <div className="animate-fade-in-up-d3 card-hover"><ExchangeRateWidget /></div>
           </div>
         </div>
       </section>
     </div>
   );
 }
+
+
 

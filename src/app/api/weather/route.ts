@@ -235,3 +235,4 @@ function extractWindDirection(windText: string): number {
   }
   return 0;
 }
+
