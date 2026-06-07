@@ -6,6 +6,7 @@ import { Bar, Doughnut, Line } from 'react-chartjs-2';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement, PointElement, LineElement);
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/AuthProvider';
 import QuickAddCards from '@/components/QuickAddCards';
 
@@ -38,6 +39,7 @@ interface Stats {
 
 export default function IncomePage() {
   const { user, loading } = useAuth();
+  const router = useRouter();
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState<number | null>(now.getMonth() + 1);
@@ -61,12 +63,12 @@ export default function IncomePage() {
 
   const companyColor = (com: string) => {
     const colors: Record<string, string> = {
-      '国益': '#DC2626',   // 红色 - 最鲜艳
-      '煌府': '#2563EB',   // 蓝色
-      '益哥': '#16A34A',   // 绿色
-      '司': '#D97706',         // 橙色 - 公司
+      '国益': '#D4536A',   // 深粉红 - 纯色
+      '煌府': '#3B7DD8',   // 蓝色 - 纯色
+      '益哥': '#44A64D',   // 绿色 - 纯色
+      '司': '#D97A2E',         // 橙色 - 纯色
     };
-    return colors[com] || '#9333EA';  // 紫色 - 默认
+    return colors[com] || '#8B5CF6';  // 紫色 - 纯色
   };
 
   const buildCalendarDays = (yr: number, mo: number, items: IncomeItem[]) => {
@@ -191,10 +193,10 @@ export default function IncomePage() {
   if (!loading && !user) return <div className="text-center py-20 text-gray-500">请先登录</div>;
 
   const statCards = stats ? [
-    { label: monthLabel + ' 收入', value: 'HK$ ' + stats.totalIncome.toFixed(2), color: 'text-green-600' },
-    { label: monthLabel + ' 工时', value: stats.totalHours.toFixed(1) + ' h', color: 'text-blue-600' },
-    { label: monthLabel + ' 笔数', value: stats.totalRecords + ' 笔', color: 'text-gray-800' },
-    { label: '时薪', value: stats.totalHours > 0 ? 'HK$ ' + (stats.totalIncome / stats.totalHours).toFixed(2) : '-', color: 'text-purple-600' },
+    { label: '💰 ' + monthLabel + ' 收入', value: 'HK$ ' + stats.totalIncome.toFixed(2), color: 'text-green-600' },
+    { label: '⏱️ ' + monthLabel + ' 工时', value: stats.totalHours.toFixed(1) + ' h', color: 'text-blue-600' },
+    { label: '📋 ' + monthLabel + ' 笔数', value: stats.totalRecords + ' 笔', color: 'text-gray-800' },
+
   ] : [];
 
   return (
@@ -209,24 +211,24 @@ export default function IncomePage() {
           </div>
           <div>
             <h1 className="text-lg sm:text-2xl font-bold text-gray-900">收入记录</h1>
-            <p className="text-xs sm:text-sm text-gray-400">记录每一笔收入</p>
+            <p className="text-xs sm:text-sm text-gray-400">📊 记录每一笔收入 · 轻松掌控财务</p>
           </div>
         </div>
         <button onClick={openAdd} className="px-5 py-2.5 bg-gradient-to-r from-green-500 to-emerald-600 text-white text-sm font-bold rounded-xl hover:shadow-lg hover:shadow-green-200/50 hover:scale-105 active:scale-95 transition-all duration-200 min-h-[44px] inline-flex items-center gap-1.5 shadow-md">
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
-          新增收入
+          ✨ 新增收入
         </button>
       </div>
 
       {/* Month selector */}
-      <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl border border-green-100 p-3 sm:p-4 mb-3 shadow-sm">
+      <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl border border-green-100 p-2.5 sm:p-3 mb-2 shadow-sm">
         <div className="flex items-center justify-between">
           <button onClick={prevMonth} className={'p-2 hover:bg-white/70 rounded-xl transition-all hover:shadow-sm active:scale-90' + (month === null ? ' opacity-30 pointer-events-none' : '')}>
             <svg className="w-5 h-5 sm:w-6 sm:h-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
           </button>
           <div className="flex items-center gap-2">
             <span className="text-base sm:text-xl font-bold text-green-800">{monthLabel}</span>
-            <button onClick={() => { setMonth(month === null ? new Date().getMonth() + 1 : null); setPage(1); }} className={"text-xs px-2.5 py-1 rounded-full font-medium transition-all " + (month === null ? "bg-green-600 text-white shadow-sm" : "bg-green-100 text-green-600 hover:bg-green-200")}>&#x5168;&#x5e74;</button>
+            <button onClick={() => router.push('/income/annual?year=' + year)} className={"text-xs px-2.5 py-1 rounded-full font-medium transition-all " + (month === null ? "bg-green-600 text-white shadow-sm" : "bg-green-100 text-green-600 hover:bg-green-200")}>&#x5168;&#x5e74;</button>
 
           </div>
           <button onClick={nextMonth} className={'p-2 hover:bg-white/70 rounded-xl transition-all hover:shadow-sm active:scale-90' + (month === null ? ' opacity-30 pointer-events-none' : '')}>
@@ -237,7 +239,7 @@ export default function IncomePage() {
 
       {/* Stats cards */}
       {stats && (
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 mb-3 sm:mb-4">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 sm:gap-2 mb-2 sm:mb-3">
           {statCards.map((card, i) => (
             <div key={i} className={'rounded-xl p-3 sm:p-4 border shadow-sm card-hover ' + (i === 0 ? 'bg-gradient-to-br from-green-50 to-emerald-50 border-green-200' : 'bg-white border-gray-100')}>
               <p className="text-[10px] sm:text-xs text-gray-500 font-medium uppercase tracking-wide">{card.label}</p>
@@ -255,36 +257,25 @@ export default function IncomePage() {
             const workDates = new Set(incomes.map((i) => i.date?.substring(0, 10)).filter(Boolean));
             const adjustedWorkDays = workDates.size;
             const restDays = Math.max(0, totalDays - adjustedWorkDays);
-            const avgDaily = adjustedWorkDays > 0 ? stats.totalIncome / adjustedWorkDays : 0;
             const workRate = totalDays > 0 ? (adjustedWorkDays / totalDays * 100).toFixed(0) : '0';
             const dailyTotals: Record<string, number> = {};
             incomes.forEach((i) => {
               const key = i.date?.substring(0, 10);
               if (key) dailyTotals[key] = (dailyTotals[key] || 0) + i.amount;
             });
-            const bestDay = Object.values(dailyTotals).length > 0 ? Math.max(...Object.values(dailyTotals)) : 0;
             return <>
               <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-3 border border-purple-100 shadow-sm">
-                <p className="text-[10px] text-purple-500 font-medium">工作天数</p>
+                <p className="text-[10px] text-purple-500 font-medium">💼 工作天数</p>
                 <p className="text-lg font-extrabold text-purple-700 mt-0.5">{adjustedWorkDays}<span className="text-xs font-medium text-purple-400"> / {totalDays}天</span></p>
                 <p className="text-[10px] text-purple-400 mt-0.5">出勤率 {workRate}%</p>
               </div>
               <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl p-3 border border-amber-100 shadow-sm">
-                <p className="text-[10px] text-amber-500 font-medium">放假天数</p>
+                <p className="text-[10px] text-amber-500 font-medium">🌙 放假天数</p>
                 <p className="text-lg font-extrabold text-amber-700 mt-0.5">{restDays}<span className="text-xs font-medium text-amber-400"> 天</span></p>
                 <p className="text-[10px] text-amber-400 mt-0.5">{'☾'.repeat(Math.min(Math.max(restDays, 0), 5))}{restDays > 5 ? '...' : ''}</p>
               </div>
-              <div className="rounded-xl p-3 border shadow-sm bg-gradient-to-br from-blue-50 to-cyan-50 border-blue-100">
-                <p className="text-[10px] text-blue-500 font-medium">日均收入</p>
-                <p className="text-lg font-extrabold text-blue-700 mt-0.5">HK$ {avgDaily.toFixed(0)}</p>
-                <p className="text-[10px] text-blue-400 mt-0.5">每工作日</p>
-              </div>
-              <div className="rounded-xl p-3 border shadow-sm bg-gradient-to-br from-green-50 to-emerald-50 border-green-100">
-                <p className="text-[10px] text-green-500 font-medium">最佳日</p>
-                <p className="text-lg font-extrabold text-green-700 mt-0.5">HK$ {bestDay}</p>
-                <p className="text-[10px] text-green-400 mt-0.5">单日最高</p>
-              </div>
-            </>;
+
+            </>
           })()}
         </div>
       )}
@@ -293,42 +284,47 @@ export default function IncomePage() {
       {fetching ? (
         <div className="text-center py-12"><div className="w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto" /></div>
       ) : (
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden p-2 sm:p-4">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden p-1.5 sm:p-3">
           {/* Day headers */}
           <div className="grid grid-cols-7 gap-0.5 sm:gap-1 mb-1">
             {['日','一','二','三','四','五','六'].map(d => (
               <div key={d} className="text-center text-[10px] sm:text-xs font-bold text-gray-400 py-1 uppercase tracking-wider">{d}</div>
-            ))}
-          </div>
+            ))}</div>
           {/* Calendar grid */}
-          {month && year && buildCalendarDays(year, month, incomes).map((week, wi) => (
+          {(() => { const dailyTotalMap = {} as Record<string, number>; incomes.forEach(i => { const d = i.date?.substring(0, 10); if (d) dailyTotalMap[d] = (dailyTotalMap[d] || 0) + i.amount; }); const maxAmountInMonth = Math.max(...Object.values(dailyTotalMap), 0); return month && year && buildCalendarDays(year, month, incomes).map((week, wi) => (
             <div key={wi} className="grid grid-cols-7 gap-1 mb-1">
               {week.map((day, di) => {
                 if (!day) return <div key={di} className="min-h-[60px] sm:min-h-[80px]" />;
                 const { dateNum, records } = day;
                 const hasData = records.length > 0;
-                // Group records by shift
-                const morningRecs = records.filter((r: any) => r.shift === '早班' || r.shift === '日班');
-                const nightRecs = records.filter((r: any) => r.shift === '晚班');
-                const otherRecs = records.filter((r: any) => r.shift !== '早班' && r.shift !== '日班' && r.shift !== '晚班');
+                // Group by company for proportional bars
+                const compGroups = {} as Record<string, number>;
+                records.forEach((r: any) => { const k = r.company || '其他'; compGroups[k] = (compGroups[k] || 0) + r.amount; });
+                const sortedComp = Object.entries(compGroups).sort((a: any, b: any) => b[1] - a[1]);
+                const maxAmt = maxAmountInMonth > 0 ? maxAmountInMonth : 1;
                 return (
                   <button key={di}
                     onClick={() => hasData && setSelectedDay(day)}
-                    className={'min-h-[60px] sm:min-h-[80px] rounded-lg p-1 text-left transition-all overflow-hidden ' + (hasData ? 'hover:shadow-md hover:ring-2 hover:ring-green-200 cursor-pointer bg-gradient-to-b from-white to-green-50/30' : '')}
+                    className={'min-h-[60px] sm:min-h-[80px] rounded-lg p-1 text-left transition-all overflow-hidden relative ' + (hasData ? 'hover:shadow-md hover:ring-2 hover:ring-green-300 cursor-pointer bg-white' : '')}
                   >
-                    <span className={'text-xs font-medium ' + (hasData ? 'text-gray-800' : 'text-gray-300')}>{dateNum}</span>
+                    <span className={'absolute top-0.5 left-0.5 z-20 text-sm sm:text-base font-black ' + (hasData ? 'text-gray-900' : 'text-gray-300')} style={{ textShadow: hasData ? '0 0 6px rgba(255,255,255,0.9)' : 'none' }}>{dateNum}</span>
                     {hasData && (
-                      <div className="mt-0.5 space-y-0.5">
-                        {renderShiftGroup(morningRecs)}
-                        {renderShiftGroup(nightRecs)}
-                        {renderShiftGroup(otherRecs)}
+                      <div className="absolute inset-0 flex flex-col-reverse overflow-hidden rounded-lg">
+                        {sortedComp.map(([com, amt]: [string, number]) => {
+                          const pct = Math.min((amt / maxAmt) * 100, 100);
+                          return pct > 0 ? (
+                            <div key={com} className="w-full transition-all duration-300 relative flex-shrink-0" style={{ height: pct + '%', backgroundColor: companyColor(com), minHeight: '4px' }}>
+                              <span className="absolute inset-0 flex items-center justify-center text-[8px] sm:text-[9px] font-bold leading-tight" style={{ color: 'white', textShadow: '0 1px 3px rgba(0,0,0,0.7)' }}>+{amt.toFixed(0)}</span>
+                            </div>
+                          ) : null;
+                        })}
                       </div>
                     )}
                   </button>
                 );
               })}
             </div>
-          ))}
+          )); })()}
         </div>
       )}
 
@@ -374,7 +370,8 @@ export default function IncomePage() {
                   </div>
                   {item.note && <p className="text-xs text-gray-400 mt-0.5">{item.note}</p>}
                 </div>
-              ))}
+              ))
+          }
             </div>
           </div>
         </div>
@@ -388,7 +385,7 @@ export default function IncomePage() {
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden p-3 sm:p-5 card-hover">
               <h3 className="text-xs sm:text-sm font-bold text-gray-700 mb-2 sm:mb-3 flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-green-500" />
-                月度收入趋势
+                📈 月度收入趋势
               </h3>
               <Bar data={{
                 labels: Object.keys(stats.monthlyTotals).sort(),
@@ -399,7 +396,7 @@ export default function IncomePage() {
 
           {/* Industry Distribution */}
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden p-4 sm:p-5">
-            <h3 className="text-sm font-semibold text-gray-700 mb-3">行业分布</h3>
+            <h3 className="text-sm font-semibold text-gray-700 mb-3">🏭 行业分布</h3>
             {Object.keys(stats.industryTotals).length > 0 && (
               <div className="flex items-center gap-4">
                 <div className="w-32 h-32 flex-shrink-0">
@@ -417,7 +414,8 @@ export default function IncomePage() {
                       </div>
                       <span className="font-medium text-gray-800">HK$ {Number(total).toFixed(2)}</span>
                     </div>
-                  ))}
+                  ))
+          }
                 </div>
               </div>
             )}
@@ -425,7 +423,7 @@ export default function IncomePage() {
 
           {/* Company Breakdown */}
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden p-4 sm:p-5">
-            <h3 className="text-sm font-semibold text-gray-700 mb-3">公司收入</h3>
+            <h3 className="text-sm font-semibold text-gray-700 mb-3">🏢 公司收入</h3>
             {Object.keys(stats.companyTotals).sort().map((com, i) => {
               const amt = stats.companyTotals[com];
               const pct = stats.totalIncome > 0 ? (amt / stats.totalIncome * 100) : 0;
@@ -445,7 +443,7 @@ export default function IncomePage() {
 
           {/* Hourly Rate Trend */}
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden p-4 sm:p-5">
-            <h3 className="text-sm font-semibold text-gray-700 mb-3">时薪走势</h3>
+            <h3 className="text-sm font-semibold text-gray-700 mb-3">💵 时薪走势</h3>
             {(function() {
               const dailyRates: Record<string, { income: number; hours: number }> = {};
               incomes.filter((i) => i.hours > 0).forEach((i) => {
@@ -485,7 +483,7 @@ export default function IncomePage() {
 
           {/* Weekday Analysis */}
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden p-4 sm:p-5">
-            <h3 className="text-sm font-semibold text-gray-700 mb-3">星期分布</h3>
+            <h3 className="text-sm font-semibold text-gray-700 mb-3">📅 星期分布</h3>
             {(function() {
               const weekdayNames = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"];
               const weekdayTotals = [0, 0, 0, 0, 0, 0, 0];
@@ -542,7 +540,8 @@ export default function IncomePage() {
                       </div>
                       <span className="text-base font-bold text-amber-700">HK$ {data.amount.toFixed(0)}</span>
                     </div>
-                  ))}
+                  ))
+          }
                   {topDays.length === 0 && <p className="text-sm text-gray-400 text-center py-4">暂无数据</p>}
                 </div>
               );
@@ -559,7 +558,7 @@ export default function IncomePage() {
               <div className="w-8 h-8 bg-gradient-to-br from-green-400 to-emerald-600 rounded-xl flex items-center justify-center shadow-md">
                 <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
               </div>
-              <h2 className="text-lg font-bold text-gray-900">{editItem ? '编辑收入' : '新增收入'}</h2>
+              <h2 className="text-lg font-bold text-gray-900">{editItem ? '编辑收入' : '✨ 新增收入'}</h2>
             </div>
             <form onSubmit={handleSave} className="space-y-4">
               <QuickAddCards incomes={incomes} onSelect={(item) => {
@@ -643,3 +642,10 @@ export default function IncomePage() {
     </div>
   );
 }
+
+
+
+
+
+
+
