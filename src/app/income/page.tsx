@@ -282,9 +282,9 @@ export default function IncomePage() {
       {stats && month && year && (
         <div className="grid grid-cols-2 gap-2 mb-3">
           {(() => {
-            const today = new Date(); const isCurrentMonth = year === today.getFullYear() && month === today.getMonth() + 1; const fullDays = month === null ? (year % 400 === 0 || (year % 4 === 0 && year % 100 !== 0) ? 366 : 365) : new Date(year, month, 0).getDate(); const totalDays = isCurrentMonth ? today.getDate() : fullDays;
+            const today = new Date(); const isCurrentMonth = year === today.getFullYear() && month === today.getMonth() + 1; const maxDay = isCurrentMonth ? today.getDate() : new Date(year, month, 0).getDate(); const totalDays = isCurrentMonth ? today.getDate() - 1 : maxDay;
             const workDates = new Set(incomes.map((i) => i.date?.substring(0, 10)).filter(Boolean));
-            const adjustedWorkDays = workDates.size;
+            const adjustedWorkDays = [...workDates].filter(d => parseInt(d.substring(8)) <= maxDay).length;
             const restDays = Math.max(0, totalDays - adjustedWorkDays);
             const workRate = totalDays > 0 ? (adjustedWorkDays / totalDays * 100).toFixed(0) : '0';
             const dailyTotals: Record<string, number> = {};
@@ -295,7 +295,7 @@ export default function IncomePage() {
             return <>
               <div className="rounded-xl p-3 shadow-lg bg-gradient-to-br from-indigo-600 to-purple-700 text-white">
                 <p className="text-[10px] text-white/80 font-medium">💼 工作天数</p>
-                <p className="text-lg font-extrabold text-white mt-0.5">{adjustedWorkDays}<span className="text-xs font-medium text-white/60"> / {totalDays}天</span></p>
+                <p className="text-lg font-extrabold text-white mt-0.5">{adjustedWorkDays}<span className="text-xs font-medium text-white/60"> / {totalDays + '天'}</span></p>
                 <p className="text-[10px] text-white/70 mt-0.5">出勤率 {workRate}%</p>
               </div>
               <div className="bg-gradient-to-br from-amber-600 to-orange-700 rounded-xl p-3 shadow-lg text-white">
@@ -362,9 +362,9 @@ export default function IncomePage() {
                 return (
                   <button key={di}
                     onClick={() => hasData && setSelectedDay(day)}
-                    className={'min-h-[60px] sm:min-h-[80px] rounded-lg p-1 text-left transition-all overflow-hidden relative ' + (hasData ? 'hover:shadow-md hover:ring-2 hover:ring-green-300 cursor-pointer bg-white' : '')}
+                    className={'min-h-[60px] sm:min-h-[80px] rounded-lg p-1 text-left transition-all overflow-hidden relative flex items-center justify-center ' + (hasData ? 'hover:shadow-md hover:ring-2 hover:ring-green-300 cursor-pointer bg-white' : 'bg-gradient-to-b from-gray-50 to-white')}
                   >
-                    <span className={'absolute top-0.5 left-0.5 z-20 text-sm sm:text-base font-black ' + (hasData ? 'text-gray-900' : 'text-gray-300')} style={{ textShadow: hasData ? '0 0 6px rgba(255,255,255,0.9)' : 'none' }}>{dateNum}</span>
+                    <span className={'absolute top-0.5 left-0.5 z-20 text-sm sm:text-base font-black ' + (hasData ? 'text-gray-900' : 'text-gray-400')} style={{ textShadow: hasData ? '0 0 6px rgba(255,255,255,0.9)' : 'none' }}>{dateNum}</span>{!hasData && new Date(year, (month || 1) - 1, dateNum) < new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate()) && <span className="absolute inset-0 flex items-center justify-center text-xl text-gray-200 pt-4">🌙</span>}
                     {hasData && (
                       <div className="absolute inset-0 overflow-hidden rounded-lg">
                         {allBars.map(({ com, amt }) => {
@@ -742,6 +742,8 @@ export default function IncomePage() {
     </div>
   );
 }
+
+
 
 
 
