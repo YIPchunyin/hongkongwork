@@ -209,13 +209,13 @@ export default function IncomePage() {
               <div key={item._id} className="p-4 hover:bg-gray-50 transition-colors">
                 <div className="flex items-start gap-3">
                   <div className={'w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0 ' + (item.industry === '地盘' ? 'bg-blue-500' : item.industry === '酒楼' ? 'bg-orange-500' : 'bg-gray-400')}>
-                    {item.industry === '地盘' ? '地' : item.industry === '酒楼' ? '酒' : item.industry === '补贴' ? '补' : '其'}
+                    {item.industry === '地盘' ? '地' : item.industry === '酒楼' ? '酒' : '其'}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-xs px-2 py-0.5 rounded-full bg-green-50 text-green-700 font-medium">{item.category || "未分类"}</span>
-                      {item.shift ? <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">{item.shift}</span> : null}
-                      {item.company ? <span className="text-xs text-gray-400">{item.company}</span> : null}
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-green-50 text-green-700 font-medium">{item.category}</span>
+                      {item.shift && <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">{item.shift}</span>}
+                      {item.company && <span className="text-xs text-gray-400">{item.company}</span>}
                     </div>
                     <p className="mt-1 text-sm text-gray-600">
                       {item.date}

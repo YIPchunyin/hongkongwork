@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       success: true,
       data: {
-        items: items.map(i => ({ ...i, _id: String(i._id) })),
+        items: items.map(i => ({ ...i, _id: String(i._id), category: i.category || "未分类", note: i.note || "", shift: i.shift || "", company: i.company || "", industry: i.industry || "" })),
         total, page, limit,
         totalPages: Math.ceil(total / limit),
         stats: { totalIncome, totalHours, totalRecords: allIncomes.length, industries, companies },
