@@ -55,7 +55,7 @@ export default function ExchangeRateWidget() {
       <div className="relative">
         <p className="text-emerald-100 text-xs font-medium mb-1">💱 港币兑人民币</p>
         <p className="text-2xl sm:text-3xl font-bold mt-1">
-          HK$1,000 = ¥<span className="text-yellow-200 inline-block animate-bounce-in">{cny100}</span>
+          100港币 = ¥<span className="text-yellow-200 inline-block animate-bounce-in">{cny100}</span>
         </p>
         <div className="flex items-baseline gap-3 mt-1">
           <p className="text-emerald-200 text-xs">1 HKD = {rate.hkdToCny.toFixed(4)} CNY</p>
