@@ -58,7 +58,35 @@ export default function IncomePage() {
   const [formIndustry, setFormIndustry] = useState('地盘');
   const [formCompany, setFormCompany] = useState('国益');
   const [saving, setSaving] = useState(false);
+  const [selectedDay, setSelectedDay] = useState<any>(null);
 
+  const companyColor = (com: string) => {
+    const colors: Record<string, string> = { '国益': '#3B82F6', '煌府': '#F59E0B', '益哥': '#8B5CF6' };
+    return colors[com] || '#9CA3AF';
+  };
+
+  const buildCalendarDays = (yr: number, mo: number, items: IncomeItem[]) => {
+    const daysInMonth = new Date(yr, mo, 0).getDate();
+    const firstDay = new Date(yr, mo - 1, 1).getDay();
+    const dayMap: Record<number, { dateNum: number; total: number; records: IncomeItem[]; companies: string[] }> = {};
+    items.forEach(item => {
+      if (!item.date) return;
+      const d = parseInt(item.date.substring(8, 10));
+      if (!dayMap[d]) dayMap[d] = { dateNum: d, total: 0, records: [], companies: [] as string[] };
+      dayMap[d].total += item.amount;
+      dayMap[d].records.push(item);
+      if (item.company && !dayMap[d].companies.includes(item.company)) dayMap[d].companies.push(item.company);
+    });
+    const weeks: any[][] = [];
+    let week: any[] = [];
+    for (let i = 0; i < firstDay; i++) week.push(null);
+    for (let d = 1; d <= daysInMonth; d++) {
+      week.push(dayMap[d] || { dateNum: d, total: 0, records: [], companies: [] as string[] });
+      if (week.length === 7) { weeks.push(week); week = []; }
+    }
+    if (week.length > 0) { while (week.length < 7) week.push(null); weeks.push(week); }
+    return weeks;
+  };
   const monthKey = year + '-' + String(month).padStart(2, '0');
   const monthLabel = year + '\u5e74' + String(month).padStart(2, '0') + '\u6708';
 
@@ -269,50 +297,91 @@ export default function IncomePage() {
         </div>
       )}
 
-      {/* Income list */}
+      {/* Calendar View */}
       {fetching ? (
         <div className="text-center py-12"><div className="w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto" /></div>
-      ) : incomes.length === 0 ? (
-        <div className="text-center py-16 bg-white rounded-2xl border border-gray-100">
-          <p className="text-gray-400">{monthLabel} 没有收入记录</p>
-          <button onClick={openAdd} className="mt-2 text-sm text-green-600 hover:text-green-700 font-medium">新增第一条 →</button>
-        </div>
       ) : (
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-          <div className="divide-y divide-gray-100">
-            {incomes.map((item) => (
-              <div key={item._id} className="p-4 hover:bg-gray-50 transition-colors">
-                <div className="flex items-start gap-3">
-                  <div className={'w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0 ' + (item.industry === '地盘' ? 'bg-blue-500' : item.industry === '酒楼' ? 'bg-orange-500' : 'bg-gray-400')}>
-                    {item.industry === '地盘' ? '地' : item.industry === '酒楼' ? '酒' : item.industry === '补贴' ? '补' : '其'}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-xs px-2 py-0.5 rounded-full bg-green-50 text-green-700 font-medium">{item.category || "未分类"}</span>
-                      {item.shift ? <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">{item.shift}</span> : null}
-                      {item.company ? <span className="text-xs text-gray-400">{item.company}</span> : null}
-                    </div>
-                    <p className="mt-1 text-sm text-gray-600">
-                      {item.date}
-                      {item.hours > 0 ? ' · ' + item.hours.toFixed(1) + 'h' : ''}
-                      {item.note ? ' · ' + item.note : ''}
-                    </p>
-                  </div>
-                  <div className="text-right flex-shrink-0">
-                    <p className="text-lg font-bold text-green-600">HK$ {item.amount.toFixed(2)}</p>
-                    <div className="flex gap-2 justify-end mt-1">
-                      <button onClick={() => openEdit(item)} className="text-xs text-blue-400 hover:text-blue-600">编辑</button>
-                      <button onClick={() => deleteIncome(item._id)} className="text-xs text-red-400 hover:text-red-600">删除</button>
-                    </div>
-                  </div>
-                </div>
-              </div>
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden p-3 sm:p-4">
+          {/* Day headers */}
+          <div className="grid grid-cols-7 gap-1 mb-1">
+            {['日','一','二','三','四','五','六'].map(d => (
+              <div key={d} className="text-center text-xs font-medium text-gray-400 py-1">{d}</div>
             ))}
+          </div>
+          {/* Calendar grid */}
+          {month && year && buildCalendarDays(year, month, incomes).map((week, wi) => (
+            <div key={wi} className="grid grid-cols-7 gap-1 mb-1">
+              {week.map((day, di) => {
+                if (!day) return <div key={di} className="min-h-[60px] sm:min-h-[80px]" />;
+                const { dateNum, total, records, companies } = day;
+                const hasData = records.length > 0;
+                return (
+                  <button key={di}
+                    onClick={() => hasData && setSelectedDay(day)}
+                    className={'min-h-[60px] sm:min-h-[80px] rounded-lg p-1 text-left transition-all relative flex flex-col ' + (hasData ? 'hover:shadow-md hover:ring-2 hover:ring-green-200 cursor-pointer bg-gray-50' : '')}
+                  >
+                    <span className={'text-xs font-medium ' + (hasData ? 'text-gray-800' : 'text-gray-300')}>{dateNum}</span>
+                    {hasData && (
+                      <>
+                        <span className="text-xs font-bold text-green-600 mt-auto">HK{total.toFixed(0)}</span>
+                        <div className="flex gap-0.5 mt-0.5 flex-wrap">
+                          {Array.from(new Set<string>(companies)).slice(0, 3).map(com => (
+                            <span key={com} className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: companyColor(com) }} />
+                          ))}
+                          {Array.from(new Set<string>(companies)).length > 3 && <span className="text-[8px] text-gray-400">+{Array.from(new Set(companies)).length - 3}</span>}
+                        </div>
+                      </>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Day Detail Popup */}
+      {selectedDay && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40" onClick={() => setSelectedDay(null)}>
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-5 max-h-[70vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold text-gray-900">{year}年{String(month).padStart(2, '0')}月{String(selectedDay.dateNum).padStart(2, '0')}日</h3>
+              <button onClick={() => setSelectedDay(null)} className="p-1 hover:bg-gray-100 rounded-lg">
+                <svg className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            </div>
+            <div className="text-right mb-3">
+              <span className="text-2xl font-bold text-green-600">HK$ {selectedDay.total.toFixed(2)}</span>
+              <span className="text-sm text-gray-400 ml-2">{selectedDay.records.length} 笔</span>
+            </div>
+            <div className="space-y-2 divide-y divide-gray-100">
+              {selectedDay.records.map((item: any) => (
+                <div key={item._id} className="pt-2 first:pt-0">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: companyColor(item.company) }} />
+                    <span className="text-xs px-1.5 py-0.5 rounded bg-green-50 text-green-700 font-medium">{item.category || '未分类'}</span>
+                    {item.shift && <span className="text-xs text-gray-400">{item.shift}</span>}
+                    {item.company && <span className="text-xs text-gray-400">{item.company}</span>}
+                  </div>
+                  <div className="flex justify-between items-center mt-1">
+                    <div>
+                      <span className="font-bold text-gray-800">HK$ {item.amount.toFixed(2)}</span>
+                      {item.hours > 0 && <span className="text-xs text-gray-400 ml-2">{item.hours}h</span>}
+                    </div>
+                    <div className="flex gap-2">
+                      <button onClick={(e) => { e.stopPropagation(); openEdit(item); setSelectedDay(null); }} className="text-xs text-blue-400 hover:text-blue-600">编辑</button>
+                      <button onClick={(e) => { e.stopPropagation(); deleteIncome(item._id); setSelectedDay(null); }} className="text-xs text-red-400 hover:text-red-600">删除</button>
+                    </div>
+                  </div>
+                  {item.note && <p className="text-xs text-gray-400 mt-0.5">{item.note}</p>}
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       )}
 
-      {/* Add/Edit Modal */}
+      {/* Add/Edit Modal */}      {/* Add/Edit Modal */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40" onClick={() => setShowModal(false)}>
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
