@@ -92,6 +92,20 @@ export default function IncomePage() {
     if (week.length > 0) { while (week.length < 7) week.push(null); weeks.push(week); }
     return weeks;
   };
+
+  const renderShiftGroup = (recs: IncomeItem[]) => {
+    const groups: Record<string, number> = {};
+    recs.forEach(r => {
+      const key = r.company || '其他';
+      groups[key] = (groups[key] || 0) + r.amount;
+    });
+    return Object.entries(groups).map(([com, amt]) => (
+      <div key={com} className="flex items-center gap-0.5 text-[9px] sm:text-[10px] leading-tight">
+        <span className="w-1.5 h-1.5 rounded-sm flex-shrink-0" style={{ backgroundColor: companyColor(com) }} />
+        <span className="font-bold" style={{ color: companyColor(com) }}>+{amt.toFixed(0)}</span>
+      </div>
+    ));
+  };
   const monthKey = year + '-' + String(month).padStart(2, '0');
   const monthLabel = year + '\u5e74' + String(month).padStart(2, '0') + '\u6708';
 
@@ -251,24 +265,24 @@ export default function IncomePage() {
             <div key={wi} className="grid grid-cols-7 gap-1 mb-1">
               {week.map((day, di) => {
                 if (!day) return <div key={di} className="min-h-[60px] sm:min-h-[80px]" />;
-                const { dateNum, total, records, companies } = day;
+                const { dateNum, records } = day;
                 const hasData = records.length > 0;
+                // Group records by shift
+                const morningRecs = records.filter((r: any) => r.shift === '早班' || r.shift === '日班');
+                const nightRecs = records.filter((r: any) => r.shift === '晚班');
+                const otherRecs = records.filter((r: any) => r.shift !== '早班' && r.shift !== '日班' && r.shift !== '晚班');
                 return (
                   <button key={di}
                     onClick={() => hasData && setSelectedDay(day)}
-                    className={'min-h-[60px] sm:min-h-[80px] rounded-lg p-1 text-left transition-all relative flex flex-col ' + (hasData ? 'hover:shadow-md hover:ring-2 hover:ring-green-200 cursor-pointer bg-gray-50' : '')}
+                    className={'min-h-[60px] sm:min-h-[80px] rounded-lg p-1 text-left transition-all overflow-hidden ' + (hasData ? 'hover:shadow-md hover:ring-2 hover:ring-green-200 cursor-pointer bg-gradient-to-b from-white to-green-50/30' : '')}
                   >
                     <span className={'text-xs font-medium ' + (hasData ? 'text-gray-800' : 'text-gray-300')}>{dateNum}</span>
                     {hasData && (
-                      <>
-                        <span className="text-xs font-bold text-green-600 mt-auto">HK{total.toFixed(0)}</span>
-                        <div className="flex gap-0.5 mt-0.5 flex-wrap">
-                          {Array.from(new Set<string>(companies)).slice(0, 3).map(com => (
-                            <span key={com} className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: companyColor(com) }} />
-                          ))}
-                          {Array.from(new Set<string>(companies)).length > 3 && <span className="text-[8px] text-gray-400">+{Array.from(new Set(companies)).length - 3}</span>}
-                        </div>
-                      </>
+                      <div className="mt-0.5 space-y-0.5">
+                        {renderShiftGroup(morningRecs)}
+                        {renderShiftGroup(nightRecs)}
+                        {renderShiftGroup(otherRecs)}
+                      </div>
                     )}
                   </button>
                 );
