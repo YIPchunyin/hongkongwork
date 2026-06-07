@@ -60,6 +60,7 @@ export default function IncomePage() {
   const [formCompany, setFormCompany] = useState('国益');
   const [saving, setSaving] = useState(false);
   const [selectedDay, setSelectedDay] = useState<any>(null);
+  const [showAmount, setShowAmount] = useState(true);
 
   const companyColor = (com: string) => {
     const colors: Record<string, string> = {
@@ -239,21 +240,39 @@ export default function IncomePage() {
 
       {/* Stats cards */}
       {stats && (
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 sm:gap-2 mb-2 sm:mb-3">
-          {statCards.map((card, i) => (
-            <div key={i} className={'rounded-xl p-3 sm:p-4 border shadow-sm card-hover ' + (i === 0 ? 'bg-gradient-to-br from-green-50 to-emerald-50 border-green-200' : 'bg-white border-gray-100')}>
-              <p className="text-[10px] sm:text-xs text-gray-500 font-medium uppercase tracking-wide">{card.label}</p>
-              <p className={'text-lg sm:text-2xl font-extrabold mt-1 ' + card.color}>{card.value}</p>
-            </div>
-          ))}
+        <div className="flex flex-col gap-2 mb-2 sm:mb-3">
+          {/* First card full width */}
+          {(() => {
+            const bgClasses = [
+              'bg-gradient-to-r from-green-500 to-emerald-500 text-white',
+              'bg-gradient-to-r from-blue-500 to-cyan-500 text-white',
+              'bg-gradient-to-r from-purple-500 to-pink-500 text-white',
+            ];
+            return (
+              <>
+                <div className="rounded-xl p-3 sm:p-4 shadow-lg card-hover bg-gradient-to-r from-green-500 to-emerald-500 text-white">
+                  <p className="text-[10px] sm:text-xs text-white/80 font-medium uppercase tracking-wide">{statCards[0].label}</p>
+                  <p className="text-lg sm:text-2xl font-black mt-0.5 text-white">{statCards[0].value}</p>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  {statCards.slice(1).map((card, i) => (
+                    <div key={i} className={'rounded-xl p-3 sm:p-4 shadow-lg card-hover ' + bgClasses[i + 1]}>
+                      <p className="text-[10px] sm:text-xs text-white/80 font-medium uppercase tracking-wide">{card.label}</p>
+                      <p className="text-lg sm:text-2xl font-black mt-0.5 text-white">{card.value}</p>
+                    </div>
+                  ))}
+                </div>
+              </>
+            );
+          })()}
         </div>
       )}
 
       {/* Advanced Analytics */}
       {stats && month && year && (
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 mb-3">
+        <div className="grid grid-cols-2 gap-2 mb-3">
           {(() => {
-            const totalDays = month === null ? (year % 400 === 0 || (year % 4 === 0 && year % 100 !== 0) ? 366 : 365) : new Date(year, month, 0).getDate();
+            const today = new Date(); const isCurrentMonth = year === today.getFullYear() && month === today.getMonth() + 1; const fullDays = month === null ? (year % 400 === 0 || (year % 4 === 0 && year % 100 !== 0) ? 366 : 365) : new Date(year, month, 0).getDate(); const totalDays = isCurrentMonth ? today.getDate() : fullDays;
             const workDates = new Set(incomes.map((i) => i.date?.substring(0, 10)).filter(Boolean));
             const adjustedWorkDays = workDates.size;
             const restDays = Math.max(0, totalDays - adjustedWorkDays);
@@ -285,6 +304,21 @@ export default function IncomePage() {
         <div className="text-center py-12"><div className="w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto" /></div>
       ) : (
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden p-1.5 sm:p-3">
+          {/* Calendar toolbar */}
+          <div className="flex items-center justify-end mb-1 px-0.5">
+            <button onClick={() => setShowAmount(!showAmount)}
+              className="text-xs px-2 py-1 rounded-lg font-medium transition-all flex items-center gap-1 hover:bg-gray-100 active:scale-95"
+              title={showAmount ? '显示公司名' : '显示金额'}>
+              <svg className="w-3.5 h-3.5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                {showAmount ? (
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                ) : (
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                )}
+              </svg>
+              <span className="text-gray-400">{showAmount ? '💰' : '🏷️'}</span>
+            </button>
+          </div>
           {/* Day headers */}
           <div className="grid grid-cols-7 gap-0.5 sm:gap-1 mb-1">
             {['日','一','二','三','四','五','六'].map(d => (
@@ -314,7 +348,7 @@ export default function IncomePage() {
                           const pct = Math.min((amt / maxAmt) * 100, 100);
                           return pct > 0 ? (
                             <div key={com} className="w-full transition-all duration-300 relative flex-shrink-0" style={{ height: pct + '%', backgroundColor: companyColor(com), minHeight: '4px' }}>
-                              <span className="absolute inset-0 flex items-center justify-center text-[8px] sm:text-[9px] font-bold leading-tight" style={{ color: 'white', textShadow: '0 1px 3px rgba(0,0,0,0.7)' }}>+{amt.toFixed(0)}</span>
+                              <span className="absolute inset-0 flex items-center justify-center text-[8px] sm:text-[9px] font-bold leading-tight" style={{ color: 'white', textShadow: '0 1px 3px rgba(0,0,0,0.7)' }}>{showAmount ? ('+' + amt.toFixed(0)) : com}</span>
                             </div>
                           ) : null;
                         })}

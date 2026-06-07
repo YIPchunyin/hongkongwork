@@ -74,7 +74,10 @@ function AnnualReportContent() {
     const totalHours = incomes.reduce((s, i) => s + (i.hours || 0), 0);
     const totalRecords = incomes.length;
     const isLeap = year % 400 === 0 || (year % 4 === 0 && year % 100 !== 0);
-    const totalDays = isLeap ? 366 : 365;
+    const today = new Date();
+    const isCurrentYear = year === today.getFullYear();
+    const fullYearDays = isLeap ? 366 : 365;
+    const totalDays = isCurrentYear ? Math.floor((today.getTime() - new Date(year, 0, 0).getTime()) / 86400000) : fullYearDays;
 
     const dateSet = new Set<string>();
     incomes.forEach(i => { if (i.date) dateSet.add(i.date.substring(0, 10)); });
@@ -108,7 +111,8 @@ function AnnualReportContent() {
       const mk = year + '-' + String(m).padStart(2, '0');
       monthlyWorkDays[mk] = monthDateSets[mk].size;
       const daysInMonth = new Date(year, m, 0).getDate();
-      monthlyRestDays[mk] = Math.max(0, daysInMonth - monthDateSets[mk].size);
+      const actualDaysInMonth = isCurrentYear && m === today.getMonth() + 1 ? today.getDate() : daysInMonth;
+      monthlyRestDays[mk] = Math.max(0, actualDaysInMonth - monthDateSets[mk].size);
     }
 
     // Company totals
