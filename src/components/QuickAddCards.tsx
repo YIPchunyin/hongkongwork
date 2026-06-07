@@ -113,7 +113,7 @@ export default function QuickAddCards({ incomes, onSelect }: QuickAddCardsProps)
                   </span>
                 </div>
                 <p className="text-[10px] text-gray-400 mt-0.5">
-                  {p.industry} · {p.hours}h · 已上{p.count}次
+                  {p.industry} · {p.hours}h · HK$ {p.amount.toFixed(0)}
                 </p>
               </div>
             </div>
