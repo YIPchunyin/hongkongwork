@@ -190,33 +190,46 @@ export default function IncomePage() {
     <div className="max-w-5xl mx-auto px-4 py-6 sm:py-8">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-        <h1 className="text-xl sm:text-2xl font-bold text-gray-900">收入记录</h1>
-        <button onClick={openAdd} className="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-xl hover:bg-green-700 transition-colors min-h-[44px] inline-flex items-center gap-1.5">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-gradient-to-br from-green-400 to-emerald-600 rounded-xl flex items-center justify-center shadow-lg shadow-green-200/50">
+            <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <div>
+            <h1 className="text-lg sm:text-2xl font-bold text-gray-900">收入记录</h1>
+            <p className="text-xs sm:text-sm text-gray-400">记录每一笔收入</p>
+          </div>
+        </div>
+        <button onClick={openAdd} className="px-5 py-2.5 bg-gradient-to-r from-green-500 to-emerald-600 text-white text-sm font-bold rounded-xl hover:shadow-lg hover:shadow-green-200/50 hover:scale-105 active:scale-95 transition-all duration-200 min-h-[44px] inline-flex items-center gap-1.5 shadow-md">
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
           新增收入
         </button>
       </div>
 
       {/* Month selector */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 mb-4">
+      <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl border border-green-100 p-3 sm:p-4 mb-3 shadow-sm">
         <div className="flex items-center justify-between">
-          <button onClick={prevMonth} className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-            <svg className="w-5 h-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
+          <button onClick={prevMonth} className="p-2 hover:bg-white/70 rounded-xl transition-all hover:shadow-sm active:scale-90">
+            <svg className="w-5 h-5 sm:w-6 sm:h-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
           </button>
-          <span className="text-lg font-bold text-gray-800">{monthLabel}</span>
-          <button onClick={nextMonth} className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-            <svg className="w-5 h-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
+          <div className="flex items-center gap-2">
+            <span className="text-base sm:text-xl font-bold text-green-800">{monthLabel}</span>
+            {stats && <span className="text-xs sm:text-sm font-medium text-green-500 bg-green-100 px-2.5 py-1 rounded-full">HK$ {stats.totalIncome.toFixed(0)}</span>}
+          </div>
+          <button onClick={nextMonth} className="p-2 hover:bg-white/70 rounded-xl transition-all hover:shadow-sm active:scale-90">
+            <svg className="w-5 h-5 sm:w-6 sm:h-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
           </button>
         </div>
       </div>
 
       {/* Stats cards */}
       {stats && (
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 mb-3 sm:mb-4">
           {statCards.map((card, i) => (
-            <div key={i} className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
-              <p className="text-xs text-gray-500">{card.label}</p>
-              <p className={'text-2xl font-bold mt-1 ' + card.color}>{card.value}</p>
+            <div key={i} className={'rounded-xl p-3 sm:p-4 border shadow-sm card-hover ' + (i === 0 ? 'bg-gradient-to-br from-green-50 to-emerald-50 border-green-200' : 'bg-white border-gray-100')}>
+              <p className="text-[10px] sm:text-xs text-gray-500 font-medium uppercase tracking-wide">{card.label}</p>
+              <p className={'text-lg sm:text-2xl font-extrabold mt-1 ' + card.color}>{card.value}</p>
             </div>
           ))}
         </div>
@@ -226,11 +239,11 @@ export default function IncomePage() {
       {fetching ? (
         <div className="text-center py-12"><div className="w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto" /></div>
       ) : (
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden p-3 sm:p-4">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden p-2 sm:p-4">
           {/* Day headers */}
-          <div className="grid grid-cols-7 gap-1 mb-1">
+          <div className="grid grid-cols-7 gap-0.5 sm:gap-1 mb-1">
             {['日','一','二','三','四','五','六'].map(d => (
-              <div key={d} className="text-center text-xs font-medium text-gray-400 py-1">{d}</div>
+              <div key={d} className="text-center text-[10px] sm:text-xs font-bold text-gray-400 py-1 uppercase tracking-wider">{d}</div>
             ))}
           </div>
           {/* Calendar grid */}
@@ -268,10 +281,17 @@ export default function IncomePage() {
       {/* Day Detail Popup */}
       {selectedDay && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40" onClick={() => setSelectedDay(null)}>
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-5 max-h-[70vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-bold text-gray-900">{year}年{String(month).padStart(2, '0')}月{String(selectedDay.dateNum).padStart(2, '0')}日</h3>
-              <button onClick={() => setSelectedDay(null)} className="p-1 hover:bg-gray-100 rounded-lg">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-5 max-h-[70vh] overflow-y-auto border border-green-100" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 bg-gradient-to-br from-green-400 to-emerald-600 rounded-xl flex items-center justify-center shadow-md">
+                  <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                <h3 className="text-lg font-bold text-gray-900">{year}年{String(month).padStart(2, '0')}月{String(selectedDay.dateNum).padStart(2, '0')}日</h3>
+              </div>
+              <button onClick={() => setSelectedDay(null)} className="p-1.5 hover:bg-red-50 rounded-xl transition-colors">
                 <svg className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
             </div>
@@ -308,11 +328,14 @@ export default function IncomePage() {
 
       {/* Charts & Analysis */}
       {stats && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 mb-4">
           {/* Monthly Trend */}
           {Object.keys(stats.monthlyTotals).length > 1 && (
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-5">
-              <h3 className="text-sm font-semibold text-gray-700 mb-3">月度收入趋势</h3>
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-3 sm:p-5 card-hover">
+              <h3 className="text-xs sm:text-sm font-bold text-gray-700 mb-2 sm:mb-3 flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-green-500" />
+                月度收入趋势
+              </h3>
               <Bar data={{
                 labels: Object.keys(stats.monthlyTotals).sort(),
                 datasets: [{ label: '收入 (HK$)', data: Object.keys(stats.monthlyTotals).sort().map(m => stats.monthlyTotals[m]), backgroundColor: '#10B98133', borderColor: '#10B981', borderWidth: 2, borderRadius: 4 }]
@@ -386,11 +409,16 @@ export default function IncomePage() {
         </div>
       )}
 
-      {/* Add/Edit Modal */}      {/* Add/Edit Modal */}
+      {/* Add/Edit Modal */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40" onClick={() => setShowModal(false)}>
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-            <h2 className="text-lg font-bold text-gray-900 mb-4">{editItem ? '编辑收入' : '新增收入'}</h2>
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-5 max-h-[90vh] overflow-y-auto border border-green-100" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center gap-2 mb-5">
+              <div className="w-8 h-8 bg-gradient-to-br from-green-400 to-emerald-600 rounded-xl flex items-center justify-center shadow-md">
+                <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
+              </div>
+              <h2 className="text-lg font-bold text-gray-900">{editItem ? '编辑收入' : '新增收入'}</h2>
+            </div>
             <form onSubmit={handleSave} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">日期时间</label>
