@@ -61,6 +61,8 @@ export default function IncomePage() {
   const [saving, setSaving] = useState(false);
   const [selectedDay, setSelectedDay] = useState<any>(null);
   const [showAmount, setShowAmount] = useState(false);
+  const [touchStart, setTouchStart] = useState<number | null>(null);
+  const [touchEnd, setTouchEnd] = useState<number | null>(null);
 
   const companyColor = (com: string) => {
     const colors: Record<string, string> = {
@@ -201,7 +203,18 @@ export default function IncomePage() {
   ] : [];
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-6 sm:py-8">
+    <div className="max-w-5xl mx-auto px-4 py-6 sm:py-8"
+      onTouchStart={(e) => setTouchStart(e.touches[0].clientX)}
+      onTouchMove={(e) => setTouchEnd(e.touches[0].clientX)}
+      onTouchEnd={() => {
+        if (touchStart === null || touchEnd === null) return;
+        const diff = touchStart - touchEnd;
+        if (Math.abs(diff) > 80) {
+          if (diff > 0) nextMonth(); else prevMonth();
+        }
+        setTouchStart(null);
+        setTouchEnd(null);
+      }}>
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div className="flex items-center gap-3">
@@ -341,28 +354,11 @@ export default function IncomePage() {
                 const morningComps = groupByCompany(morningRecs);
                 const nightComps = groupByCompany(nightRecs);
                 const otherComps = groupByCompany(otherRecs);
-                const renderBars = (comps: [string, number][], fromTop: boolean) => {
-                  let cumPct = 0;
-                  return comps.map(([com, amt]) => {
-                    const pct = Math.min((amt / maxAmt) * 100, 100);
-                    if (pct <= 0) return null;
-                    const topPct = 100 - cumPct - pct;
-                    cumPct += pct;
-                    return (
-                      <div key={com} className="absolute left-0 right-0 transition-all duration-300" style={{ top: fromTop ? cumPct - pct + '%' : 'auto', bottom: fromTop ? 'auto' : cumPct - pct + '%', height: pct + '%', backgroundColor: companyColor(com), minHeight: '4px' }}>
-                        <span className="absolute inset-0 flex items-center justify-center text-[8px] sm:text-[9px] font-bold leading-tight" style={{ color: 'white', textShadow: '0 1px 3px rgba(0,0,0,0.7)' }}>{showAmount ? ('+' + amt.toFixed(0)) : com}</span>
-                        {/* FAB */}
-      <button onClick={openAdd}
-        className="fixed bottom-20 md:bottom-6 right-4 z-40 w-10 h-10 md:w-12 md:h-12 bg-emerald-600 text-white rounded-full hover:bg-emerald-700 active:scale-95 transition-all duration-200 flex items-center justify-center"
-        >
-        <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-        </svg>
-      </button>
-    </div>
-  );
-});
-                };
+                const allBars: { com: string; amt: number }[] = [];
+                morningComps.forEach(([c, a]) => allBars.push({ com: c, amt: a }));
+                nightComps.forEach(([c, a]) => allBars.push({ com: c, amt: a }));
+                otherComps.forEach(([c, a]) => allBars.push({ com: c, amt: a }));
+                let cumPct = 0;
                 return (
                   <button key={di}
                     onClick={() => hasData && setSelectedDay(day)}
@@ -371,12 +367,17 @@ export default function IncomePage() {
                     <span className={'absolute top-0.5 left-0.5 z-20 text-sm sm:text-base font-black ' + (hasData ? 'text-gray-900' : 'text-gray-300')} style={{ textShadow: hasData ? '0 0 6px rgba(255,255,255,0.9)' : 'none' }}>{dateNum}</span>
                     {hasData && (
                       <div className="absolute inset-0 overflow-hidden rounded-lg">
-                        {/* 早班 从顶部开始 */}
-                        {renderBars(morningComps, true)}
-                        {/* 晚班 从底部开始 */}
-                        {renderBars(nightComps, false)}
-                        {/* 其他 从底部开始 */}
-                        {renderBars(otherComps, false)}
+                        {allBars.map(({ com, amt }) => {
+                          const pct = Math.min((amt / maxAmt) * 100, 100);
+                          if (pct <= 0) return null;
+                          const top = cumPct;
+                          cumPct += pct;
+                          return (
+                            <div key={com} className="absolute left-0 right-0 transition-all duration-300" style={{ top: top + '%', height: pct + '%', backgroundColor: companyColor(com), minHeight: '4px' }}>
+                              <span className="absolute inset-0 flex items-center justify-center text-[8px] sm:text-[9px] font-bold leading-tight" style={{ color: 'white', textShadow: '0 1px 3px rgba(0,0,0,0.7)'}}>{showAmount ? ('+' + amt.toFixed(0)) : com}</span>
+                            </div>
+                          );
+                        })}
                       </div>
                     )}
                   </button>
