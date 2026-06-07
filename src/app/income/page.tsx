@@ -111,7 +111,7 @@ export default function IncomePage() {
   const fetchIncomes = useCallback(async () => {
     setFetching(true);
     try {
-      const res = await fetch('/api/income?year=' + (year || '') + '&month=' + (month ? String(month) : '') + '&page=' + page + '&limit=100');
+      const res = await fetch('/api/income?year=' + (year || '') + '&month=' + (month ? String(month) : '') + '&page=' + page + '&limit=50');
       const json = await res.json();
       if (json.success) {
         setIncomes(json.data.items);
