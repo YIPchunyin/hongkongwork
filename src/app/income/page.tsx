@@ -254,7 +254,7 @@ export default function IncomePage() {
             const totalDays = month === null ? (year % 400 === 0 || (year % 4 === 0 && year % 100 !== 0) ? 366 : 365) : new Date(year, month, 0).getDate();
             const workDates = new Set(incomes.map((i) => i.date?.substring(0, 10)).filter(Boolean));
             const adjustedWorkDays = workDates.size;
-            const restDays = totalDays - adjustedWorkDays;
+            const restDays = Math.max(0, totalDays - adjustedWorkDays);
             const avgDaily = adjustedWorkDays > 0 ? stats.totalIncome / adjustedWorkDays : 0;
             const workRate = totalDays > 0 ? (adjustedWorkDays / totalDays * 100).toFixed(0) : '0';
             const dailyTotals: Record<string, number> = {};
@@ -272,7 +272,7 @@ export default function IncomePage() {
               <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl p-3 border border-amber-100 shadow-sm">
                 <p className="text-[10px] text-amber-500 font-medium">放假天数</p>
                 <p className="text-lg font-extrabold text-amber-700 mt-0.5">{restDays}<span className="text-xs font-medium text-amber-400"> 天</span></p>
-                <p className="text-[10px] text-amber-400 mt-0.5">{'☾'.repeat(Math.min(restDays, 5))}{restDays > 5 ? '...' : ''}</p>
+                <p className="text-[10px] text-amber-400 mt-0.5">{'☾'.repeat(Math.min(Math.max(restDays, 0), 5))}{restDays > 5 ? '...' : ''}</p>
               </div>
               <div className="rounded-xl p-3 border shadow-sm bg-gradient-to-br from-blue-50 to-cyan-50 border-blue-100">
                 <p className="text-[10px] text-blue-500 font-medium">日均收入</p>
