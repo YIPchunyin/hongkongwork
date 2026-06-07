@@ -222,7 +222,7 @@ export default function IncomePage() {
       <div className="rounded-2xl p-2.5 sm:p-3 mb-2 shadow-lg bg-gradient-to-r from-green-600 to-emerald-700 text-white">
         <div className="flex items-center justify-between">
           <button onClick={prevMonth} className={'p-2 hover:bg-white/70 rounded-xl transition-all hover:shadow-sm active:scale-90' + (month === null ? ' opacity-30 pointer-events-none' : '')}>
-            <svg className="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
+            <svg className="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
           </button>
           <div className="flex items-center gap-2">
             <span className="text-base sm:text-xl font-bold text-white">{monthLabel}</span>
@@ -230,7 +230,7 @@ export default function IncomePage() {
 
           </div>
           <button onClick={nextMonth} className={'p-2 hover:bg-white/70 rounded-xl transition-all hover:shadow-sm active:scale-90' + (month === null ? ' opacity-30 pointer-events-none' : '')}>
-            <svg className="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
+            <svg className="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
           </button>
         </div>
       </div>
@@ -353,9 +353,9 @@ export default function IncomePage() {
                         <span className="absolute inset-0 flex items-center justify-center text-[8px] sm:text-[9px] font-bold leading-tight" style={{ color: 'white', textShadow: '0 1px 3px rgba(0,0,0,0.7)' }}>{showAmount ? ('+' + amt.toFixed(0)) : com}</span>
                         {/* FAB */}
       <button onClick={openAdd}
-        className="fixed bottom-20 md:bottom-6 right-6 z-40 w-14 h-14 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-full shadow-2xl hover:shadow-green-400/50 hover:scale-110 active:scale-95 transition-all duration-200 flex items-center justify-center"
+        className="fixed bottom-20 md:bottom-6 right-4 z-40 w-12 h-12 md:w-14 md:h-14 bg-emerald-600 text-white rounded-full shadow-lg hover:bg-emerald-700 hover:scale-110 active:scale-95 transition-all duration-200 flex items-center justify-center"
         style={{ boxShadow: '0 4px 20px rgba(16,185,129,0.4)' }}>
-        <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+        <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
         </svg>
       </button>
@@ -394,7 +394,7 @@ export default function IncomePage() {
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 bg-gradient-to-br from-green-400 to-emerald-600 rounded-xl flex items-center justify-center shadow-md">
-                  <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                   </svg>
                 </div>
@@ -497,9 +497,9 @@ export default function IncomePage() {
                   </div>
                   {/* FAB */}
       <button onClick={openAdd}
-        className="fixed bottom-20 md:bottom-6 right-6 z-40 w-14 h-14 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-full shadow-2xl hover:shadow-green-400/50 hover:scale-110 active:scale-95 transition-all duration-200 flex items-center justify-center"
+        className="fixed bottom-20 md:bottom-6 right-4 z-40 w-12 h-12 md:w-14 md:h-14 bg-emerald-600 text-white rounded-full shadow-lg hover:bg-emerald-700 hover:scale-110 active:scale-95 transition-all duration-200 flex items-center justify-center"
         style={{ boxShadow: '0 4px 20px rgba(16,185,129,0.4)' }}>
-        <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+        <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
         </svg>
       </button>
@@ -545,9 +545,9 @@ export default function IncomePage() {
                   ) : <p className="text-sm text-gray-400 text-center py-4">暂无工时数据</p>}
                   {/* FAB */}
       <button onClick={openAdd}
-        className="fixed bottom-20 md:bottom-6 right-6 z-40 w-14 h-14 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-full shadow-2xl hover:shadow-green-400/50 hover:scale-110 active:scale-95 transition-all duration-200 flex items-center justify-center"
+        className="fixed bottom-20 md:bottom-6 right-4 z-40 w-12 h-12 md:w-14 md:h-14 bg-emerald-600 text-white rounded-full shadow-lg hover:bg-emerald-700 hover:scale-110 active:scale-95 transition-all duration-200 flex items-center justify-center"
         style={{ boxShadow: '0 4px 20px rgba(16,185,129,0.4)' }}>
-        <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+        <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
         </svg>
       </button>
@@ -585,9 +585,9 @@ export default function IncomePage() {
                   }} options={{ responsive: true, plugins: { legend: { display: false }, tooltip: { callbacks: { label: (ctx) => "HK$ " + ctx.raw + " (" + weekdayCounts[ctx.dataIndex] + "次)" } } }, scales: { y: { beginAtZero: true, ticks: { callback: (v) => "HK$" + v } } } }} />
                   {/* FAB */}
       <button onClick={openAdd}
-        className="fixed bottom-20 md:bottom-6 right-6 z-40 w-14 h-14 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-full shadow-2xl hover:shadow-green-400/50 hover:scale-110 active:scale-95 transition-all duration-200 flex items-center justify-center"
+        className="fixed bottom-20 md:bottom-6 right-4 z-40 w-12 h-12 md:w-14 md:h-14 bg-emerald-600 text-white rounded-full shadow-lg hover:bg-emerald-700 hover:scale-110 active:scale-95 transition-all duration-200 flex items-center justify-center"
         style={{ boxShadow: '0 4px 20px rgba(16,185,129,0.4)' }}>
-        <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+        <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
         </svg>
       </button>
@@ -628,9 +628,9 @@ export default function IncomePage() {
                   {topDays.length === 0 && <p className="text-sm text-gray-400 text-center py-4">暂无数据</p>}
                   {/* FAB */}
       <button onClick={openAdd}
-        className="fixed bottom-20 md:bottom-6 right-6 z-40 w-14 h-14 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-full shadow-2xl hover:shadow-green-400/50 hover:scale-110 active:scale-95 transition-all duration-200 flex items-center justify-center"
+        className="fixed bottom-20 md:bottom-6 right-4 z-40 w-12 h-12 md:w-14 md:h-14 bg-emerald-600 text-white rounded-full shadow-lg hover:bg-emerald-700 hover:scale-110 active:scale-95 transition-all duration-200 flex items-center justify-center"
         style={{ boxShadow: '0 4px 20px rgba(16,185,129,0.4)' }}>
-        <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+        <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
         </svg>
       </button>
@@ -647,7 +647,7 @@ export default function IncomePage() {
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-5 max-h-[90vh] overflow-y-auto border border-green-100" onClick={e => e.stopPropagation()}>
             <div className="flex items-center gap-2 mb-5">
               <div className="w-8 h-8 bg-gradient-to-br from-green-400 to-emerald-600 rounded-xl flex items-center justify-center shadow-md">
-                <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
+                <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
               </div>
               <h2 className="text-lg font-bold text-gray-900">{editItem ? '编辑收入' : '✨ 新增收入'}</h2>
             </div>
@@ -732,15 +732,17 @@ export default function IncomePage() {
       )}
       {/* FAB */}
       <button onClick={openAdd}
-        className="fixed bottom-20 md:bottom-6 right-6 z-40 w-14 h-14 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-full shadow-2xl hover:shadow-green-400/50 hover:scale-110 active:scale-95 transition-all duration-200 flex items-center justify-center"
+        className="fixed bottom-20 md:bottom-6 right-4 z-40 w-12 h-12 md:w-14 md:h-14 bg-emerald-600 text-white rounded-full shadow-lg hover:bg-emerald-700 hover:scale-110 active:scale-95 transition-all duration-200 flex items-center justify-center"
         style={{ boxShadow: '0 4px 20px rgba(16,185,129,0.4)' }}>
-        <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+        <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
         </svg>
       </button>
     </div>
   );
 }
+
+
 
 
 

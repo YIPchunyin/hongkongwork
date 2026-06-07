@@ -1,6 +1,22 @@
-﻿import WeatherWidget from '@/components/WeatherWidget';
-import ExchangeRateWidget from '@/components/ExchangeRateWidget';
-import MtrWidget from '@/components/MtrWidget';
+﻿import dynamic from 'next/dynamic';
+
+const WeatherWidget = dynamic(() => import('@/components/WeatherWidget'), { 
+  loading: () => <SkeletonCard icon="🌤️" label="天气" />});
+const ExchangeRateWidget = dynamic(() => import('@/components/ExchangeRateWidget'), { 
+  loading: () => <SkeletonCard icon="💱" label="汇率" />});
+const MtrWidget = dynamic(() => import('@/components/MtrWidget'), { 
+  loading: () => <SkeletonCard icon="🚇" label="地铁" />});
+
+function SkeletonCard({ icon, label }: { icon: string; label: string }) {
+  return (
+    <div className="bg-white rounded-2xl p-5 sm:p-6 shadow-sm border border-gray-100 animate-pulse">
+      <div className="w-12 h-12 bg-gray-200 rounded-xl mb-3 flex items-center justify-center text-2xl">{icon}</div>
+      <div className="h-4 bg-gray-200 rounded w-16 mb-2" />
+      <div className="h-3 bg-gray-100 rounded w-24 mb-3" />
+      <div className="h-8 bg-gray-100 rounded w-32" />
+    </div>
+  );
+}
 
 export default function HomePage() {
   return (
@@ -28,3 +44,4 @@ export default function HomePage() {
     </div>
   );
 }
+
