@@ -35,6 +35,7 @@ export default function Navbar() {
     { href: '/search', label: '搜索' },
     { href: '/expenses', label: '账单' },
     { href: '/work', label: '工时' },
+    { href: '/income', label: '收入' },
   ];
 
   return (
@@ -152,4 +153,5 @@ export default function Navbar() {
     </>
   );
 }
+
 
