@@ -36,10 +36,19 @@ export async function GET(request: NextRequest) {
 
     const allIncomes = await Income.find({ userId: payload.userId }).lean();
     let totalIncome = 0, totalHours = 0;
-    allIncomes.forEach(r => { totalIncome += r.amount || 0; totalHours += r.hours || 0; });
+    const industryTotals: Record<string, number> = {}, companyTotals: Record<string, number> = {}, shiftTotals: Record<string, number> = {}, categoryTotals: Record<string, number> = {}, monthlyTotals: Record<string, number> = {};
+    allIncomes.forEach(r => {
+      const amt = r.amount || 0; const hrs = r.hours || 0;
+      totalIncome += amt; totalHours += hrs;
+      const ind = r.industry || '其他'; industryTotals[ind] = (industryTotals[ind] || 0) + amt;
+      const com = r.company || '其他'; companyTotals[com] = (companyTotals[com] || 0) + amt;
+      const sh = r.shift || '其他'; shiftTotals[sh] = (shiftTotals[sh] || 0) + amt;
+      const cat = r.category || '未分类'; categoryTotals[cat] = (categoryTotals[cat] || 0) + amt;
+      if (r.date) { const ym = r.date.substring(0, 7); monthlyTotals[ym] = (monthlyTotals[ym] || 0) + amt; }
+    });
 
-    const industries = [...new Set(allIncomes.map(r => r.industry).filter(Boolean))];
-    const companies = [...new Set(allIncomes.map(r => r.company).filter(Boolean))];
+    const industries = Object.keys(industryTotals).sort();
+    const companies = Object.keys(companyTotals).sort();
 
     return NextResponse.json({
       success: true,
@@ -47,7 +56,15 @@ export async function GET(request: NextRequest) {
         items: items.map(i => ({ ...i, _id: String(i._id), category: i.category || "未分类", note: i.note || "", shift: i.shift || "", company: i.company || "", industry: i.industry || "" })),
         total, page, limit,
         totalPages: Math.ceil(total / limit),
-        stats: { totalIncome, totalHours, totalRecords: allIncomes.length, industries, companies },
+        stats: {
+          totalIncome, totalHours, totalRecords: allIncomes.length,
+          industries, companies,
+          industryTotals,
+          companyTotals,
+          shiftTotals,
+          categoryTotals,
+          monthlyTotals,
+        },
       },
     });
   } catch (error) {

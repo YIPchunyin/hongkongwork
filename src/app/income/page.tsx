@@ -1,6 +1,10 @@
 ﻿'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement, PointElement, LineElement } from 'chart.js';
+import { Bar, Doughnut, Line } from 'react-chartjs-2';
+
+ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement, PointElement, LineElement);
 import Link from 'next/link';
 import { useAuth } from '@/components/AuthProvider';
 
@@ -22,7 +26,15 @@ interface Stats {
   totalRecords: number;
   industries: string[];
   companies: string[];
+  industryTotals: Record<string, number>;
+  companyTotals: Record<string, number>;
+  shiftTotals: Record<string, number>;
+  categoryTotals: Record<string, number>;
+  monthlyTotals: Record<string, number>;
 }
+
+  const chartColors = ['#10B981', '#3B82F6', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#14B8A6', '#F97316', '#6366F1', '#84CC16'];
+  const chartBgColors = chartColors.map(c => c + '33');
 
 export default function IncomePage() {
   const { user, loading } = useAuth();
@@ -177,19 +189,82 @@ export default function IncomePage() {
         </div>
       )}
 
-      {/* Industry/Company summary */}
-      {stats && stats.industries.length > 0 && (
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 mb-4">
-          <div className="flex flex-wrap gap-2">
-            {stats.industries.map(ind => {
-              const total = incomes.filter(i => i.industry === ind).reduce((s, i) => s + i.amount, 0);
-              const count = incomes.filter(i => i.industry === ind).length;
+      {/* Charts & Analysis */}
+      {stats && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+          {/* Monthly Trend */}
+          {Object.keys(stats.monthlyTotals).length > 1 && (
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-5">
+              <h3 className="text-sm font-semibold text-gray-700 mb-3">月度收入趋势</h3>
+              <Bar data={{
+                labels: Object.keys(stats.monthlyTotals).sort(),
+                datasets: [{ label: '收入 (HK$)', data: Object.keys(stats.monthlyTotals).sort().map(m => stats.monthlyTotals[m]), backgroundColor: '#10B98133', borderColor: '#10B981', borderWidth: 2, borderRadius: 4 }]
+              }} options={{ responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { callback: (v: any) => 'HK$' + v } } } }} />
+            </div>
+          )}
+
+          {/* Industry Distribution */}
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-5">
+            <h3 className="text-sm font-semibold text-gray-700 mb-3">行业分布</h3>
+            {Object.keys(stats.industryTotals).length > 0 && (
+              <div className="flex items-center gap-4">
+                <div className="w-32 h-32 flex-shrink-0">
+                  <Doughnut data={{
+                    labels: Object.keys(stats.industryTotals),
+                    datasets: [{ data: Object.values(stats.industryTotals), backgroundColor: chartColors.slice(0, Object.keys(stats.industryTotals).length), borderWidth: 0 }]
+                  }} options={{ responsive: true, plugins: { legend: { display: false } } }} />
+                </div>
+                <div className="flex-1 space-y-2">
+                  {Object.entries(stats.industryTotals).sort((a: any, b: any) => b[1] - a[1]).map(([ind, total], i) => (
+                    <div key={ind} className="flex items-center justify-between text-sm">
+                      <div className="flex items-center gap-2">
+                        <span className="w-3 h-3 rounded-full" style={{ backgroundColor: chartColors[i % chartColors.length] }} />
+                        <span className="text-gray-600">{ind}</span>
+                      </div>
+                      <span className="font-medium text-gray-800">HK$ {Number(total).toFixed(2)}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Company Breakdown */}
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-5">
+            <h3 className="text-sm font-semibold text-gray-700 mb-3">公司收入</h3>
+            {Object.keys(stats.companyTotals).sort().map((com, i) => {
+              const amt = stats.companyTotals[com];
+              const pct = stats.totalIncome > 0 ? (amt / stats.totalIncome * 100) : 0;
               return (
-                <span key={ind} className="text-xs px-3 py-1.5 bg-green-50 text-green-700 rounded-full font-medium">
-                  {ind}: HK$ {total.toFixed(2)} ({count})
-                </span>
+                <div key={com} className="mb-2">
+                  <div className="flex justify-between text-sm mb-1">
+                    <span className="text-gray-600">{com}</span>
+                    <span className="font-medium">HK$ {amt.toFixed(2)} ({pct.toFixed(1)}%)</span>
+                  </div>
+                  <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+                    <div className="h-full rounded-full transition-all" style={{ width: pct.toFixed(1) + '%', backgroundColor: chartColors[i % chartColors.length] }} />
+                  </div>
+                </div>
               );
             })}
+          </div>
+
+          {/* Shift Analysis */}
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-5">
+            <h3 className="text-sm font-semibold text-gray-700 mb-3">班次分析</h3>
+            {Object.keys(stats.shiftTotals).length > 0 && (
+              <div className="space-y-2">
+                {Object.entries(stats.shiftTotals).sort((a: any, b: any) => b[1] - a[1]).map(([sh, total], i) => (
+                  <div key={sh} className="flex items-center justify-between px-3 py-2 bg-gray-50 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: chartColors[i % chartColors.length] }} />
+                      <span className="text-sm text-gray-600">{sh}</span>
+                    </div>
+                    <span className="text-sm font-medium">HK$ {Number(total).toFixed(2)}</span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}
