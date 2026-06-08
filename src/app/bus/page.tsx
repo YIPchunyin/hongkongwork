@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState, useCallback, useEffect, useRef } from 'react';
 import Link from 'next/link';
@@ -139,7 +139,7 @@ export default function BusPage() {
           <svg className="w-5 h-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
         </Link>
         <div>
-          <h1 className="text-lg sm:text-2xl font-bold text-gray-900">\U0001f68c 巴士到站</h1>
+          <h1 className="text-lg sm:text-2xl font-bold text-gray-900">🚌 巴士到站</h1>
           <p className="text-xs sm:text-sm text-gray-400">搜索巴士线路，查看实时到站</p>
         </div>
       </div>
@@ -224,7 +224,7 @@ export default function BusPage() {
       {/* Route Stops / ETA */}
       {!selectedRoute && results.length === 0 && !searching && search && (
         <div className="text-center py-10 text-gray-400">
-          <p className="text-4xl mb-2">\U0001f68c</p>
+          <p className="text-4xl mb-2">🚌</p>
           <p className="text-sm">未找到相关巴士线路</p>
         </div>
       )}

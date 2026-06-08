@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
@@ -16,24 +16,82 @@ interface UploadResult {
   error?: string;
 }
 
+interface ImageFile {
+  file: File;
+  preview: string;
+  rotation: number;
+  mode: 'ai' | 'manual';
+  manualAmount: string;
+  manualMerchant: string;
+  manualCategory: string;
+  manualDate: string;
+  manualDesc: string;
+}
+
+const CATEGORIES = ['餐饮', '交通', '购物', '医疗', '娱乐', '居住', '通讯', '教育', '其他'];
+
+function rotateBase64Image(base64: string, rotation: number): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      const angle = rotation * 90;
+      const rad = (angle * Math.PI) / 180;
+      const sin = Math.abs(Math.sin(rad));
+      const cos = Math.abs(Math.cos(rad));
+      canvas.width = img.width * cos + img.height * sin;
+      canvas.height = img.width * sin + img.height * cos;
+      const ctx = canvas.getContext('2d')!;
+      ctx.translate(canvas.width / 2, canvas.height / 2);
+      ctx.rotate(rad);
+      ctx.drawImage(img, -img.width / 2, -img.height / 2);
+      const rotatedDataUrl = canvas.toDataURL('image/jpeg', 0.9);
+      resolve(rotatedDataUrl);
+    };
+    img.onerror = reject;
+    img.src = base64;
+  });
+}
+
+function dataURLtoBlob(dataUrl: string): Blob {
+  const arr = dataUrl.split(',');
+  const mime = arr[0].match(/:(.*?);/)![1];
+  const bstr = atob(arr[1]);
+  const n = bstr.length;
+  const u8arr = new Uint8Array(n);
+  for (let i = 0; i < n; i++) u8arr[i] = bstr.charCodeAt(i);
+  return new Blob([u8arr], { type: mime });
+}
+
 export default function ExpensesUploadPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [files, setFiles] = useState<{ file: File; preview: string }[]>([]);
+  const [files, setFiles] = useState<ImageFile[]>([]);
   const [results, setResults] = useState<UploadResult[] | null>(null);
   const [uploading, setUploading] = useState(false);
   const [totalAmount, setTotalAmount] = useState(0);
+  const today = new Date().toISOString().split('T')[0];
 
   if (!loading && !user) { router.push('/login'); return null; }
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selected = e.target.files;
     if (!selected) return;
-    const newFiles: { file: File; preview: string }[] = [];
+    const newFiles: ImageFile[] = [];
     for (let i = 0; i < selected.length; i++) {
-      newFiles.push({ file: selected[i], preview: URL.createObjectURL(selected[i]) });
+      newFiles.push({
+        file: selected[i],
+        preview: URL.createObjectURL(selected[i]),
+        rotation: 0,
+        mode: 'ai',
+        manualAmount: '',
+        manualMerchant: '',
+        manualCategory: CATEGORIES[0],
+        manualDate: today,
+        manualDesc: '',
+      });
     }
     setFiles((prev) => [...prev, ...newFiles]);
     setResults(null);
@@ -49,19 +107,59 @@ export default function ExpensesUploadPage() {
     setResults(null);
   };
 
-  const handleUpload = async () => {
-    if (files.length === 0) return;
+  const rotateFile = (index: number) => {
+    setFiles((prev) => {
+      const updated = [...prev];
+      updated[index] = { ...updated[index], rotation: (updated[index].rotation + 1) % 4 };
+      return updated;
+    });
+  };
+
+  const getRotationStyle = (rotation: number): React.CSSProperties => ({
+    transform: `rotate(${rotation * 90}deg)`,
+    transition: 'transform 0.3s ease',
+  });
+
+  const toggleImageMode = (index: number) => {
+    setFiles((prev) => {
+      const updated = [...prev];
+      updated[index] = { ...updated[index], mode: updated[index].mode === 'ai' ? 'manual' : 'ai' };
+      return updated;
+    });
+  };
+
+  const updateManualField = (index: number, field: string, value: string) => {
+    setFiles((prev) => {
+      const updated = [...prev];
+      (updated[index] as any)[field] = value;
+      return updated;
+    });
+  };
+
+  const handleAiUpload = async () => {
+    const aiFiles = files.filter((f) => f.mode === 'ai');
+    if (aiFiles.length === 0) { alert('请选择要 AI 识别的图片'); return; }
     setUploading(true);
-
     const formData = new FormData();
-    for (const f of files) formData.append('files', f.file);
-
+    for (const f of aiFiles) {
+      if (f.rotation !== 0) {
+        try {
+          const rotatedDataUrl = await rotateBase64Image(f.preview, f.rotation);
+          const rotatedBlob = dataURLtoBlob(rotatedDataUrl);
+          formData.append('files', rotatedBlob, f.file.name);
+        } catch {
+          formData.append('files', f.file);
+        }
+      } else {
+        formData.append('files', f.file);
+      }
+    }
     try {
       const res = await fetch('/api/expenses', { method: 'POST', body: formData });
       const json = await res.json();
       if (json.success) {
-        setResults(json.data);
-        setTotalAmount(json.totalAmount || 0);
+        setResults((prev) => [...(prev || []), ...json.data]);
+        setTotalAmount((prev) => prev + (json.totalAmount || 0));
       } else {
         alert(json.error || '上传失败');
       }
@@ -72,16 +170,87 @@ export default function ExpensesUploadPage() {
     }
   };
 
+  const handleManualUpload = async () => {
+    const manualFiles = files.filter((f) => f.mode === 'manual');
+    if (manualFiles.length === 0) { alert('请选择手动填写的图片'); return; }
+    for (const f of manualFiles) {
+      if (!f.manualAmount || parseFloat(f.manualAmount) <= 0) {
+        alert('请填写有效金额');
+        return;
+      }
+    }
+    setUploading(true);
+    try {
+      for (const f of manualFiles) {
+        const imgFormData = new FormData();
+        if (f.rotation !== 0) {
+          try {
+            const rotatedDataUrl = await rotateBase64Image(f.preview, f.rotation);
+            const rotatedBlob = dataURLtoBlob(rotatedDataUrl);
+            imgFormData.append('files', rotatedBlob, f.file.name);
+          } catch {
+            imgFormData.append('files', f.file);
+          }
+        } else {
+          imgFormData.append('files', f.file);
+        }
+        
+        // Upload image to get a record with imageUrl
+        const uploadRes = await fetch('/api/expenses', { method: 'POST', body: imgFormData });
+        const uploadJson = await uploadRes.json();
+        
+        if (uploadJson.success && uploadJson.data.length > 0) {
+          const record = uploadJson.data[0];
+          // Update the record with manual data
+          await fetch('/api/expenses/' + record._id, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              amount: parseFloat(f.manualAmount),
+              merchant: f.manualMerchant,
+              category: f.manualCategory,
+              billDate: f.manualDate,
+              description: f.manualDesc,
+              status: 'confirmed',
+            }),
+          });
+          setResults((prev) => [...(prev || []), { 
+            ...record, 
+            amount: parseFloat(f.manualAmount),
+            merchant: f.manualMerchant,
+            category: f.manualCategory,
+            billDate: f.manualDate,
+            description: f.manualDesc,
+          }]);
+          setTotalAmount((prev) => prev + parseFloat(f.manualAmount));
+        } else {
+          alert('图片上传失败');
+        }
+      }
+    } catch {
+      alert('网络错误');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const hasAiFiles = files.some((f) => f.mode === 'ai');
+  const hasManualFiles = files.some((f) => f.mode === 'manual');
+  const aiCount = files.filter((f) => f.mode === 'ai').length;
+  const manualCount = files.filter((f) => f.mode === 'manual').length;
+
   return (
     <div className="max-w-3xl mx-auto px-4 py-6 sm:py-8">
-      <div className="mb-6">
-        <h1 className="text-xl sm:text-2xl font-bold text-gray-900">上传杂费单</h1>
-        <p className="text-sm text-gray-500 mt-1">上传后 AI 自动识别金额和商户信息</p>
+      <div className="mb-6 flex items-center justify-between">
+        <div>
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">杂费单</h1>
+          <p className="text-sm text-gray-500 mt-1">上传图片后选择 AI 识别或手动填写</p>
+        </div>
       </div>
 
       {!results ? (
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-          {/* Upload area */}
+          {/* Upload area - always shown first */}
           <div
             onClick={() => fileInputRef.current?.click()}
             className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center cursor-pointer hover:border-blue-400 hover:bg-blue-50/50 transition-colors"
@@ -94,31 +263,141 @@ export default function ExpensesUploadPage() {
             <input ref={fileInputRef} type="file" accept="image/*" multiple onChange={handleFileSelect} className="hidden" />
           </div>
 
-          {/* Previews */}
+          {/* File previews */}
           {files.length > 0 && (
-            <div className="mt-4 space-y-3">
-              <div className="grid grid-cols-4 sm:grid-cols-5 gap-2">
+            <div className="mt-6 space-y-4">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
                 {files.map((f, i) => (
-                  <div key={i} className="relative aspect-square rounded-lg overflow-hidden bg-gray-100 group">
-                    <img src={f.preview} alt="" className="w-full h-full object-cover" />
-                    <button onClick={() => removeFile(i)} className="absolute top-0.5 right-0.5 w-5 h-5 bg-black/50 text-white rounded-full flex items-center justify-center text-xs opacity-0 group-hover:opacity-100">✕</button>
+                  <div key={i} className="bg-gray-50 rounded-xl overflow-hidden border border-gray-200">
+                    {/* Image preview with rotation */}
+                    <div className="relative aspect-square bg-gray-100 flex items-center justify-center">
+                      <img
+                        src={f.preview}
+                        alt=""
+                        className="max-w-full max-h-full object-contain"
+                        style={getRotationStyle(f.rotation)}
+                      />
+                      {/* Always-visible rotate and delete buttons */}
+                      <div className="absolute top-1 right-1 flex gap-1">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); rotateFile(i); }}
+                          className="w-8 h-8 bg-black/60 text-white rounded-full flex items-center justify-center text-base hover:bg-black/80 shadow"
+                          title="点击旋转 90°"
+                        >
+                          ↻
+                        </button>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); removeFile(i); }}
+                          className="w-8 h-8 bg-black/60 text-white rounded-full flex items-center justify-center text-base hover:bg-red-500/80 shadow"
+                          title="删除"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                      {/* Mode badge */}
+                      <div className="absolute bottom-1 left-1">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); toggleImageMode(i); }}
+                          className={
+                            'text-xs px-2 py-0.5 rounded-full font-medium shadow border ' +
+                            (f.mode === 'ai'
+                              ? 'bg-blue-500 text-white border-blue-400'
+                              : 'bg-green-500 text-white border-green-400')
+                          }
+                        >
+                          {f.mode === 'ai' ? '🤖 AI' : '✏️ 手动'}
+                        </button>
+                      </div>
+                    </div>
+                    {/* File name */}
+                    <div className="px-2 py-1.5">
+                      <p className="text-xs text-gray-500 truncate">{f.file.name}</p>
+                    </div>
+
+                    {/* Manual form (shown when mode = manual) */}
+                    {f.mode === 'manual' && (
+                      <div className="px-2 pb-3 space-y-2 border-t border-gray-200 pt-2 bg-gray-50/50">
+                        <div>
+                          <input
+                            type="number" step="0.01" placeholder="金额 (HK$)"
+                            value={f.manualAmount}
+                            onChange={(e) => updateManualField(i, 'manualAmount', e.target.value)}
+                            className="w-full px-2 py-1.5 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                          />
+                        </div>
+                        <div>
+                          <input
+                            type="text" placeholder="商户名称"
+                            value={f.manualMerchant}
+                            onChange={(e) => updateManualField(i, 'manualMerchant', e.target.value)}
+                            className="w-full px-2 py-1.5 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                          />
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                          <select
+                            value={f.manualCategory}
+                            onChange={(e) => updateManualField(i, 'manualCategory', e.target.value)}
+                            className="px-2 py-1.5 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                          >
+                            {CATEGORIES.map((c: string) => <option key={c} value={c}>{c}</option>)}
+                          </select>
+                          <input
+                            type="date"
+                            value={f.manualDate}
+                            max={today}
+                            onChange={(e) => updateManualField(i, 'manualDate', e.target.value)}
+                            className="px-2 py-1.5 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                          />
+                        </div>
+                        <div>
+                          <input
+                            type="text" placeholder="备注（可选）"
+                            value={f.manualDesc}
+                            onChange={(e) => updateManualField(i, 'manualDesc', e.target.value)}
+                            className="w-full px-2 py-1.5 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                          />
+                        </div>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
-              <button
-                onClick={handleUpload}
-                disabled={uploading}
-                className="w-full py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 disabled:opacity-50 transition-all min-h-[48px]"
-              >
-                {uploading ? (
-                  <span className="flex items-center justify-center gap-2">
-                    <svg className="animate-spin w-5 h-5" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
-                    AI 识别中...
-                  </span>
-                ) : (
-                  `上传 ${files.length} 张并 AI 识别`
+
+              {/* Action buttons */}
+              <div className="flex gap-3">
+                {hasAiFiles && (
+                  <button
+                    onClick={handleAiUpload}
+                    disabled={uploading}
+                    className="flex-1 py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 disabled:opacity-50 transition-all min-h-[48px]"
+                  >
+                    {uploading ? (
+                      <span className="flex items-center justify-center gap-2">
+                        <svg className="animate-spin w-5 h-5" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
+                        处理中...
+                      </span>
+                    ) : (
+                      '🤖 AI 识别 (' + aiCount + ' 张)'
+                    )}
+                  </button>
                 )}
-              </button>
+                {hasManualFiles && (
+                  <button
+                    onClick={handleManualUpload}
+                    disabled={uploading}
+                    className="flex-1 py-3 bg-green-600 text-white font-semibold rounded-xl hover:bg-green-700 disabled:opacity-50 transition-all min-h-[48px]"
+                  >
+                    {uploading ? (
+                      <span className="flex items-center justify-center gap-2">
+                        <svg className="animate-spin w-5 h-5" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
+                        提交中...
+                      </span>
+                    ) : (
+                      '✓ 提交手动 (' + manualCount + ' 张)'
+                    )}
+                  </button>
+                )}
+              </div>
             </div>
           )}
         </div>
@@ -127,18 +406,20 @@ export default function ExpensesUploadPage() {
         <div className="space-y-4">
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-gray-800">AI 识别完成</h2>
+              <h2 className="text-lg font-semibold text-gray-900">已提交</h2>
               <span className="text-sm text-gray-400">{results.length} 张</span>
             </div>
 
             <div className="space-y-3">
               {results.map((r) => (
                 <div key={r._id} className="flex gap-3 p-3 bg-gray-50 rounded-xl">
-                  <img src={r.imageUrl} alt="" className="w-16 h-16 rounded-lg object-cover bg-gray-200 flex-shrink-0" />
+                  {r.imageUrl && (
+                    <img src={r.imageUrl} alt="" className="w-16 h-16 rounded-lg object-cover bg-gray-200 flex-shrink-0" />
+                  )}
                   <div className="flex-1 min-w-0 text-sm">
-                    <p className="font-medium text-gray-800">{r.merchant || '未识别'}</p>
+                    <p className="font-medium text-gray-800">{r.merchant || '未填写'}</p>
                     <p className="text-blue-600 font-semibold">HK$ {r.amount.toFixed(2)}</p>
-                    <p className="text-xs text-gray-400">{r.category}{r.billDate ? ` · ${r.billDate}` : ''}</p>
+                    <p className="text-xs text-gray-400">{r.category}{r.billDate ? ' · ' + r.billDate : ''}</p>
                     {r.error && <p className="text-xs text-red-500 mt-0.5">{r.error}</p>}
                   </div>
                 </div>
@@ -161,7 +442,7 @@ export default function ExpensesUploadPage() {
                 onClick={() => { setResults(null); setFiles([]); }}
                 className="px-6 py-3 bg-gray-100 text-gray-600 font-medium rounded-xl hover:bg-gray-200 transition-colors"
               >
-                继续上传
+                继续
               </button>
             </div>
           </div>
