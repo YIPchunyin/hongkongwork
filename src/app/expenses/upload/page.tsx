@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
@@ -29,6 +29,7 @@ interface ImageFile {
   manualCategory: string;
   manualDate: string;
   manualDesc: string;
+  manualProject: string;
 }
 
 const DEFAULT_CATEGORIES = ['工具', '交通', '其他'];
@@ -125,6 +126,7 @@ export default function ExpensesUploadPage() {
   const [results, setResults] = useState<UploadResult[] | null>(null);
   const [uploading, setUploading] = useState(false);
   const [totalAmount, setTotalAmount] = useState(0);
+  const [isManualResult, setIsManualResult] = useState(false);
   const [editorOpen, setEditorOpen] = useState(false);
   const [editIndex, setEditIndex] = useState(-1);
   const [editSrc, setEditSrc] = useState('');
@@ -154,6 +156,7 @@ export default function ExpensesUploadPage() {
         manualCategory: CATEGORIES[0],
         manualDate: today,
         manualDesc: '',
+        manualProject: '',
       });
     }
     setFiles((prev) => [...prev, ...newFiles]);
@@ -279,53 +282,38 @@ export default function ExpensesUploadPage() {
     }
     setUploading(true);
     try {
+      const newResults = [];
+      let sum = 0;
       for (const f of manualFiles) {
-        const imgFormData = new FormData();
+        const formData = new FormData();
         if (f.rotation !== 0) {
           try {
             const rotatedDataUrl = await rotateBase64Image(f.preview, f.rotation);
             const rotatedBlob = dataURLtoBlob(rotatedDataUrl);
-            imgFormData.append('files', rotatedBlob, f.file.name);
+            formData.append('file', rotatedBlob, f.file.name);
           } catch {
-            imgFormData.append('files', f.file);
+            formData.append('file', f.file);
           }
         } else {
-          imgFormData.append('files', f.file);
+          formData.append('file', f.file);
         }
-        
-        // Upload image to get a record with imageUrl
-        const uploadRes = await fetch('/api/expenses', { method: 'POST', body: imgFormData });
-        const uploadJson = await uploadRes.json();
-        
-        if (uploadJson.success && uploadJson.data.length > 0) {
-          const record = uploadJson.data[0];
-          // Update the record with manual data
-          await fetch('/api/expenses/' + record._id, {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              amount: parseFloat(f.manualAmount),
-              merchant: f.manualMerchant,
-              category: f.manualCategory,
-              billDate: f.manualDate,
-              description: f.manualDesc,
-              status: 'confirmed',
-            }),
-          });
-          setResults((prev) => [...(prev || []), { 
-            ...record, 
-            amount: parseFloat(f.manualAmount),
-            merchant: f.manualMerchant,
-            category: f.manualCategory,
-            billDate: f.manualDate,
-            description: f.manualDesc,
-          }]);
-          setTotalAmount((prev) => prev + parseFloat(f.manualAmount));
-        } else {
-          alert('图片上传失败');
+        formData.append('amount', f.manualAmount);
+        formData.append('merchant', f.manualMerchant);
+        formData.append('category', f.manualCategory);
+        formData.append('billDate', f.manualDate);
+        formData.append('description', f.manualDesc);
+        formData.append('project', f.manualProject);
+
+        const res = await fetch('/api/expenses/manual-upload', { method: 'POST', body: formData });
+        const json = await res.json();
+        if (json.success) {
+          newResults.push(json.data);
+          sum += json.data.amount;
         }
       }
-    } catch {
+      setResults(newResults);
+      setTotalAmount(sum);
+      setIsManualResult(true);    } catch {
       alert('网络错误');
     } finally {
       setUploading(false);
@@ -451,13 +439,19 @@ export default function ExpensesUploadPage() {
                             className="px-2 py-1.5 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
                           />
                         </div>
-                        <div>
-                          <input
-                            type="text" placeholder="备注（可选）"
-                            value={f.manualDesc}
-                            onChange={(e) => updateManualField(i, 'manualDesc', e.target.value)}
-                            className="w-full px-2 py-1.5 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
-                          />
+                        <div className="grid grid-cols-2 gap-2">
+                        <input
+                        type="text" placeholder="备注（可选）"
+                        value={f.manualDesc}
+                        onChange={(e) => updateManualField(i, 'manualDesc', e.target.value)}
+                        className="w-full px-2 py-1.5 border border-gray-200 rounded-lg text-sm"
+                        />
+                        <input
+                        type="text" placeholder="所属项目（可选）"
+                        value={f.manualProject}
+                        onChange={(e) => updateManualField(i, 'manualProject', e.target.value)}
+                        className="w-full px-2 py-1.5 border border-gray-200 rounded-lg text-sm"
+                        />
                         </div>
                       </div>
                     )}
@@ -534,14 +528,20 @@ export default function ExpensesUploadPage() {
             </div>
 
             <div className="mt-4 flex gap-3">
+              {isManualResult ? (
+                <div className="flex-1 py-3 bg-green-50 text-green-700 font-semibold rounded-xl text-center text-sm">
+                  ✓ 已确认，无需审核
+                </div>
+              ) : (
+                <button
+                  onClick={() => router.push("/expenses/review")}
+                  className="flex-1 py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-colors"
+                >
+                  去确认信息
+                </button>
+              )}
               <button
-                onClick={() => router.push('/expenses/review')}
-                className="flex-1 py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-colors"
-              >
-                去确认信息
-              </button>
-              <button
-                onClick={() => { setResults(null); setFiles([]); }}
+                onClick={() => { setResults(null); setFiles([]); setIsManualResult(false); }}
                 className="px-6 py-3 bg-gray-100 text-gray-600 font-medium rounded-xl hover:bg-gray-200 transition-colors"
               >
                 继续
