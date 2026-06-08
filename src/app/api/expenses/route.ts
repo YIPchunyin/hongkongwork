@@ -3,6 +3,7 @@ import connectDB from '@/lib/mongodb';
 import Expense from '@/lib/models/Expense';
 import { getTokenFromRequest, verifyToken } from '@/lib/auth';
 import { saveFileToLocal, fileToBuffer } from '@/lib/localStorage';
+import { uploadToR2, isR2Configured } from '@/lib/r2Storage';
 
 const API_BASE_URL = process.env.AI_API_BASE_URL || 'https://api-ai.7e.ink';
 const API_KEY = process.env.AI_API_KEY || '';
@@ -21,7 +22,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '100');
-    const month = searchParams.get('month'); // e.g. "2026-06"
+    const month = searchParams.get('month');
     const status = searchParams.get('status') || 'confirmed';
     const category = searchParams.get('category');
 
@@ -29,7 +30,6 @@ export async function GET(request: NextRequest) {
 
     const query: Record<string, unknown> = { userId: payload.userId, status };
     if (month) {
-      // Match bills in that month
       const regex = `^${month}-`;
       query.billDate = { $regex: regex };
     }
@@ -94,16 +94,25 @@ export async function POST(request: NextRequest) {
       const bytes = await file.arrayBuffer();
       const buffer = Buffer.from(bytes);
 
-      // Save image
-      const { relativePath } = await saveFileToLocal(buffer, file.name, 'image');
-      const imageUrl = `/api/files/${relativePath}`;
+      // Save image to R2 (preferred) or local storage
+      let imageUrl: string, imageOssKey: string;
+      const useR2 = isR2Configured();
+      if (useR2) {
+        const r2Result = await uploadToR2(buffer, file.name, 'expenses');
+        imageUrl = r2Result.url;
+        imageOssKey = r2Result.key;
+      } else {
+        const { relativePath } = await saveFileToLocal(buffer, file.name, 'image');
+        imageUrl = `/api/files/${relativePath}`;
+        imageOssKey = relativePath;
+      }
 
       // Create record (pending)
       const expense = await Expense.create({
         userId: payload.userId,
         status: 'pending',
         imageUrl,
-        imageOssKey: relativePath,
+        imageOssKey,
         fileName: file.name,
       });
 
