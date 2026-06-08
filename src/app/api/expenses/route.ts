@@ -33,8 +33,17 @@ export async function GET(request: NextRequest) {
     else if (statusFilter === 'pending') query.status = { '$in': ['pending', 'recognized'] };
     else query.status = { '$in': ['recognized', 'confirmed'] };
     if (month) {
-      const regex = `^${month}-`;
-      query.billDate = { $regex: regex };
+      const year = parseInt(month.split('-')[0]);
+      const mo = parseInt(month.split('-')[1]);
+      const monthStart = new Date(year, mo - 1, 1);
+      const monthEnd = new Date(year, mo, 0, 23, 59, 59);
+      query["$or"] = [
+        { billDate: { "$regex": `^${month}-` } },
+        { 
+          billDate: { "$in": ['', null, undefined] },
+          createdAt: { "$gte": monthStart, "$lte": monthEnd }
+        }
+      ];
     }
     if (category) query.category = category;
 
@@ -226,7 +235,8 @@ export async function POST(request: NextRequest) {
       expense.merchant = merchant;
       expense.category = category;
       expense.description = description;
-      expense.billDate = billDate;
+      // Fallback to today if AI did not provide a date
+      expense.billDate = billDate || new Date().toISOString().split('T')[0];
       expense.aiRaw = aiRaw;
       expense.status = 'recognized';
       await expense.save();
