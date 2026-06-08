@@ -4,6 +4,39 @@ import { findDistrict, getHkoWeatherIcon, psrToPercent } from '@/lib/weather';
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
+function stripHtml(html: string | null | undefined): string {
+  if (!html) return '';
+  return html.replace(/<[^>]*>/g, '').trim();
+}
+
+function extractWindSpeed(windText: string | null | undefined): number {
+  if (!windText) return 15;
+  const match = windText.match(/force\s*(\d+)/i);
+  if (match) {
+    return parseInt(match[1]) * 10;
+  }
+  return 15;
+}
+
+function extractWindDirection(windText: string | null | undefined): number {
+  if (!windText) return 0;
+  const dirMap: Record<string, number> = {
+    north: 0, n: 0,
+    northeast: 45, ne: 45,
+    east: 90, e: 90,
+    southeast: 135, se: 135,
+    south: 180, s: 180,
+    southwest: 225, sw: 225,
+    west: 270, w: 270,
+    northwest: 315, nw: 315,
+  };
+  const lower = windText.toLowerCase();
+  for (const [key, deg] of Object.entries(dirMap)) {
+    if (lower.includes(key)) return deg;
+  }
+  return 0;
+}
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -64,15 +97,15 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // Extract wind from text
-    const windSpeed = extractWindSpeed(forecastDays[0]?.ForecastWind || '');
-    const windDirection = extractWindDirection(forecastDays[0]?.ForecastWind || '');
+    // Extract wind from text (safe with updated functions)
+    const windSpeed = extractWindSpeed(forecastDays[0]?.ForecastWind);
+    const windDirection = extractWindDirection(forecastDays[0]?.ForecastWind);
 
     // Build daily forecast
     const dailyForecast = forecastDays.slice(0, 7).map((day: any) => ({
       date: day.ForecastDate,
-      tempMax: parseFloat(day.ForecastMaxtemp),
-      tempMin: parseFloat(day.ForecastMintemp),
+      tempMax: parseFloat(day.ForecastMaxtemp || '0'),
+      tempMin: parseFloat(day.ForecastMintemp || '0'),
       weatherCode: getHkoWeatherIcon(day.ForecastIcon),
       weatherIcon: day.ForecastIcon,
       weatherDesc: day.IconDesc,
@@ -80,8 +113,8 @@ export async function GET(request: NextRequest) {
       psrRating: day.PSR,
       wind: day.ForecastWind,
       humidity: {
-        max: parseFloat(day.ForecastMaxrh),
-        min: parseFloat(day.ForecastMinrh),
+        max: parseFloat(day.ForecastMaxrh || '0'),
+        min: parseFloat(day.ForecastMinrh || '0'),
       },
       weatherText: day.ForecastWeather,
     }));
@@ -89,17 +122,11 @@ export async function GET(request: NextRequest) {
     const district = findDistrict(lat, lng);
 
     // Build radar image URLs
-    const radarImages = [];
+    const radarImages: string[] = [];
     if (radarData?.radar?.range0?.image) {
       const images = radarData.radar.range0.image;
-      const lastEntry = images[images.length - 1] || '';
-      const match = lastEntry.match(/"([^"]+)"/);
-      if (match) {
-        radarImages.push('https://www.hko.gov.hk/wxinfo/radars/' + match[1]);
-      }
-      // Also get a few more recent frames
       for (let i = Math.max(0, images.length - 5); i < images.length; i++) {
-        const m = images[i].match(/"([^"]+)"/);
+        const m = images[i]?.match(/"([^"]+)"/);
         if (m) {
           radarImages.push('https://www.hko.gov.hk/wxinfo/radars/' + m[1]);
         }
@@ -121,10 +148,10 @@ export async function GET(request: NextRequest) {
     if (forecastDays.length > 0) {
       const today = forecastDays[0];
       const todayDate = today.ForecastDate;
-      const maxTemp = parseFloat(today.ForecastMaxtemp);
-      const minTemp = parseFloat(today.ForecastMintemp);
-      const maxRh = parseFloat(today.ForecastMaxrh);
-      const minRh = parseFloat(today.ForecastMinrh);
+      const maxTemp = parseFloat(today.ForecastMaxtemp || '0');
+      const minTemp = parseFloat(today.ForecastMintemp || '0');
+      const maxRh = parseFloat(today.ForecastMaxrh || '0');
+      const minRh = parseFloat(today.ForecastMinrh || '0');
 
       for (let h = 0; h < 24; h++) {
         let temp: number;
@@ -184,10 +211,10 @@ export async function GET(request: NextRequest) {
         hourly: hourlyForecast,
         daily: dailyForecast,
         forecast: {
-          generalSituation: stripHtml(flw.GeneralSituation) || '',
-          forecastDesc: stripHtml(flw.ForecastDesc) || '',
-          forecastPeriod: stripHtml(flw.ForecastPeriod) || '',
-          outlook: stripHtml(flw.OutlookContent) || '',
+          generalSituation: stripHtml(flw.GeneralSituation),
+          forecastDesc: stripHtml(flw.ForecastDesc),
+          forecastPeriod: stripHtml(flw.ForecastPeriod),
+          outlook: stripHtml(flw.OutlookContent),
           tcInfo: stripHtml(flw.TCInfo) || null,
         },
         lightning: lightningInfo,
@@ -204,35 +231,5 @@ export async function GET(request: NextRequest) {
       { success: false, error: '获取天气数据失败，请稍后重试' },
       { status: 500 }
     );
-
   }
-function stripHtml(html: string): string { return html.replace(/<[^>]*>/g, "").trim(); }
 }
-function stripHtml(html: string): string { return html.replace(/<[^>]*>/g, "").trim(); }
-
-function extractWindSpeed(windText: string): number {
-  const match = windText.match(/force\s*(\d+)/i);
-  if (match) {
-    return parseInt(match[1]) * 10;
-  }
-  return 15;
-}
-
-function extractWindDirection(windText: string): number {
-  const dirMap: Record<string, number> = {
-    north: 0, n: 0,
-    northeast: 45, ne: 45,
-    east: 90, e: 90,
-    southeast: 135, se: 135,
-    south: 180, s: 180,
-    southwest: 225, sw: 225,
-    west: 270, w: 270,
-    northwest: 315, nw: 315,
-  };
-  const lower = windText.toLowerCase();
-  for (const [key, deg] of Object.entries(dirMap)) {
-    if (lower.includes(key)) return deg;
-  }
-  return 0;
-}
-
