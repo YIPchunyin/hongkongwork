@@ -31,6 +31,9 @@ export default function ExpensesPage() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [fetching, setFetching] = useState(true);
   const [page, setPage] = useState(1);
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [reviewCount, setReviewCount] = useState(0);
+  const [pendingCount, setPendingCount] = useState(0);
 
   const monthKey = `${year}-${String(month).padStart(2, '0')}`;
   const monthLabel = `${year}年${String(month).padStart(2, '0')}月`;
@@ -38,11 +41,13 @@ export default function ExpensesPage() {
   const fetchExpenses = useCallback(async () => {
     setFetching(true);
     try {
-      const res = await fetch(`/api/expenses?month=${monthKey}&status=confirmed&page=${page}&limit=100`);
+      const res = await fetch(`/api/expenses?month=${monthKey}&status=${statusFilter}&page=${page}&limit=100`);
       const json = await res.json();
       if (json.success) {
         setExpenses(json.data.items);
         setStats(json.data.stats);
+        setReviewCount(json.data.reviewCount || 0);
+        setPendingCount(json.data.pendingCount || 0);
       }
     } catch {} finally { setFetching(false); }
   }, [monthKey, page]);
@@ -98,6 +103,22 @@ export default function ExpensesPage() {
           </select>
           <span className="text-lg font-bold text-gray-800 ml-auto">{monthLabel}</span>
         </div>
+      </div>
+
+      {/* Status tabs */}
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-1.5 mb-4 flex gap-1">
+        <button
+          onClick={() => setStatusFilter('all')}
+          className={'flex-1 py-2 text-sm font-medium rounded-xl transition-colors ' + (statusFilter === 'all' ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-500 hover:bg-gray-50')}
+        >全部 {reviewCount > 0 && <span className="ml-1 text-xs opacity-70">({reviewCount + pendingCount})</span>}</button>
+        <button
+          onClick={() => setStatusFilter('pending')}
+          className={'flex-1 py-2 text-sm font-medium rounded-xl transition-colors ' + (statusFilter === 'pending' ? 'bg-amber-500 text-white shadow-sm' : 'text-gray-500 hover:bg-gray-50')}
+        >待审核 {reviewCount > 0 && <span className="ml-1 text-xs">({reviewCount})</span>}</button>
+        <button
+          onClick={() => setStatusFilter('confirmed')}
+          className={'flex-1 py-2 text-sm font-medium rounded-xl transition-colors ' + (statusFilter === 'confirmed' ? 'bg-green-600 text-white shadow-sm' : 'text-gray-500 hover:bg-gray-50')}
+        >已确认</button>
       </div>
 
       {/* Stats cards */}
