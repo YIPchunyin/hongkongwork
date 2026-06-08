@@ -73,6 +73,8 @@ export default function ExpensesUploadPage() {
   const [results, setResults] = useState<UploadResult[] | null>(null);
   const [uploading, setUploading] = useState(false);
   const [totalAmount, setTotalAmount] = useState(0);
+  const [previewImg, setPreviewImg] = useState<string | null>(null);
+  const [previewRotation, setPreviewRotation] = useState(0);
   
   
   const today = new Date().toISOString().split('T')[0];
@@ -448,6 +450,31 @@ export default function ExpensesUploadPage() {
           </div>
         </div>
       )}
+      
+      {/* Image preview modal */}
+      {previewImg && (
+        <div
+          className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4 touch-none"
+          onClick={() => setPreviewImg(null)}
+        >
+          <button
+            className="absolute top-4 right-4 z-10 w-10 h-10 bg-white/20 backdrop-blur rounded-full flex items-center justify-center text-white hover:bg-white/30 text-xl"
+            onClick={() => setPreviewImg(null)}
+          >
+            X
+          </button>
+          <div className="max-w-full max-h-full flex items-center justify-center overflow-hidden">
+            <img
+              src={previewImg}
+              alt=""
+              className="max-w-full max-h-[90vh] object-contain"
+              style={getRotationStyle(previewRotation)}
+              onClick={(e) => e.stopPropagation()}
+            />
           </div>
+        </div>
+      )}
+
+    </div>
   );
 }
