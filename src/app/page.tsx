@@ -4,6 +4,7 @@ const WeatherWidget = dynamic(() => import('@/components/WeatherWidget'), {
   loading: () => <SkeletonCard icon="🌤️" label="天气" />});
 const ExchangeRateWidget = dynamic(() => import('@/components/ExchangeRateWidget'), { 
   loading: () => <SkeletonCard icon="💱" label="汇率" />});
+const BusWidget = dynamic(() => import('@/components/BusWidget'), { loading: () => <SkeletonCard icon='🚌' label='🚌' />});
 const MtrWidget = dynamic(() => import('@/components/MtrWidget'), { 
   loading: () => <SkeletonCard icon="🚇" label="地铁" />});
 
@@ -34,9 +35,10 @@ export default function HomePage() {
             </div>
             <p className="text-sm text-gray-500 mt-0.5">天气 · 交通 · 汇率</p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="animate-fade-in-up-d1 card-hover"><WeatherWidget /></div>
             <div className="animate-fade-in-up-d2 card-hover"><MtrWidget /></div>
+            <div className="animate-fade-in-up-d3 card-hover"><BusWidget /></div>
             <div className="animate-fade-in-up-d3 card-hover"><ExchangeRateWidget /></div>
           </div>
         </div>
@@ -44,6 +46,7 @@ export default function HomePage() {
     </div>
   );
 }
+
 
 
 

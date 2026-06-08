@@ -74,6 +74,16 @@ export default function IncomePage() {
     return colors[com] || '#8B5CF6';  // 紫色 - 纯色
   };
 
+  const companyGradient = (com: string) => {
+    const grads: Record<string, string> = {
+      '国益': 'linear-gradient(135deg, #D4536A, #E8839A)',
+      '煌府': 'linear-gradient(135deg, #3B7DD8, #6BA3E8)',
+      '益哥': 'linear-gradient(135deg, #44A64D, #7ACC82)',
+      '司': 'linear-gradient(135deg, #D97A2E, #E8A86A)',
+    };
+    return grads[com] || 'linear-gradient(135deg, #8B5CF6, #B794F4)';  // 紫色 - 渐变
+  };
+
   const buildCalendarDays = (yr: number, mo: number, items: IncomeItem[]) => {
     const daysInMonth = new Date(yr, mo, 0).getDate();
     const firstDay = new Date(yr, mo - 1, 1).getDay();
@@ -373,7 +383,7 @@ export default function IncomePage() {
                           const top = cumPct;
                           cumPct += pct;
                           return (
-                            <div key={com} className="absolute left-0 right-0 transition-all duration-300" style={{ top: top + '%', height: pct + '%', backgroundColor: companyColor(com), minHeight: '4px' }}>
+                            <div key={com} className="absolute left-0 right-0 transition-all duration-300" style={{ top: top + '%', height: pct + '%', background: companyGradient(com), minHeight: '4px' }}>
                               <span className="absolute inset-0 flex items-center justify-center text-[8px] sm:text-[9px] font-bold leading-tight" style={{ color: 'white', textShadow: '0 1px 3px rgba(0,0,0,0.7)'}}>{showAmount ? ('+' + amt.toFixed(0)) : com}</span>
                             </div>
                           );
