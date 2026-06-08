@@ -58,6 +58,15 @@ export default function ExpensesPage() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [reviewCount, setReviewCount] = useState(0);
   const [pendingCount, setPendingCount] = useState(0);
+  const [showModal, setShowModal] = useState(false);
+  const [editItem, setEditItem] = useState<ExpenseItem | null>(null);
+  const [formAmount, setFormAmount] = useState("");
+  const [formMerchant, setFormMerchant] = useState("");
+  const [formCategory, setFormCategory] = useState("其他");
+  const [formDesc, setFormDesc] = useState("");
+  const [formBillDate, setFormBillDate] = useState("");
+  const [formNote, setFormNote] = useState("");
+  const [saving, setSaving] = useState(false);
 
   // Lightbox state
   const [lightboxImg, setLightboxImg] = useState<string | null>(null);
@@ -93,7 +102,45 @@ export default function ExpensesPage() {
     fetchExpenses();
   };
 
-  const months = Array.from({ length: 12 }, (_, i) => {
+
+  const openAdd = () => {
+    setEditItem(null);
+    setFormAmount("");
+    setFormMerchant("");
+    setFormCategory("其他");
+    setFormDesc("");
+    setFormBillDate(new Date().toISOString().split("T")[0]);
+    setFormNote("");
+    setShowModal(true);
+  };
+
+  const openEdit = (item: ExpenseItem) => {
+    setEditItem(item);
+    setFormAmount(String(item.amount));
+    setFormMerchant(item.merchant || "");
+    setFormCategory(item.category || "其他");
+    setFormDesc(item.description || "");
+    setFormBillDate(item.billDate || "");
+    setFormNote("");
+    setShowModal(true);
+  };
+
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formBillDate || !formAmount) { alert("请填写日期和金额"); return; }
+    setSaving(true);
+    try {
+      const body = { amount: parseFloat(formAmount), merchant: formMerchant, category: formCategory, description: formDesc, billDate: formBillDate, userNote: formNote, status: "confirmed" };
+      const url = editItem ? "/api/expenses/" + editItem._id : "/api/expenses";
+      const method = editItem ? "PUT" : "POST";
+      const res = await fetch(url, { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+      const json = await res.json();
+      if (json.success) { setShowModal(false); fetchExpenses(); }
+      else { alert(json.error || "保存失败"); }
+    } catch { alert("保存失败"); } finally { setSaving(false); }
+  };
+
+    const months = Array.from({ length: 12 }, (_, i) => {
     const m = i + 1;
     return { value: m, label: `${m}月` };
   });
@@ -343,23 +390,78 @@ export default function ExpensesPage() {
                   <p className="text-xs text-gray-500 mt-1 truncate">{item.description}</p>
                 )}
 
-                {/* Delete button */}
-                <button
-                  onClick={(e) => { e.stopPropagation(); deleteExpense(item._id); }}
-                  className="mt-2 text-xs text-red-400 hover:text-red-600 transition-colors flex items-center gap-0.5"
-                >
-                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                  </svg>
-                  删除
-                </button>
+                <div className="mt-2 flex items-center gap-3">
+                  <button
+                    onClick={(e) => { e.stopPropagation(); openEdit(item); }}
+                    className="text-xs text-blue-400 hover:text-blue-600 transition-colors flex items-center gap-0.5"
+                  >
+                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                    编辑
+                  </button>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); deleteExpense(item._id); }}
+                    className="text-xs text-red-400 hover:text-red-600 transition-colors flex items-center gap-0.5"
+                  >
+                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                    删除
+                  </button>
+                </div>
               </div>
             </div>
           ))}
         </div>
       )}
 
-      {/* Image Lightbox */}
+      {/* Add/Edit Modal */}
+      {showModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40" onClick={() => setShowModal(false)}>
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6" onClick={(e) => e.stopPropagation()}>
+            <h2 className="text-lg font-bold text-gray-900 mb-4">{editItem ? '编辑杂费单' : '✅ 新增杂费'}</h2>
+            <form onSubmit={handleSave} className="space-y-4">
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1">日期</label>
+                <input type="date" value={formBillDate} onChange={(e) => setFormBillDate(e.target.value)} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" required />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1">金额 (HKD)</label>
+                <input type="number" step="0.01" value={formAmount} onChange={(e) => setFormAmount(e.target.value)} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" required />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1">商户</label>
+                <input type="text" value={formMerchant} onChange={(e) => setFormMerchant(e.target.value)} placeholder="商户名称" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1">分类</label>
+                <select value={formCategory} onChange={(e) => setFormCategory(e.target.value)} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm">
+                  <option value="餐饮">🍽️ 餐饮</option>
+                  <option value="交通">🚇 交通</option>
+                  <option value="购物">🛍️ 购物</option>
+                  <option value="医疗">🏥 医疗</option>
+                  <option value="娱乐">🎮 娱乐</option>
+                  <option value="居住">🏠 居住</option>
+                  <option value="通讯">📱 通讯</option>
+                  <option value="教育">📚 教育</option>
+                  <option value="其他">📄 其他</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1">备注</label>
+                <input type="text" value={formDesc} onChange={(e) => setFormDesc(e.target.value)} placeholder="备注信息" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" />
+              </div>
+              <div className="flex gap-3 pt-2">
+                <button type="button" onClick={() => setShowModal(false)} className="flex-1 py-2.5 border border-gray-200 text-gray-600 font-medium rounded-xl hover:bg-gray-50 transition-colors text-sm">取消</button>
+                <button type="submit" disabled={saving} className="flex-1 py-2.5 bg-blue-600 text-white font-medium rounded-xl hover:bg-blue-700 disabled:opacity-50 transition-colors text-sm">{saving ? '保存中...' : (editItem ? '保存修改' : '添加记录')}</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+            {/* Image Lightbox */}
       {lightboxImg && (
         <div
           className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center touch-none select-none"

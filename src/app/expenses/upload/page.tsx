@@ -1,8 +1,11 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/AuthProvider';
+import Cropper from 'react-easy-crop';
+import type { Area } from 'react-easy-crop';
+import 'react-easy-crop/react-easy-crop.css';
 
 interface UploadResult {
   _id: string;
@@ -64,6 +67,55 @@ function dataURLtoBlob(dataUrl: string): Blob {
   return new Blob([u8arr], { type: mime });
 }
 
+
+
+function createImage(url: string): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.addEventListener('load', () => resolve(img));
+    img.addEventListener('error', reject);
+    img.src = url;
+  });
+}
+
+function getRadianAngle(degreeValue: number): number {
+  return (degreeValue * Math.PI) / 180;
+}
+
+function rotateSize(width: number, height: number, rotation: number) {
+  const rotRad = getRadianAngle(rotation);
+  return {
+    width: Math.abs(Math.cos(rotRad) * width) + Math.abs(Math.sin(rotRad) * height),
+    height: Math.abs(Math.sin(rotRad) * width) + Math.abs(Math.cos(rotRad) * height),
+  };
+}
+
+async function getCroppedImg(imageSrc: string, pixelCrop: Area, rotation = 0): Promise<Blob | null> {
+  try {
+    const image = await createImage(imageSrc);
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return null;
+    const rotRad = getRadianAngle(rotation);
+    const bBox = rotateSize(image.width, image.height, rotation);
+    canvas.width = bBox.width;
+    canvas.height = bBox.height;
+    ctx.translate(bBox.width / 2, bBox.height / 2);
+    ctx.rotate(rotRad);
+    ctx.drawImage(image, -image.width / 2, -image.height / 2);
+    const croppedCanvas = document.createElement('canvas');
+    const croppedCtx = croppedCanvas.getContext('2d');
+    if (!croppedCtx) return null;
+    croppedCanvas.width = pixelCrop.width;
+    croppedCanvas.height = pixelCrop.height;
+    croppedCtx.drawImage(canvas, pixelCrop.x, pixelCrop.y, pixelCrop.width, pixelCrop.height, 0, 0, pixelCrop.width, pixelCrop.height);
+    return new Promise((resolve) => {
+      croppedCanvas.toBlob((blob) => resolve(blob), 'image/jpeg', 0.9);
+    });
+  } catch (err) {
+    return null;
+  }
+}
 export default function ExpensesUploadPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
@@ -73,14 +125,14 @@ export default function ExpensesUploadPage() {
   const [results, setResults] = useState<UploadResult[] | null>(null);
   const [uploading, setUploading] = useState(false);
   const [totalAmount, setTotalAmount] = useState(0);
-  const [previewImg, setPreviewImg] = useState<string | null>(null);
-  const [previewRotation, setPreviewRotation] = useState(0);
-  const [zoom, setZoom] = useState(1);
-  const [pan, setPan] = useState({ x: 0, y: 0 });
-  const [isPinching, setIsPinching] = useState(false);
-  const lastPinchDist = useRef(0);
-  const lastPan = useRef({ x: 0, y: 0 });
-  const lastTouch = useRef({ x: 0, y: 0 });
+  const [editorOpen, setEditorOpen] = useState(false);
+  const [editIndex, setEditIndex] = useState(-1);
+  const [editSrc, setEditSrc] = useState('');
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [cropZoom, setCropZoom] = useState(1);
+  const [editorRotation, setEditorRotation] = useState(0);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
+  const [cropAspect, setCropAspect] = useState(4 / 3);
   
   
   const today = new Date().toISOString().split('T')[0];
@@ -116,6 +168,41 @@ export default function ExpensesUploadPage() {
       return updated;
     });
     setResults(null);
+  };
+
+
+  const openEditor = (index: number) => {
+    setEditIndex(index);
+    setEditSrc(files[index].preview);
+    setCrop({ x: 0, y: 0 });
+    setCropZoom(1);
+    setEditorRotation(0);
+    setCroppedAreaPixels(null);
+    setEditorOpen(true);
+  };
+
+  const applyCrop = async () => {
+    if (!croppedAreaPixels) return;
+    try {
+      const blob = await getCroppedImg(editSrc, croppedAreaPixels, editorRotation);
+      if (blob) {
+        const newPreview = URL.createObjectURL(blob);
+        setFiles((prev) => {
+          const updated = [...prev];
+          URL.revokeObjectURL(updated[editIndex].preview);
+          updated[editIndex] = {
+            ...updated[editIndex],
+            preview: newPreview,
+            file: new File([blob], updated[editIndex].file.name, { type: updated[editIndex].file.type }),
+            rotation: 0,
+          };
+          return updated;
+        });
+      }
+    } catch (err) {
+      console.error('applyCrop error:', err);
+    }
+    setEditorOpen(false);
   };
 
   const rotateFile = (index: number) => {
@@ -287,12 +374,12 @@ export default function ExpensesUploadPage() {
                         alt=""
                         className="max-w-full max-h-full object-contain cursor-pointer"
                         style={getRotationStyle(f.rotation)}
-                        onClick={(e) => { e.stopPropagation(); setPreviewImg(f.preview); setPreviewRotation(f.rotation); }}
+                        onClick={(e) => { e.stopPropagation(); openEditor(i); }}
                       />
                       {/* Always-visible rotate and delete buttons */}
                       <div className="absolute top-1 right-1 flex gap-1">
                         <button
-                          onClick={(e) => { e.stopPropagation(); setPreviewImg(f.preview); setPreviewRotation(f.rotation); }}
+                          onClick={(e) => { e.stopPropagation(); openEditor(i); }}
                           className="w-8 h-8 bg-black/60 text-white rounded-full flex items-center justify-center text-base hover:bg-blue-500/80 shadow"
                           title="放大查看"
                         >
@@ -464,63 +551,76 @@ export default function ExpensesUploadPage() {
         </div>
       )}
       
-      {/* Image lightbox with zoom/pan */}
-      {previewImg && (
+      {/* Image lightbox using yet-another-react-lightbox */}
+      {/* Image editor with crop/rotate/zoom */}
+      {editorOpen && (
         <div
-          className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center touch-none select-none"
-          onClick={() => { setZoom(1); setPan({ x: 0, y: 0 }); setPreviewImg(null); }}
-          onWheel={(e) => { e.preventDefault(); setZoom((z) => Math.max(0.5, Math.min(8, z - e.deltaY * 0.01))); }}
-          onTouchStart={(e) => {
-            if (e.touches.length === 2) {
-              setIsPinching(true);
-              lastPinchDist.current = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
-            } else if (e.touches.length === 1) {
-              lastTouch.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-              lastPan.current = { ...pan };
-            }
-          }}
-          onTouchMove={(e) => {
-            if (e.touches.length === 2 && isPinching) {
-              e.preventDefault();
-              const dist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
-              setZoom((z) => Math.max(0.5, Math.min(8, z * (dist / lastPinchDist.current))));
-              lastPinchDist.current = dist;
-            } else if (e.touches.length === 1 && zoom > 1) {
-              e.preventDefault();
-              const dx = e.touches[0].clientX - lastTouch.current.x;
-              const dy = e.touches[0].clientY - lastTouch.current.y;
-              setPan({ x: lastPan.current.x + dx, y: lastPan.current.y + dy });
-            }
-          }}
-          onTouchEnd={() => setIsPinching(false)}
+          className="fixed inset-0 z-50 bg-black/90 flex flex-col items-center justify-center"
+          onClick={() => setEditorOpen(false)}
         >
-          <button
-            className="absolute top-4 right-4 z-10 w-10 h-10 bg-white/20 backdrop-blur rounded-full flex items-center justify-center text-white hover:bg-white/40 transition-colors text-lg"
-            onClick={() => { setPreviewImg(null); setPreviewRotation(0); setZoom(1); setPan({ x: 0, y: 0 }); }}
-          >
-            \u2715
-          </button>
-          <div
-            className="max-w-[95vw] max-h-[90vh] overflow-hidden flex items-center justify-center"
-            style={{ transform: ` + 'scale(' + zoom + ')' + ` + ' ' + ` + 'translate(' + (pan.x / zoom) + 'px, ' + (pan.y / zoom) + 'px)' + ` }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <img
-              src={previewImg}
-              alt=""
-              className="max-w-full max-h-full object-contain"
-              style={getRotationStyle(previewRotation)}
-              draggable={false}
-            />
-          </div>
-          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-white/15 backdrop-blur rounded-full px-3 py-1.5">
-            <button onClick={(e) => { e.stopPropagation(); setZoom((z) => Math.max(0.5, z - 0.5)); }} className='w-7 h-7 bg-white/20 rounded-full flex items-center justify-center text-white hover:bg-white/40 text-sm'>\u2212</button>
-            <span className='text-white text-xs font-medium min-w-[2.5rem] text-center'>{Math.round(zoom * 100)}%</span>
-            <button onClick={(e) => { e.stopPropagation(); setZoom((z) => Math.min(8, z + 0.5)); }} className='w-7 h-7 bg-white/20 rounded-full flex items-center justify-center text-white hover:bg-white/40 text-sm'>+</button>
-            <button onClick={(e) => { e.stopPropagation(); setZoom(1); setPan({ x: 0, y: 0 }); }} className='ml-2 px-2 py-1 text-xs text-white/70 hover:text-white bg-white/20 rounded-full hover:bg-white/40'>\u91cd\u7f6e</button>
+          <div className="relative w-full h-full flex flex-col" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-4 py-3 bg-black/40">
+              <button onClick={() => setEditorOpen(false)} className="text-white/70 hover:text-white text-sm">
+                ✕ 取消
+              </button>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => setEditorRotation((r) => (r + 90) % 360)}
+                  className="text-white/80 hover:text-white text-sm bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-lg transition-colors"
+                >
+                  ↻ 旋转
+                </button>
+                <button
+                  onClick={applyCrop}
+                  className="bg-blue-500 hover:bg-blue-600 text-white text-sm font-medium px-5 py-1.5 rounded-lg transition-colors"
+                >
+                  ✔ 应用
+                </button>
+              </div>
+            </div>
+
+            <div className="flex-1 relative">
+              <Cropper
+                image={editSrc}
+                crop={crop}
+                zoom={cropZoom}
+                rotation={editorRotation}
+                aspect={cropAspect}
+                onCropChange={setCrop}
+                onZoomChange={setCropZoom}
+                onCropComplete={(_: Area, croppedPixels: Area) => setCroppedAreaPixels(croppedPixels)}
+              />
+            </div>
+
+            <div className="px-4 py-3 bg-black/40 flex items-center gap-4 justify-center">
+              <span className="text-white/60 text-xs">缩放</span>
+              <input
+                type="range"
+                min={1}
+                max={3}
+                step={0.01}
+                value={cropZoom}
+                onChange={(e) => setCropZoom(Number(e.target.value))}
+                className="w-32 accent-blue-500"
+              />
+              <span className="text-white/60 text-xs">{Math.round(cropZoom * 100)}%</span>
+              <div className="w-px h-6 bg-white/20" />
+              <span className="text-white/60 text-xs">比例</span>
+              <select
+                value={cropAspect}
+                onChange={(e) => setCropAspect(Number(e.target.value))}
+                className="bg-white/10 text-white text-xs border border-white/20 rounded px-2 py-1"
+              >
+                <option value={4 / 3}>自由</option>
+                <option value={1 / 1}>1:1</option>
+                <option value={3 / 4}>3:4</option>
+                <option value={16 / 9}>16:9</option>
+              </select>
+            </div>
           </div>
         </div>
       )}
+
 
     </div>
   );
