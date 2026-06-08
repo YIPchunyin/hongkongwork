@@ -30,10 +30,9 @@ export default function Navbar() {
 
   const navLinks = [
     { href: '/', label: '首页' },
-    { href: '/gallery', label: '画廊' },
-    { href: '/upload', label: '上传' },
+    { href: '/notes', label: '记事本' },
+    { href: '/expenses', label: '杂费统计' },
     { href: '/search', label: '搜索' },
-    { href: '/expenses', label: '账单' },
     { href: '/income', label: '收入' },
   ];
 
