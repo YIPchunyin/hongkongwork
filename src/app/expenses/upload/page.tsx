@@ -75,6 +75,12 @@ export default function ExpensesUploadPage() {
   const [totalAmount, setTotalAmount] = useState(0);
   const [previewImg, setPreviewImg] = useState<string | null>(null);
   const [previewRotation, setPreviewRotation] = useState(0);
+  const [zoom, setZoom] = useState(1);
+  const [pan, setPan] = useState({ x: 0, y: 0 });
+  const [isPinching, setIsPinching] = useState(false);
+  const lastPinchDist = useRef(0);
+  const lastPan = useRef({ x: 0, y: 0 });
+  const lastTouch = useRef({ x: 0, y: 0 });
   
   
   const today = new Date().toISOString().split('T')[0];
@@ -281,10 +287,17 @@ export default function ExpensesUploadPage() {
                         alt=""
                         className="max-w-full max-h-full object-contain cursor-pointer"
                         style={getRotationStyle(f.rotation)}
-                        onClick={(e) => { e.stopPropagation(); window.open(f.preview, '_blank'); }}
+                        onClick={(e) => { e.stopPropagation(); setPreviewImg(f.preview); setPreviewRotation(f.rotation); }}
                       />
                       {/* Always-visible rotate and delete buttons */}
                       <div className="absolute top-1 right-1 flex gap-1">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setPreviewImg(f.preview); setPreviewRotation(f.rotation); }}
+                          className="w-8 h-8 bg-black/60 text-white rounded-full flex items-center justify-center text-base hover:bg-blue-500/80 shadow"
+                          title="放大查看"
+                        >
+                          🔍
+                        </button>
                         <button
                           onClick={(e) => { e.stopPropagation(); rotateFile(i); }}
                           className="w-8 h-8 bg-black/60 text-white rounded-full flex items-center justify-center text-base hover:bg-black/80 shadow"
