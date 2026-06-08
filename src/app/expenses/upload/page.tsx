@@ -20,7 +20,7 @@ interface ImageFile {
   file: File;
   preview: string;
   rotation: number;
-  mode: 'ai' | 'manual';
+  mode: string;
   manualAmount: string;
   manualMerchant: string;
   manualCategory: string;
@@ -28,7 +28,8 @@ interface ImageFile {
   manualDesc: string;
 }
 
-const CATEGORIES = ['餐饮', '交通', '购物', '医疗', '娱乐', '居住', '通讯', '教育', '其他'];
+const DEFAULT_CATEGORIES = ['工具', '交通', '其他'];
+const CATEGORIES = DEFAULT_CATEGORIES;
 
 function rotateBase64Image(base64: string, rotation: number): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -85,7 +86,7 @@ export default function ExpensesUploadPage() {
         file: selected[i],
         preview: URL.createObjectURL(selected[i]),
         rotation: 0,
-        mode: 'ai',
+        mode: 'manual',
         manualAmount: '',
         manualMerchant: '',
         manualCategory: CATEGORIES[0],
@@ -325,22 +326,18 @@ export default function ExpensesUploadPage() {
                             className="w-full px-2 py-1.5 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
                           />
                         </div>
-                        <div>
-                          <input
-                            type="text" placeholder="商户名称"
-                            value={f.manualMerchant}
-                            onChange={(e) => updateManualField(i, 'manualMerchant', e.target.value)}
-                            className="w-full px-2 py-1.5 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
-                          />
-                        </div>
+                        
                         <div className="grid grid-cols-2 gap-2">
-                          <select
+                          <input
+                            type="text" placeholder="分类"
                             value={f.manualCategory}
                             onChange={(e) => updateManualField(i, 'manualCategory', e.target.value)}
+                            list={"cat-suggestions-" + i}
                             className="px-2 py-1.5 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
-                          >
-                            {CATEGORIES.map((c: string) => <option key={c} value={c}>{c}</option>)}
-                          </select>
+                          />
+                          <datalist id={"cat-suggestions-" + i}>
+                            {DEFAULT_CATEGORIES.map((c: string) => <option key={c} value={c} />)}
+                          </datalist>
                           <input
                             type="date"
                             value={f.manualDate}
