@@ -23,17 +23,23 @@ export async function GET(request: NextRequest) {
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '100');
     const month = searchParams.get('month');
-    const status = searchParams.get('status') || 'confirmed';
+    const statusFilter = searchParams.get('status') || 'all';
     const category = searchParams.get('category');
 
     await connectDB();
 
-    const query: Record<string, unknown> = { userId: payload.userId, status };
+    const query: Record<string, unknown> = { userId: payload.userId };
+    if (statusFilter === 'confirmed') query.status = 'confirmed';
+    else if (statusFilter === 'pending') query.status = { '$in': ['pending', 'recognized'] };
+    else query.status = { '$in': ['recognized', 'confirmed'] };
     if (month) {
       const regex = `^${month}-`;
       query.billDate = { $regex: regex };
     }
     if (category) query.category = category;
+
+        const pendingCount = await Expense.countDocuments({ userId: payload.userId, status: 'pending' });
+    const reviewCount = await Expense.countDocuments({ userId: payload.userId, status: 'recognized' });
 
     const skip = (page - 1) * limit;
     const [items, total] = await Promise.all([
@@ -43,7 +49,7 @@ export async function GET(request: NextRequest) {
 
     const allConfirmed = await Expense.find({
       userId: payload.userId,
-      status: 'confirmed',
+      status: { '$in': ['recognized', 'confirmed'] },
       ...(month ? { billDate: { $regex: `^${month}-` } } : {}),
     }).lean();
     const totalAmount = allConfirmed.reduce((sum, item) => sum + (item.amount || 0), 0);
@@ -61,6 +67,8 @@ export async function GET(request: NextRequest) {
         items: items.map((item) => ({ ...item, _id: String(item._id) })),
         total, page, limit,
         totalPages: Math.ceil(total / limit),
+        reviewCount,
+        pendingCount,
         stats: { totalAmount, totalCount: allConfirmed.length, byCategory },
       },
     });
@@ -236,3 +244,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: false, error: `上传失败: ${error instanceof Error ? error.message : '未知错误'}` }, { status: 500 });
   }
 }
+
+
+
