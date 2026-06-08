@@ -464,26 +464,60 @@ export default function ExpensesUploadPage() {
         </div>
       )}
       
-      {/* Image preview modal */}
+      {/* Image lightbox with zoom/pan */}
       {previewImg && (
         <div
-          className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4 touch-none"
-          onClick={() => setPreviewImg(null)}
+          className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center touch-none select-none"
+          onClick={() => { setZoom(1); setPan({ x: 0, y: 0 }); setPreviewImg(null); }}
+          onWheel={(e) => { e.preventDefault(); setZoom((z) => Math.max(0.5, Math.min(8, z - e.deltaY * 0.01))); }}
+          onTouchStart={(e) => {
+            if (e.touches.length === 2) {
+              setIsPinching(true);
+              lastPinchDist.current = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+            } else if (e.touches.length === 1) {
+              lastTouch.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+              lastPan.current = { ...pan };
+            }
+          }}
+          onTouchMove={(e) => {
+            if (e.touches.length === 2 && isPinching) {
+              e.preventDefault();
+              const dist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+              setZoom((z) => Math.max(0.5, Math.min(8, z * (dist / lastPinchDist.current))));
+              lastPinchDist.current = dist;
+            } else if (e.touches.length === 1 && zoom > 1) {
+              e.preventDefault();
+              const dx = e.touches[0].clientX - lastTouch.current.x;
+              const dy = e.touches[0].clientY - lastTouch.current.y;
+              setPan({ x: lastPan.current.x + dx, y: lastPan.current.y + dy });
+            }
+          }}
+          onTouchEnd={() => setIsPinching(false)}
         >
           <button
-            className="absolute top-4 right-4 z-10 w-10 h-10 bg-white/20 backdrop-blur rounded-full flex items-center justify-center text-white hover:bg-white/30 text-xl"
-            onClick={() => setPreviewImg(null)}
+            className="absolute top-4 right-4 z-10 w-10 h-10 bg-white/20 backdrop-blur rounded-full flex items-center justify-center text-white hover:bg-white/40 transition-colors text-lg"
+            onClick={() => { setPreviewImg(null); setPreviewRotation(0); setZoom(1); setPan({ x: 0, y: 0 }); }}
           >
-            X
+            \u2715
           </button>
-          <div className="max-w-full max-h-full flex items-center justify-center overflow-hidden">
+          <div
+            className="max-w-[95vw] max-h-[90vh] overflow-hidden flex items-center justify-center"
+            style={{ transform: ` + 'scale(' + zoom + ')' + ` + ' ' + ` + 'translate(' + (pan.x / zoom) + 'px, ' + (pan.y / zoom) + 'px)' + ` }}
+            onClick={(e) => e.stopPropagation()}
+          >
             <img
               src={previewImg}
               alt=""
-              className="max-w-full max-h-[90vh] object-contain"
+              className="max-w-full max-h-full object-contain"
               style={getRotationStyle(previewRotation)}
-              onClick={(e) => e.stopPropagation()}
+              draggable={false}
             />
+          </div>
+          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-white/15 backdrop-blur rounded-full px-3 py-1.5">
+            <button onClick={(e) => { e.stopPropagation(); setZoom((z) => Math.max(0.5, z - 0.5)); }} className='w-7 h-7 bg-white/20 rounded-full flex items-center justify-center text-white hover:bg-white/40 text-sm'>\u2212</button>
+            <span className='text-white text-xs font-medium min-w-[2.5rem] text-center'>{Math.round(zoom * 100)}%</span>
+            <button onClick={(e) => { e.stopPropagation(); setZoom((z) => Math.min(8, z + 0.5)); }} className='w-7 h-7 bg-white/20 rounded-full flex items-center justify-center text-white hover:bg-white/40 text-sm'>+</button>
+            <button onClick={(e) => { e.stopPropagation(); setZoom(1); setPan({ x: 0, y: 0 }); }} className='ml-2 px-2 py-1 text-xs text-white/70 hover:text-white bg-white/20 rounded-full hover:bg-white/40'>\u91cd\u7f6e</button>
           </div>
         </div>
       )}
