@@ -73,6 +73,8 @@ export default function ExpensesUploadPage() {
   const [results, setResults] = useState<UploadResult[] | null>(null);
   const [uploading, setUploading] = useState(false);
   const [totalAmount, setTotalAmount] = useState(0);
+  
+  
   const today = new Date().toISOString().split('T')[0];
 
   if (!loading && !user) { router.push('/login'); return null; }
@@ -275,8 +277,9 @@ export default function ExpensesUploadPage() {
                       <img
                         src={f.preview}
                         alt=""
-                        className="max-w-full max-h-full object-contain"
+                        className="max-w-full max-h-full object-contain cursor-pointer"
                         style={getRotationStyle(f.rotation)}
+                        onClick={(e) => { e.stopPropagation(); window.open(f.preview, '_blank'); }}
                       />
                       {/* Always-visible rotate and delete buttons */}
                       <div className="absolute top-1 right-1 flex gap-1">
@@ -445,6 +448,6 @@ export default function ExpensesUploadPage() {
           </div>
         </div>
       )}
-    </div>
+          </div>
   );
 }
