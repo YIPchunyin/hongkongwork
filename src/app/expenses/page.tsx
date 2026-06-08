@@ -13,6 +13,7 @@ interface ExpenseItem {
   description: string;
   imageUrl: string;
   status: string;
+  project: string;
   createdAt: string;
 }
 
@@ -66,6 +67,7 @@ export default function ExpensesPage() {
   const [formDesc, setFormDesc] = useState("");
   const [formBillDate, setFormBillDate] = useState("");
   const [formNote, setFormNote] = useState("");
+  const [formProject, setFormProject] = useState("");
   const [saving, setSaving] = useState(false);
 
   // Lightbox state
@@ -379,6 +381,7 @@ export default function ExpensesPage() {
 
                 {/* Merchant */}
                 <p className="text-sm font-medium text-gray-800 truncate mt-0.5">{item.merchant || '未填写商户'}</p>
+                {item.project && <p className="text-[10px] text-gray-400 mt-0.5 truncate">\🏗\uFE0F {item.project}</p>}
 
                 {/* Date */}
                 <p className="text-xs text-gray-400 mt-1">

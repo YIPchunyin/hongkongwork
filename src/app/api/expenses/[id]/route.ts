@@ -27,7 +27,7 @@ export async function PATCH(
     if (expense.userId !== payload.userId) return NextResponse.json({ success: false, error: '无权修改' }, { status: 403 });
 
     // Update allowed fields
-    const updatable = ['amount', 'merchant', 'category', 'description', 'billDate', 'userNote', 'status'];
+    const updatable = ['amount', 'merchant', 'category', 'description', 'billDate', 'project', 'userNote', 'status'];
     for (const field of updatable) {
       if (body[field] !== undefined) {
         (expense as unknown as Record<string, unknown>)[field] = body[field];
@@ -64,6 +64,7 @@ export async function PUT(
     if (body.description !== undefined) updateData.description = body.description;
     if (body.billDate !== undefined) updateData.billDate = body.billDate;
     if (body.userNote !== undefined) updateData.userNote = body.userNote;
+    if (body.project !== undefined) updateData.project = body.project;
     if (body.status !== undefined) updateData.status = body.status;
 
     await connectDB();

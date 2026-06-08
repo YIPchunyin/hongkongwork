@@ -17,6 +17,7 @@ export interface IExpense extends Document {
   billDate: string;
   aiRaw: string;
   // User edits before confirm
+  project: string;
   userNote: string;
   // Timestamps
   createdAt: Date;
@@ -41,6 +42,7 @@ const ExpenseSchema = new Schema<IExpense>(
     description: { type: String, default: '' },
     billDate: { type: String, default: '' },
     aiRaw: { type: String, default: '' },
+    project: { type: String, default: '' },
     userNote: { type: String, default: '' },
   },
   { timestamps: true }
