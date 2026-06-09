@@ -19,13 +19,13 @@ export interface MtrLine {
 
 export const MTR_LINES: Record<string, MtrLine> = {
   TWL: { code: 'TWL', nameTc: '荃灣線', nameEn: 'Tsuen Wan Line', color: '#E2231A' },
-  KTL: { code: 'KTL', nameTc: '觀塘線', nameEn: 'Kwun Tong Line', color: '#00A85D' },
-  ISL: { code: 'ISL', nameTc: '港島線', nameEn: 'Island Line', color: '#004EA2' },
+  KTL: { code: 'KTL', nameTc: '觀塘線', nameEn: 'Kwun Tong Line', color: '#00AF41' },
+  ISL: { code: 'ISL', nameTc: '港島線', nameEn: 'Island Line', color: '#003FA0' },
   TKL: { code: 'TKL', nameTc: '將軍澳線', nameEn: 'Tseung Kwan O Line', color: '#7B4E9B' },
-  TML: { code: 'TML', nameTc: '屯馬線', nameEn: 'Tuen Ma Line', color: '#A75B2E' },
+  TML: { code: 'TML', nameTc: '屯馬線', nameEn: 'Tuen Ma Line', color: '#923011' },
   EAL: { code: 'EAL', nameTc: '東鐵線', nameEn: 'East Rail Line', color: '#5EB6E4' },
   SIL: { code: 'SIL', nameTc: '南港島線', nameEn: 'South Island Line', color: '#CAC400' },
-  DRL: { code: 'DRL', nameTc: '迪士尼線', nameEn: 'Disneyland Resort Line', color: '#F36C21' },
+  DRL: { code: 'DRL', nameTc: '迪士尼線', nameEn: 'Disneyland Resort Line', color: '#F26F21' },
   AEL: { code: 'AEL', nameTc: '機場快線', nameEn: 'Airport Express', color: '#00888A' },
   EAL_LO: { code: 'EAL_LO', nameTc: '東鐵線(落馬洲)', nameEn: 'East Rail Line (Lok Ma Chau)', color: '#5EB6E4' },
 };
