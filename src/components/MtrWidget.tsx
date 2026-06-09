@@ -103,8 +103,8 @@ export default function MtrWidget() {
 
         <div className="space-y-2">
           {lines.length > 0 ? lines.map(line => {
-            const upTrains = line.up.filter((tr: any) => tr.ttnt <= 120).slice(0, 2);
-            const downTrains = line.down.filter((tr: any) => tr.ttnt <= 120).slice(0, 2);
+            const upTrains = line.up.slice(0, 2);
+            const downTrains = line.down.slice(0, 2);
             const hasAny = upTrains.length > 0 || downTrains.length > 0;
             if (!hasAny) return null;
             const lc = getLineColor(line.line);
@@ -120,7 +120,7 @@ export default function MtrWidget() {
                     {upTrains.map((tr: any, j: number) => (
                       <div key={j} className="flex items-center justify-between py-0.5 border-b border-white/10 last:border-0">
                         <span className="text-xs text-white/90 truncate mr-1">{tr.dest}</span>
-                        <span className={'text-xs font-bold tabular-nums shrink-0 ' + (tr.ttnt <= 1 ? 'text-yellow-300' : 'text-white')}>{tr.ttnt > 15 ? fmtTime(tr.time) : tr.ttnt + '分'}</span>
+                        <span className={'text-xs font-bold tabular-nums shrink-0 ' + (tr.ttnt <= 1 ? 'text-yellow-300' : 'text-white')}>{tr.ttnt > 60 ? fmtTime(tr.time) : tr.ttnt + '分'}</span>
                       </div>
                     ))}
                     {upTrains.length === 0 && <span className="text-[10px] text-orange-200/60">--</span>}
@@ -130,7 +130,7 @@ export default function MtrWidget() {
                     {downTrains.map((tr: any, j: number) => (
                       <div key={j} className="flex items-center justify-between py-0.5 border-b border-white/10 last:border-0">
                         <span className="text-xs text-white/90 truncate mr-1">{tr.dest}</span>
-                        <span className={'text-xs font-bold tabular-nums shrink-0 ' + (tr.ttnt <= 1 ? 'text-yellow-300' : 'text-white')}>{tr.ttnt > 15 ? fmtTime(tr.time) : tr.ttnt + '分'}</span>
+                        <span className={'text-xs font-bold tabular-nums shrink-0 ' + (tr.ttnt <= 1 ? 'text-yellow-300' : 'text-white')}>{tr.ttnt > 60 ? fmtTime(tr.time) : tr.ttnt + '分'}</span>
                       </div>
                     ))}
                     {downTrains.length === 0 && <span className="text-[10px] text-orange-200/60">--</span>}
