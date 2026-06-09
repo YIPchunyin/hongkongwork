@@ -1,7 +1,7 @@
-﻿import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { uploadToR2 } from '@/lib/r2Storage';
 import { getTokenFromRequest, verifyToken } from '@/lib/auth';
-import { generateThumbnail, getThumbKey } from '@/lib/imageUtils';
+import { generateThumbnail, fixOrientation, optimizeForWeb, getImageInfo } from '@/lib/imageUtils';
 
 export const dynamic = 'force-dynamic';
 
@@ -21,30 +21,56 @@ export async function POST(request: NextRequest) {
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
-    // Upload original image
-    const original = await uploadToR2(buffer, file.name, 'notes');
+    // Auto-fix EXIF orientation (especially important for phone photos)
+    const fixedBuffer = await fixOrientation(buffer);
+    const info = await getImageInfo(fixedBuffer);
+
+    // Determine file name parts
+    const nameParts = file.name.split('.');
+    const ext = nameParts.pop() || 'jpg';
+    const baseName = nameParts.join('.');
+
+    // Upload WebP optimized version
+    let webpUrl = '';
+    let webpKey = '';
+    try {
+      const webpBuffer = await optimizeForWeb(buffer, 80);
+      const webpName = baseName + '.webp';
+      const webpResult = await uploadToR2(webpBuffer, webpName, 'notes');
+      webpUrl = webpResult.url;
+      webpKey = webpResult.key;
+    } catch (err) {
+      console.error('WebP转换失败，上传原图:', err);
+    }
+
+    // Upload fixed-orientation original
+    const fixedName = baseName + '_fixed.' + ext;
+    const original = await uploadToR2(fixedBuffer, fixedName, 'notes');
 
     // Generate and upload thumbnail
     let thumbUrl = original.url;
     let thumbKey = '';
     try {
-      const thumbBuffer = await generateThumbnail(buffer);
-      const thumbName = 'thumb_' + file.name;
+      const thumbBuffer = await generateThumbnail(fixedBuffer);
+      const thumbName = 'thumb_' + fixedName;
       const thumbResult = await uploadToR2(thumbBuffer, thumbName, 'notes');
       thumbUrl = thumbResult.url;
       thumbKey = thumbResult.key;
     } catch (err) {
       console.error('缩略图生成失败，使用原图:', err);
-      // Fallback to original if thumbnail fails
     }
 
     return NextResponse.json({
       success: true,
       data: {
-        url: original.url,
-        key: original.key,
+        url: webpUrl || original.url,
+        key: webpKey || original.key,
         thumbUrl,
         thumbKey,
+        originalUrl: original.url,
+        width: info.width,
+        height: info.height,
+        format: info.format,
       },
     });
   } catch (error) {
