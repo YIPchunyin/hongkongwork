@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -76,22 +76,13 @@ export default function MtrWidget() {
     );
   }
 
-  const { station, lines, distanceKm, sysTime } = data;
-  // Up/down trains are computed inline in the JSX below
-  const allTrains: { lineName: string; lineCode: string; dest: string; ttnt: number; plat: string; time: string; direction: string }[] = [];
-  for (const line of lines) {
-    for (const t of line.up) allTrains.push({ lineName: line.lineName, lineCode: line.line, dest: t.dest, ttnt: t.ttnt, plat: t.plat, time: t.time, direction: '上行' });
-    for (const t of line.down) allTrains.push({ lineName: line.lineName, lineCode: line.line, dest: t.dest, ttnt: t.ttnt, plat: t.plat, time: t.time, direction: '下行' });
-  }
-  allTrains.filter(t => t.ttnt <= 120).sort((a, b) => a.ttnt - b.ttnt);
-  const next3 = allTrains.slice(0, 3);
+  const { station, lines, distanceKm } = data;
 
   return (
     <div
       className="relative bg-gradient-to-br from-orange-500 via-orange-600 to-red-600 rounded-2xl p-5 sm:p-6 text-white shadow-lg card-hover cursor-pointer overflow-hidden group"
       onClick={handleClick}
     >
-      {/* Decorative */}
       <div className="absolute top-0 right-0 w-32 h-32 bg-orange-400/10 rounded-full -translate-y-1/2 translate-x-1/2 animate-float pointer-events-none" />
       <div className="absolute -bottom-8 -left-8 w-20 h-20 bg-red-400/10 rounded-full animate-float-slow pointer-events-none" style={{ animationDelay: '2s' }} />
 
@@ -104,32 +95,56 @@ export default function MtrWidget() {
             </p>
           </div>
           <div className="flex gap-1">
-            {station.lines.slice(0, 2).map((l) => (
+            {station.lines.slice(0, 3).map((l) => (
               <span key={l.code} className="text-[10px] px-1.5 py-0.5 rounded font-medium backdrop-blur" style={{ backgroundColor: getLineColor(l.code) + '55', color: '#fff' }}>{l.code}</span>
             ))}
           </div>
         </div>
 
-        <div className="space-y-1.5">
-          {next3.length > 0 ? next3.map((t, i) => (
-            <div key={i} className="flex items-center justify-between bg-white/15 backdrop-blur rounded-lg px-3 py-2 card-hover border border-white/10">
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] font-bold px-1 py-0.5 rounded" style={{ backgroundColor: getLineColor(t.lineCode) }}>{t.lineCode}</span>
-                <span className="text-xs">{t.dest}</span>
+        <div className="space-y-2">
+          {lines.length > 0 ? lines.map(line => {
+            const upTrains = line.up.filter((tr: any) => tr.ttnt <= 120).slice(0, 2);
+            const downTrains = line.down.filter((tr: any) => tr.ttnt <= 120).slice(0, 2);
+            const hasAny = upTrains.length > 0 || downTrains.length > 0;
+            if (!hasAny) return null;
+            const lc = getLineColor(line.line);
+            return (
+              <div key={line.line} className="bg-white/15 backdrop-blur rounded-lg px-3 py-2.5 border border-white/10">
+                <div className="flex items-center gap-1.5 mb-1.5">
+                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded text-white" style={{ backgroundColor: lc }}>{line.line}</span>
+                  <span className="text-[10px] text-orange-200/80">{line.lineName}</span>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="space-y-0.5">
+                    <p className="text-[9px] text-orange-200/60">&#8593;</p>
+                    {upTrains.map((tr: any, j: number) => (
+                      <div key={j} className="flex items-center justify-between py-0.5 border-b border-white/10 last:border-0">
+                        <span className="text-xs text-white/90 truncate mr-1">{tr.dest}</span>
+                        <span className={'text-xs font-bold tabular-nums shrink-0 ' + (tr.ttnt <= 1 ? 'text-yellow-300' : 'text-white')}>{tr.ttnt > 15 ? fmtTime(tr.time) : tr.ttnt + '分'}</span>
+                      </div>
+                    ))}
+                    {upTrains.length === 0 && <span className="text-[10px] text-orange-200/60">--</span>}
+                  </div>
+                  <div className="space-y-0.5">
+                    <p className="text-[9px] text-orange-200/60">&#8595;</p>
+                    {downTrains.map((tr: any, j: number) => (
+                      <div key={j} className="flex items-center justify-between py-0.5 border-b border-white/10 last:border-0">
+                        <span className="text-xs text-white/90 truncate mr-1">{tr.dest}</span>
+                        <span className={'text-xs font-bold tabular-nums shrink-0 ' + (tr.ttnt <= 1 ? 'text-yellow-300' : 'text-white')}>{tr.ttnt > 15 ? fmtTime(tr.time) : tr.ttnt + '分'}</span>
+                      </div>
+                    ))}
+                    {downTrains.length === 0 && <span className="text-[10px] text-orange-200/60">--</span>}
+                  </div>
+                </div>
               </div>
-              <div className="flex items-center gap-3">
-                <span className="text-[10px] text-orange-200 border border-orange-200/30 rounded px-1.5 py-0.5">{t.direction}</span>
-                <span className="text-[10px] text-orange-200">🖥 {t.plat}号</span>
-                <span className={'text-sm font-bold tabular-nums ' + (t.ttnt <= 1 ? 'text-yellow-300' : 'text-white')}>{t.ttnt}分</span>
-              </div>
-            </div>
-          )) : (
-            <p className="text-orange-200 text-xs text-center py-2">收车时段，{t('mtr.noData')}</p>
+            );
+          }) : (
+            <p className="text-orange-200 text-xs text-center py-2">{t('mtr.noData')}</p>
           )}
         </div>
 
         <div className="mt-2 flex items-center justify-between">
-          <p className="text-orange-200 text-[10px]">🔄 {t('home.refreshEvery')}</p>
+          <p className="text-orange-200 text-[10px]">&#x1f504; {t('home.refreshEvery')}</p>
           <span className="text-orange-200 text-xs group-hover:text-white transition-colors flex items-center gap-1">
             {t('home.allTimes')}
             <svg className="w-3 h-3 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
