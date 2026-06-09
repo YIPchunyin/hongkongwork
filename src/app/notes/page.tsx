@@ -33,7 +33,7 @@ export default function NotesPage(){
   const[ft,sFt]=useState('');const[fc,sFc]=useState('');const[fi,sFi]=useState<NoteImage[]>([]);
   const[up,sUp]=useState(false);const[sv,sSv]=useState(false);
   const fir=useRef<HTMLInputElement>(null);
-  const[li,sLi]=useState<string|null>(null);const[zm,sZm]=useState(1);const[pn,sPn]=useState({x:0,y:0});
+  const[li,sLi]=useState<{url:string;images:{url:string;thumbUrl?:string}[];idx:number}|null>(null);const[zm,sZm]=useState(1);const[pn,sPn]=useState({x:0,y:0});
   const[di,sDi]=useState<string|null>(null);
   const[editingImgIdx,setEditingImgIdx]=useState<number|null>(null);
   const ob=useRef<IntersectionObserver|null>(null);const cr=useRef<Map<string,HTMLDivElement>>(new Map);
@@ -53,7 +53,7 @@ export default function NotesPage(){
   const hsv=async(e:React.FormEvent)=>{e.preventDefault();if(!fc&&fi.length===0){alert('请输入内容或添加图片');return;}sSv(true);
     try{const b={title:ft,content:fc,images:fi};if(ei){await fetch('/api/notes/'+ei._id,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)});}else{await fetch('/api/notes',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)});}sSm(false);fn();}catch{}finally{sSv(false);}};
   const dn=async(id:string)=>{sDi(null);await fetch('/api/notes/'+id,{method:'DELETE'});fn();};
-  const cl=()=>{sLi(null);sZm(1);sPn({x:0,y:0});};
+  const cl=()=>{sLi(null);sZm(1);sPn({x:0,y:0});};const goImg=(d:number)=>{if(!li)return;const n=li.idx+d;if(n<0||n>=li.images.length)return;sLi({...li,idx:n,url:li.images[n].url});sZm(1);sPn({x:0,y:0});};
   const handleEditSave=async(dataUrl:string,idx:number)=>{setEditingImgIdx(null);
     try{const blob=await fetch(dataUrl).then(r=>r.blob());const fd=new FormData();fd.append('file',blob,'edited_'+Date.now()+'.jpg');
       const r=await fetch('/api/notes/upload',{method:'POST',body:fd});const j=await r.json();
@@ -70,8 +70,8 @@ export default function NotesPage(){
         <ImageEditorModal
           imageUrl={fi[editingImgIdx].url}
           onSave={(dataUrl) => {
+            const idx = editingImgIdx;
             setEditingImgIdx(null);
-            // Convert dataUrl to blob and upload
             fetch(dataUrl)
               .then(r => r.blob())
               .then(blob => {
@@ -84,7 +84,7 @@ export default function NotesPage(){
                 if (j.success) {
                   sFi(prev => {
                     const next = [...prev];
-                    next[editingImgIdx] = j.data;
+                    next[idx] = j.data;
                     return next;
                   });
                 }
@@ -111,8 +111,8 @@ export default function NotesPage(){
         <ImageEditorModal
           imageUrl={fi[editingImgIdx].url}
           onSave={(dataUrl) => {
+            const idx = editingImgIdx;
             setEditingImgIdx(null);
-            // Convert dataUrl to blob and upload
             fetch(dataUrl)
               .then(r => r.blob())
               .then(blob => {
@@ -125,7 +125,7 @@ export default function NotesPage(){
                 if (j.success) {
                   sFi(prev => {
                     const next = [...prev];
-                    next[editingImgIdx] = j.data;
+                    next[idx] = j.data;
                     return next;
                   });
                 }
@@ -147,8 +147,8 @@ export default function NotesPage(){
         <ImageEditorModal
           imageUrl={fi[editingImgIdx].url}
           onSave={(dataUrl) => {
+            const idx = editingImgIdx;
             setEditingImgIdx(null);
-            // Convert dataUrl to blob and upload
             fetch(dataUrl)
               .then(r => r.blob())
               .then(blob => {
@@ -161,7 +161,7 @@ export default function NotesPage(){
                 if (j.success) {
                   sFi(prev => {
                     const next = [...prev];
-                    next[editingImgIdx] = j.data;
+                    next[idx] = j.data;
                     return next;
                   });
                 }
@@ -182,8 +182,8 @@ export default function NotesPage(){
         <ImageEditorModal
           imageUrl={fi[editingImgIdx].url}
           onSave={(dataUrl) => {
+            const idx = editingImgIdx;
             setEditingImgIdx(null);
-            // Convert dataUrl to blob and upload
             fetch(dataUrl)
               .then(r => r.blob())
               .then(blob => {
@@ -196,7 +196,7 @@ export default function NotesPage(){
                 if (j.success) {
                   sFi(prev => {
                     const next = [...prev];
-                    next[editingImgIdx] = j.data;
+                    next[idx] = j.data;
                     return next;
                   });
                 }
@@ -214,8 +214,8 @@ export default function NotesPage(){
         <ImageEditorModal
           imageUrl={fi[editingImgIdx].url}
           onSave={(dataUrl) => {
+            const idx = editingImgIdx;
             setEditingImgIdx(null);
-            // Convert dataUrl to blob and upload
             fetch(dataUrl)
               .then(r => r.blob())
               .then(blob => {
@@ -228,7 +228,7 @@ export default function NotesPage(){
                 if (j.success) {
                   sFi(prev => {
                     const next = [...prev];
-                    next[editingImgIdx] = j.data;
+                    next[idx] = j.data;
                     return next;
                   });
                 }
@@ -252,7 +252,7 @@ export default function NotesPage(){
                 <div className="absolute -top-0.5 -right-0.5 w-6 h-6 bg-white/40 rounded-bl-2xl border-l-2 border-b-2 border-white/60 z-10" />
                 {hi&&(<div className={['relative',ih?'h-48 sm:h-56':'h-36 sm:h-40','overflow-hidden'].join(' ')}>
                   <div className="flex h-full">
-                    {note.images.slice(0,3).map((img,i)=>(<button key={i} onClick={(e)=>{e.stopPropagation();sLi(img.url);}}
+                    {note.images.slice(0,3).map((img,i)=>(<button key={i} onClick={(e)=>{e.stopPropagation();sLi({url:img.url,images:note.images,idx:i});}}
                       className={[note.images.length===1?'w-full':note.images.length===2?'w-1/2':i===0?'w-1/2':'w-1/4','overflow-hidden group/img transition-all duration-300'].join(' ')}>
                       <img src={img.thumbUrl || img.url} alt="" className="w-full h-full object-cover transition-transform duration-500 group-hover/img:scale-110" />
                       {i===2&&note.images.length>3&&<div className="absolute inset-0 bg-black/40 flex items-center justify-center text-white font-bold text-lg">+{note.images.length-3}</div>}
@@ -261,8 +261,8 @@ export default function NotesPage(){
         <ImageEditorModal
           imageUrl={fi[editingImgIdx].url}
           onSave={(dataUrl) => {
+            const idx = editingImgIdx;
             setEditingImgIdx(null);
-            // Convert dataUrl to blob and upload
             fetch(dataUrl)
               .then(r => r.blob())
               .then(blob => {
@@ -275,7 +275,7 @@ export default function NotesPage(){
                 if (j.success) {
                   sFi(prev => {
                     const next = [...prev];
-                    next[editingImgIdx] = j.data;
+                    next[idx] = j.data;
                     return next;
                   });
                 }
@@ -291,8 +291,8 @@ export default function NotesPage(){
         <ImageEditorModal
           imageUrl={fi[editingImgIdx].url}
           onSave={(dataUrl) => {
+            const idx = editingImgIdx;
             setEditingImgIdx(null);
-            // Convert dataUrl to blob and upload
             fetch(dataUrl)
               .then(r => r.blob())
               .then(blob => {
@@ -305,7 +305,7 @@ export default function NotesPage(){
                 if (j.success) {
                   sFi(prev => {
                     const next = [...prev];
-                    next[editingImgIdx] = j.data;
+                    next[idx] = j.data;
                     return next;
                   });
                 }
@@ -328,8 +328,8 @@ export default function NotesPage(){
         <ImageEditorModal
           imageUrl={fi[editingImgIdx].url}
           onSave={(dataUrl) => {
+            const idx = editingImgIdx;
             setEditingImgIdx(null);
-            // Convert dataUrl to blob and upload
             fetch(dataUrl)
               .then(r => r.blob())
               .then(blob => {
@@ -342,7 +342,7 @@ export default function NotesPage(){
                 if (j.success) {
                   sFi(prev => {
                     const next = [...prev];
-                    next[editingImgIdx] = j.data;
+                    next[idx] = j.data;
                     return next;
                   });
                 }
@@ -357,8 +357,8 @@ export default function NotesPage(){
         <ImageEditorModal
           imageUrl={fi[editingImgIdx].url}
           onSave={(dataUrl) => {
+            const idx = editingImgIdx;
             setEditingImgIdx(null);
-            // Convert dataUrl to blob and upload
             fetch(dataUrl)
               .then(r => r.blob())
               .then(blob => {
@@ -371,7 +371,7 @@ export default function NotesPage(){
                 if (j.success) {
                   sFi(prev => {
                     const next = [...prev];
-                    next[editingImgIdx] = j.data;
+                    next[idx] = j.data;
                     return next;
                   });
                 }
@@ -386,8 +386,8 @@ export default function NotesPage(){
         <ImageEditorModal
           imageUrl={fi[editingImgIdx].url}
           onSave={(dataUrl) => {
+            const idx = editingImgIdx;
             setEditingImgIdx(null);
-            // Convert dataUrl to blob and upload
             fetch(dataUrl)
               .then(r => r.blob())
               .then(blob => {
@@ -400,7 +400,7 @@ export default function NotesPage(){
                 if (j.success) {
                   sFi(prev => {
                     const next = [...prev];
-                    next[editingImgIdx] = j.data;
+                    next[idx] = j.data;
                     return next;
                   });
                 }
@@ -415,8 +415,8 @@ export default function NotesPage(){
         <ImageEditorModal
           imageUrl={fi[editingImgIdx].url}
           onSave={(dataUrl) => {
+            const idx = editingImgIdx;
             setEditingImgIdx(null);
-            // Convert dataUrl to blob and upload
             fetch(dataUrl)
               .then(r => r.blob())
               .then(blob => {
@@ -429,7 +429,7 @@ export default function NotesPage(){
                 if (j.success) {
                   sFi(prev => {
                     const next = [...prev];
-                    next[editingImgIdx] = j.data;
+                    next[idx] = j.data;
                     return next;
                   });
                 }
@@ -444,8 +444,8 @@ export default function NotesPage(){
         <ImageEditorModal
           imageUrl={fi[editingImgIdx].url}
           onSave={(dataUrl) => {
+            const idx = editingImgIdx;
             setEditingImgIdx(null);
-            // Convert dataUrl to blob and upload
             fetch(dataUrl)
               .then(r => r.blob())
               .then(blob => {
@@ -458,7 +458,7 @@ export default function NotesPage(){
                 if (j.success) {
                   sFi(prev => {
                     const next = [...prev];
-                    next[editingImgIdx] = j.data;
+                    next[idx] = j.data;
                     return next;
                   });
                 }
@@ -474,8 +474,8 @@ export default function NotesPage(){
         <ImageEditorModal
           imageUrl={fi[editingImgIdx].url}
           onSave={(dataUrl) => {
+            const idx = editingImgIdx;
             setEditingImgIdx(null);
-            // Convert dataUrl to blob and upload
             fetch(dataUrl)
               .then(r => r.blob())
               .then(blob => {
@@ -488,7 +488,7 @@ export default function NotesPage(){
                 if (j.success) {
                   sFi(prev => {
                     const next = [...prev];
-                    next[editingImgIdx] = j.data;
+                    next[idx] = j.data;
                     return next;
                   });
                 }
@@ -507,8 +507,8 @@ export default function NotesPage(){
         <ImageEditorModal
           imageUrl={fi[editingImgIdx].url}
           onSave={(dataUrl) => {
+            const idx = editingImgIdx;
             setEditingImgIdx(null);
-            // Convert dataUrl to blob and upload
             fetch(dataUrl)
               .then(r => r.blob())
               .then(blob => {
@@ -521,7 +521,7 @@ export default function NotesPage(){
                 if (j.success) {
                   sFi(prev => {
                     const next = [...prev];
-                    next[editingImgIdx] = j.data;
+                    next[idx] = j.data;
                     return next;
                   });
                 }
@@ -542,8 +542,8 @@ export default function NotesPage(){
         <ImageEditorModal
           imageUrl={fi[editingImgIdx].url}
           onSave={(dataUrl) => {
+            const idx = editingImgIdx;
             setEditingImgIdx(null);
-            // Convert dataUrl to blob and upload
             fetch(dataUrl)
               .then(r => r.blob())
               .then(blob => {
@@ -556,7 +556,7 @@ export default function NotesPage(){
                 if (j.success) {
                   sFi(prev => {
                     const next = [...prev];
-                    next[editingImgIdx] = j.data;
+                    next[idx] = j.data;
                     return next;
                   });
                 }
@@ -581,8 +581,8 @@ export default function NotesPage(){
         <ImageEditorModal
           imageUrl={fi[editingImgIdx].url}
           onSave={(dataUrl) => {
+            const idx = editingImgIdx;
             setEditingImgIdx(null);
-            // Convert dataUrl to blob and upload
             fetch(dataUrl)
               .then(r => r.blob())
               .then(blob => {
@@ -595,7 +595,7 @@ export default function NotesPage(){
                 if (j.success) {
                   sFi(prev => {
                     const next = [...prev];
-                    next[editingImgIdx] = j.data;
+                    next[idx] = j.data;
                     return next;
                   });
                 }
@@ -610,8 +610,8 @@ export default function NotesPage(){
         <ImageEditorModal
           imageUrl={fi[editingImgIdx].url}
           onSave={(dataUrl) => {
+            const idx = editingImgIdx;
             setEditingImgIdx(null);
-            // Convert dataUrl to blob and upload
             fetch(dataUrl)
               .then(r => r.blob())
               .then(blob => {
@@ -624,7 +624,7 @@ export default function NotesPage(){
                 if (j.success) {
                   sFi(prev => {
                     const next = [...prev];
-                    next[editingImgIdx] = j.data;
+                    next[idx] = j.data;
                     return next;
                   });
                 }
@@ -642,8 +642,8 @@ export default function NotesPage(){
         <ImageEditorModal
           imageUrl={fi[editingImgIdx].url}
           onSave={(dataUrl) => {
+            const idx = editingImgIdx;
             setEditingImgIdx(null);
-            // Convert dataUrl to blob and upload
             fetch(dataUrl)
               .then(r => r.blob())
               .then(blob => {
@@ -656,7 +656,7 @@ export default function NotesPage(){
                 if (j.success) {
                   sFi(prev => {
                     const next = [...prev];
-                    next[editingImgIdx] = j.data;
+                    next[idx] = j.data;
                     return next;
                   });
                 }
@@ -672,8 +672,8 @@ export default function NotesPage(){
         <ImageEditorModal
           imageUrl={fi[editingImgIdx].url}
           onSave={(dataUrl) => {
+            const idx = editingImgIdx;
             setEditingImgIdx(null);
-            // Convert dataUrl to blob and upload
             fetch(dataUrl)
               .then(r => r.blob())
               .then(blob => {
@@ -686,7 +686,7 @@ export default function NotesPage(){
                 if (j.success) {
                   sFi(prev => {
                     const next = [...prev];
-                    next[editingImgIdx] = j.data;
+                    next[idx] = j.data;
                     return next;
                   });
                 }
@@ -701,8 +701,8 @@ export default function NotesPage(){
         <ImageEditorModal
           imageUrl={fi[editingImgIdx].url}
           onSave={(dataUrl) => {
+            const idx = editingImgIdx;
             setEditingImgIdx(null);
-            // Convert dataUrl to blob and upload
             fetch(dataUrl)
               .then(r => r.blob())
               .then(blob => {
@@ -715,7 +715,7 @@ export default function NotesPage(){
                 if (j.success) {
                   sFi(prev => {
                     const next = [...prev];
-                    next[editingImgIdx] = j.data;
+                    next[idx] = j.data;
                     return next;
                   });
                 }
@@ -739,8 +739,8 @@ export default function NotesPage(){
         <ImageEditorModal
           imageUrl={fi[editingImgIdx].url}
           onSave={(dataUrl) => {
+            const idx = editingImgIdx;
             setEditingImgIdx(null);
-            // Convert dataUrl to blob and upload
             fetch(dataUrl)
               .then(r => r.blob())
               .then(blob => {
@@ -753,7 +753,7 @@ export default function NotesPage(){
                 if (j.success) {
                   sFi(prev => {
                     const next = [...prev];
-                    next[editingImgIdx] = j.data;
+                    next[idx] = j.data;
                     return next;
                   });
                 }
@@ -768,8 +768,8 @@ export default function NotesPage(){
         <ImageEditorModal
           imageUrl={fi[editingImgIdx].url}
           onSave={(dataUrl) => {
+            const idx = editingImgIdx;
             setEditingImgIdx(null);
-            // Convert dataUrl to blob and upload
             fetch(dataUrl)
               .then(r => r.blob())
               .then(blob => {
@@ -782,7 +782,7 @@ export default function NotesPage(){
                 if (j.success) {
                   sFi(prev => {
                     const next = [...prev];
-                    next[editingImgIdx] = j.data;
+                    next[idx] = j.data;
                     return next;
                   });
                 }
@@ -797,8 +797,8 @@ export default function NotesPage(){
         <ImageEditorModal
           imageUrl={fi[editingImgIdx].url}
           onSave={(dataUrl) => {
+            const idx = editingImgIdx;
             setEditingImgIdx(null);
-            // Convert dataUrl to blob and upload
             fetch(dataUrl)
               .then(r => r.blob())
               .then(blob => {
@@ -811,7 +811,7 @@ export default function NotesPage(){
                 if (j.success) {
                   sFi(prev => {
                     const next = [...prev];
-                    next[editingImgIdx] = j.data;
+                    next[idx] = j.data;
                     return next;
                   });
                 }
@@ -826,8 +826,8 @@ export default function NotesPage(){
         <ImageEditorModal
           imageUrl={fi[editingImgIdx].url}
           onSave={(dataUrl) => {
+            const idx = editingImgIdx;
             setEditingImgIdx(null);
-            // Convert dataUrl to blob and upload
             fetch(dataUrl)
               .then(r => r.blob())
               .then(blob => {
@@ -840,7 +840,7 @@ export default function NotesPage(){
                 if (j.success) {
                   sFi(prev => {
                     const next = [...prev];
-                    next[editingImgIdx] = j.data;
+                    next[idx] = j.data;
                     return next;
                   });
                 }
@@ -853,78 +853,37 @@ export default function NotesPage(){
     </div>}
       {li&&<div className="fixed inset-0 z-50 bg-black/85 flex items-center justify-center touch-none select-none animate-fadeIn" onClick={cl}>
         <button onClick={cl} className="absolute top-4 right-4 z-10 w-10 h-10 bg-white/15 backdrop-blur rounded-full flex items-center justify-center text-white hover:bg-white/30 hover:rotate-90 transition-all duration-300"><svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg></button>
+        {li.images.length > 1 && (
+          <div className="absolute top-4 left-4 z-10 px-3 py-1.5 bg-white/15 backdrop-blur rounded-full text-white text-xs font-medium">
+            {li.idx + 1} / {li.images.length}
+          </div>
+        )}
+        {li.idx > 0 && (
+          <button onClick={(e) => { e.stopPropagation(); goImg(-1); }} className="absolute left-4 top-1/2 -translate-y-1/2 z-10 w-12 h-12 bg-white/15 backdrop-blur rounded-full flex items-center justify-center text-white hover:bg-white/30 hover:scale-110 transition-all duration-200">
+            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
+          </button>
+        )}
+        {li.idx < li.images.length - 1 && (
+          <button onClick={(e) => { e.stopPropagation(); goImg(1); }} className="absolute right-4 top-1/2 -translate-y-1/2 z-10 w-12 h-12 bg-white/15 backdrop-blur rounded-full flex items-center justify-center text-white hover:bg-white/30 hover:scale-110 transition-all duration-200">
+            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
+          </button>
+        )}
         <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-3 bg-white/15 backdrop-blur rounded-full px-4 py-2 shadow-lg">
           <button onClick={(e)=>{e.stopPropagation();sZm(z=>Math.max(0.5,z-0.5));}} className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center text-white hover:bg-white/40 transition-colors"><svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M20 12H4" /></svg></button>
           <span className="text-white text-sm font-medium min-w-[3rem] text-center tabular-nums">{Math.round(zm*100)}%</span>
           <button onClick={(e)=>{e.stopPropagation();sZm(z=>Math.min(5,z+0.5));}} className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center text-white hover:bg-white/40 transition-colors"><svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg></button>
           <button onClick={(e)=>{e.stopPropagation();sZm(1);sPn({x:0,y:0});}} className="ml-2 px-3 py-1 text-xs text-white/70 hover:text-white bg-white/20 rounded-full hover:bg-white/40 transition-colors">重置</button>
-          {editingImgIdx !== null && fi[editingImgIdx] && (
-        <ImageEditorModal
-          imageUrl={fi[editingImgIdx].url}
-          onSave={(dataUrl) => {
-            setEditingImgIdx(null);
-            // Convert dataUrl to blob and upload
-            fetch(dataUrl)
-              .then(r => r.blob())
-              .then(blob => {
-                const fd = new FormData();
-                fd.append('file', blob, 'edited_' + Date.now() + '.png');
-                return fetch('/api/notes/upload', { method: 'POST', body: fd });
-              })
-              .then(r => r.json())
-              .then(j => {
-                if (j.success) {
-                  sFi(prev => {
-                    const next = [...prev];
-                    next[editingImgIdx] = j.data;
-                    return next;
-                  });
-                }
-              })
-              .catch(err => console.error('Save edited image failed:', err));
-          }}
-          onClose={() => setEditingImgIdx(null)}
-        />
-      )}
-    </div>
-        <img src={li} alt="" className="max-w-[92vw] max-h-[90vh] object-contain cursor-grab active:cursor-grabbing transition-transform duration-150 rounded-2xl shadow-2xl"
+        </div>
+        <img src={li.url} alt="" className="max-w-[92vw] max-h-[90vh] object-contain cursor-grab active:cursor-grabbing transition-transform duration-150 rounded-2xl shadow-2xl"
           style={{transform:'scale('+zm+') translate('+(pn.x/zm)+'px,'+(pn.y/zm)+'px)'}}
           onClick={(e)=>e.stopPropagation()} draggable={false} />
-        {editingImgIdx !== null && fi[editingImgIdx] && (
-        <ImageEditorModal
-          imageUrl={fi[editingImgIdx].url}
-          onSave={(dataUrl) => {
-            setEditingImgIdx(null);
-            // Convert dataUrl to blob and upload
-            fetch(dataUrl)
-              .then(r => r.blob())
-              .then(blob => {
-                const fd = new FormData();
-                fd.append('file', blob, 'edited_' + Date.now() + '.png');
-                return fetch('/api/notes/upload', { method: 'POST', body: fd });
-              })
-              .then(r => r.json())
-              .then(j => {
-                if (j.success) {
-                  sFi(prev => {
-                    const next = [...prev];
-                    next[editingImgIdx] = j.data;
-                    return next;
-                  });
-                }
-              })
-              .catch(err => console.error('Save edited image failed:', err));
-          }}
-          onClose={() => setEditingImgIdx(null)}
-        />
-      )}
-    </div>}
+      </div>}
       {editingImgIdx !== null && fi[editingImgIdx] && (
         <ImageEditorModal
           imageUrl={fi[editingImgIdx].url}
           onSave={(dataUrl) => {
+            const idx = editingImgIdx;
             setEditingImgIdx(null);
-            // Convert dataUrl to blob and upload
             fetch(dataUrl)
               .then(r => r.blob())
               .then(blob => {
@@ -937,7 +896,7 @@ export default function NotesPage(){
                 if (j.success) {
                   sFi(prev => {
                     const next = [...prev];
-                    next[editingImgIdx] = j.data;
+                    next[idx] = j.data;
                     return next;
                   });
                 }
