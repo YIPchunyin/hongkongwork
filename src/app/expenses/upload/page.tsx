@@ -311,9 +311,7 @@ export default function ExpensesUploadPage() {
           sum += json.data.amount;
         }
       }
-      setResults(newResults);
-      setTotalAmount(sum);
-      setIsManualResult(true);    } catch {
+      router.push("/expenses");    } catch {
       alert('网络错误');
     } finally {
       setUploading(false);

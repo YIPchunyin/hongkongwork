@@ -53,7 +53,10 @@ export default function NotesPage(){
   const hsv=async(e:React.FormEvent)=>{e.preventDefault();if(!fc&&fi.length===0){alert('请输入内容或添加图片');return;}sSv(true);
     try{const b={title:ft,content:fc,images:fi};if(ei){await fetch('/api/notes/'+ei._id,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)});}else{await fetch('/api/notes',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)});}sSm(false);fn();}catch{}finally{sSv(false);}};
   const dn=async(id:string)=>{sDi(null);await fetch('/api/notes/'+id,{method:'DELETE'});fn();};
-  const cl=()=>{sLi(null);sZm(1);sPn({x:0,y:0});};const goImg=(d:number)=>{if(!li)return;const n=li.idx+d;if(n<0||n>=li.images.length)return;sLi({...li,idx:n,url:li.images[n].url});sZm(1);sPn({x:0,y:0});};
+  const cl=()=>{sLi(null);sZm(1);sPn({x:0,y:0});};const goImg=(d:number)=>{if(!li)return;const n=li.idx+d;if(n<0||n>=li.images.length)return;sLi({...li,idx:n,url:li.images[n].url});sZm(1);sPn({x:0,y:0});};const lastTouchDist=useRef(0);const lastTouchPan=useRef({x:0,y:0});const lastTouchPos=useRef({x:0,y:0});const isPinching=useRef(false);
+const handleTouchStart=(e:React.TouchEvent)=>{e.stopPropagation();if(e.touches.length===2){isPinching.current=true;const dx=e.touches[0].clientX-e.touches[1].clientX;const dy=e.touches[0].clientY-e.touches[1].clientY;lastTouchDist.current=Math.hypot(dx,dy);lastTouchPan.current={x:pn.x,y:pn.y};}else if(e.touches.length===1){lastTouchPos.current={x:e.touches[0].clientX,y:e.touches[0].clientY};lastTouchPan.current={x:pn.x,y:pn.y};}};
+const handleTouchMove=(e:React.TouchEvent)=>{e.stopPropagation();if(e.touches.length===2&&isPinching.current){const dx=e.touches[0].clientX-e.touches[1].clientX;const dy=e.touches[0].clientY-e.touches[1].clientY;const dist=Math.hypot(dx,dy);const scale=dist/lastTouchDist.current;sZm(z=>Math.max(0.5,Math.min(5,z*scale)));lastTouchDist.current=dist;}else if(e.touches.length===1){const dx=e.touches[0].clientX-lastTouchPos.current.x;const dy=e.touches[0].clientY-lastTouchPos.current.y;sPn({x:lastTouchPan.current.x+dx,y:lastTouchPan.current.y+dy});}};
+const handleTouchEnd=(e:React.TouchEvent)=>{isPinching.current=false;};
   const handleEditSave=async(dataUrl:string,idx:number)=>{setEditingImgIdx(null);
     try{const blob=await fetch(dataUrl).then(r=>r.blob());const fd=new FormData();fd.append('file',blob,'edited_'+Date.now()+'.jpg');
       const r=await fetch('/api/notes/upload',{method:'POST',body:fd});const j=await r.json();
@@ -534,7 +537,7 @@ export default function NotesPage(){
     </div>}
       </>)}
       {sm&&<div className="fixed inset-0 z-50 bg-black/30 backdrop-blur-sm flex items-end sm:items-center justify-center animate-fadeIn" onClick={()=>sSm(false)}>
-        <div className="bg-white w-full sm:max-w-lg sm:rounded-3xl rounded-t-3xl max-h-[85vh] overflow-y-auto shadow-2xl animate-slideUp" onClick={(e)=>e.stopPropagation()}>
+        <div className="bg-white w-full sm:max-w-lg sm:rounded-3xl rounded-t-3xl max-h-[85vh] overflow-y-auto shadow-2xl animate-slideUp pb-16 sm:pb-0" onClick={(e)=>e.stopPropagation()}>
           <div className="sticky top-0 bg-white border-b border-gray-100 px-4 py-3.5 flex items-center justify-between z-10 rounded-t-3xl">
             <h2 className="font-semibold text-gray-900 flex items-center gap-2"><span className="text-lg">{ei?'✏️':'📝'}</span>{ei?'编辑记事':'新建记事'}</h2>
             <button onClick={()=>sSm(false)} className="p-1.5 hover:bg-gray-100 rounded-xl transition-colors hover:rotate-90 duration-300"><svg className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg></button>
@@ -876,7 +879,8 @@ export default function NotesPage(){
         </div>
         <img src={li.url} alt="" className="max-w-[92vw] max-h-[90vh] object-contain cursor-grab active:cursor-grabbing transition-transform duration-150 rounded-2xl shadow-2xl"
           style={{transform:'scale('+zm+') translate('+(pn.x/zm)+'px,'+(pn.y/zm)+'px)'}}
-          onClick={(e)=>e.stopPropagation()} draggable={false} />
+          onClick={(e)=>e.stopPropagation()} draggable={false}
+          onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd} />
       </div>}
       {editingImgIdx !== null && fi[editingImgIdx] && (
         <ImageEditorModal
