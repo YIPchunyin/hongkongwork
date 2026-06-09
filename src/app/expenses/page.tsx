@@ -440,17 +440,19 @@ export default function ExpensesPage() {
               </div>
               <div>
                 <label className="block text-xs font-medium text-gray-500 mb-1">分类</label>
-                <select value={formCategory} onChange={(e) => setFormCategory(e.target.value)} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm">
-                  <option value="餐饮">🍽️ 餐饮</option>
-                  <option value="交通">🚇 交通</option>
-                  <option value="购物">🛍️ 购物</option>
-                  <option value="医疗">🏥 医疗</option>
-                  <option value="娱乐">🎮 娱乐</option>
-                  <option value="居住">🏠 居住</option>
-                  <option value="通讯">📱 通讯</option>
-                  <option value="教育">📚 教育</option>
-                  <option value="其他">📄 其他</option>
-                </select>
+                <input
+                  type="text"
+                  value={formCategory}
+                  onChange={(e) => setFormCategory(e.target.value)}
+                  list="cat-suggestions"
+                  placeholder="工具、交通、其他..."
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                />
+                <datalist id="cat-suggestions">
+                  <option value="工具" />
+                  <option value="交通" />
+                  <option value="其他" />
+                </datalist>
               </div>
               <div>
                 <label className="block text-xs font-medium text-gray-500 mb-1">备注</label>
