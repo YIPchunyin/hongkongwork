@@ -1,10 +1,10 @@
-import mongoose, { Schema, Document, Model } from 'mongoose';
+﻿import mongoose, { Schema, Document, Model } from 'mongoose';
 
 export interface INote extends Document {
   userId: string;
   title: string;
   content: string;
-  images: { url: string; key: string }[];
+  images: { url: string; key: string; thumbUrl: string; thumbKey: string }[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -17,6 +17,8 @@ const NoteSchema = new Schema<INote>(
     images: [{
       url: { type: String, default: '' },
       key: { type: String, default: '' },
+      thumbUrl: { type: String, default: '' },
+      thumbKey: { type: String, default: '' },
     }],
   },
   { timestamps: true }

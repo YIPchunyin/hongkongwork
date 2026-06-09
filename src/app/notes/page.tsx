@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '@/components/AuthProvider';
 
-interface NoteImage { url: string; key: string; }
+interface NoteImage { url: string; key: string; thumbUrl?: string; thumbKey?: string; }
 interface NoteItem { _id: string; title: string; content: string; images: NoteImage[]; createdAt: string; updatedAt: string; }
 interface NotesData { items: NoteItem[]; total: number; page: number; limit: number; totalPages: number; }
 
@@ -108,7 +108,7 @@ export default function NotesPage(){
                   <div className="flex h-full">
                     {note.images.slice(0,3).map((img,i)=>(<button key={i} onClick={(e)=>{e.stopPropagation();sLi(img.url);}}
                       className={[note.images.length===1?'w-full':note.images.length===2?'w-1/2':i===0?'w-1/2':'w-1/4','overflow-hidden group/img transition-all duration-300'].join(' ')}>
-                      <img src={img.url} alt="" className="w-full h-full object-cover transition-transform duration-500 group-hover/img:scale-110" />
+                      <img src={img.thumbUrl || img.url} alt="" className="w-full h-full object-cover transition-transform duration-500 group-hover/img:scale-110" />
                       {i===2&&note.images.length>3&&<div className="absolute inset-0 bg-black/40 flex items-center justify-center text-white font-bold text-lg">+{note.images.length-3}</div>}
                     </button>))}
                   </div>
@@ -146,7 +146,7 @@ export default function NotesPage(){
             <div><label className="block text-xs font-medium text-gray-400 mb-1.5">💬 内容</label><textarea value={fc} onChange={(e)=>sFc(e.target.value)} placeholder="写点什么..." rows={4} className="w-full px-3 py-2.5 border-2 border-yellow-200 rounded-xl text-sm focus:outline-none focus:border-pink-300 focus:ring-4 focus:ring-pink-50 transition-all duration-300 resize-none" /></div>
             <div>
               <label className="block text-xs font-medium text-gray-400 mb-1.5">🖼️ 图片</label>
-              {fi.length>0&&<div className="flex flex-wrap gap-2 mb-2">{fi.map((img,i)=>(<div key={i} className="relative group/image"><img src={img.url} alt="" className="w-20 h-20 rounded-xl object-cover border-2 border-yellow-100" /><button type="button" onClick={()=>ri(i)} className="absolute -top-2 -right-2 w-5 h-5 bg-red-400 text-white rounded-full flex items-center justify-center opacity-0 group-hover/image:opacity-100 transition-all duration-200 shadow-sm hover:scale-110"><svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg></button></div>))}</div>}
+              {fi.length>0&&<div className="flex flex-wrap gap-2 mb-2">{fi.map((img,i)=>(<div key={i} className="relative group/image"><img src={img.thumbUrl || img.url} alt="" className="w-20 h-20 rounded-xl object-cover border-2 border-yellow-100" onError={(e)=>{if(e.currentTarget.src.includes("thumb"))e.currentTarget.src=e.currentTarget.src.replace("thumb_","")}} /><button type="button" onClick={()=>ri(i)} className="absolute -top-2 -right-2 w-5 h-5 bg-red-400 text-white rounded-full flex items-center justify-center opacity-0 group-hover/image:opacity-100 transition-all duration-200 shadow-sm hover:scale-110"><svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg></button></div>))}</div>}
               <div className="flex items-center gap-2">
                 <button type="button" onClick={()=>fir.current?.click()} disabled={up} className="px-4 py-2 border-2 border-dashed border-yellow-200 rounded-xl text-sm text-gray-500 hover:border-pink-300 hover:text-pink-500 hover:bg-pink-50 transition-all duration-300 disabled:opacity-50 flex items-center gap-1.5">{up?(<><div className="w-4 h-4 border-2 border-yellow-300 border-t-pink-400 rounded-full animate-spin" />上传中...</>):(<><svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>添加图片</>)}</button>
                 <input ref={fir} type="file" accept="image/*" multiple onChange={hi} className="hidden" />

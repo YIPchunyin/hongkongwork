@@ -1,6 +1,7 @@
 ﻿import { NextRequest, NextResponse } from 'next/server';
 import { uploadToR2 } from '@/lib/r2Storage';
 import { getTokenFromRequest, verifyToken } from '@/lib/auth';
+import { generateThumbnail, getThumbKey } from '@/lib/imageUtils';
 
 export const dynamic = 'force-dynamic';
 
@@ -20,9 +21,32 @@ export async function POST(request: NextRequest) {
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
-    const result = await uploadToR2(buffer, file.name, 'notes');
+    // Upload original image
+    const original = await uploadToR2(buffer, file.name, 'notes');
 
-    return NextResponse.json({ success: true, data: result });
+    // Generate and upload thumbnail
+    let thumbUrl = original.url;
+    let thumbKey = '';
+    try {
+      const thumbBuffer = await generateThumbnail(buffer);
+      const thumbName = 'thumb_' + file.name;
+      const thumbResult = await uploadToR2(thumbBuffer, thumbName, 'notes');
+      thumbUrl = thumbResult.url;
+      thumbKey = thumbResult.key;
+    } catch (err) {
+      console.error('缩略图生成失败，使用原图:', err);
+      // Fallback to original if thumbnail fails
+    }
+
+    return NextResponse.json({
+      success: true,
+      data: {
+        url: original.url,
+        key: original.key,
+        thumbUrl,
+        thumbKey,
+      },
+    });
   } catch (error) {
     console.error('上传图片失败:', error);
     return NextResponse.json({ success: false, error: '上传失败' }, { status: 500 });
