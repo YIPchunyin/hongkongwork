@@ -4,8 +4,10 @@ import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/components/AuthProvider';
+import { useTranslation } from 'react-i18next';
+import i18n from '@/lib/i18n';
 
-const tabs = [
+const getTabs = (t: (key: string) => string) => [
   { href: '/', label: '首页', icon: (
     <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
       <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
@@ -41,6 +43,7 @@ const tabs = [
 export default function MobileNav() {
   const pathname = usePathname();
   const { user, logout } = useAuth();
+  const { t } = useTranslation();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -55,7 +58,7 @@ export default function MobileNav() {
   return (
     <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-lg border-t border-gray-200 safe-area-bottom">
       <div className="flex items-center justify-around h-14">
-        {tabs.map((tab) => {
+        {getTabs(t).map((tab) => {
           const isActive = pathname === tab.href || (tab.href !== '/' && pathname.startsWith(tab.href));
           if (tab.href === '/settings') {
             return (
@@ -92,6 +95,18 @@ export default function MobileNav() {
                       </svg>
                       账号设置
                     </Link>
+                    <div className="border-t border-gray-100 pt-1 mt-1">
+                      <p className="px-4 py-1 text-[10px] text-gray-400 uppercase tracking-wider">{t('nav.language')}</p>
+                      <button onClick={() => { i18n.changeLanguage("zh-CN"); setMenuOpen(false); }} className="flex items-center w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 min-h-[36px]">
+                        <span className="mr-2">????</span> {t('nav.chineseSimple')}
+                      </button>
+                      <button onClick={() => { i18n.changeLanguage("zh-HK"); setMenuOpen(false); }} className="flex items-center w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 min-h-[36px]">
+                        <span className="mr-2">????</span> {t('nav.chineseTrad')}
+                      </button>
+                      <button onClick={() => { i18n.changeLanguage("en"); setMenuOpen(false); }} className="flex items-center w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 min-h-[36px]">
+                        <span className="mr-2">????</span> {t('nav.english')}
+                      </button>
+                    </div>
                     <button
                       onClick={() => { logout(); setMenuOpen(false); }}
                       className="flex items-center w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 min-h-[44px]"

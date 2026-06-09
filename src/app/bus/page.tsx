@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useCallback, useEffect, useRef } from 'react';
 import Link from 'next/link';
@@ -121,7 +121,7 @@ export default function BusPage() {
     const diff = Math.floor((d.getTime() - now.getTime()) / 60000);
     if (diff <= 0) return '即将到站';
     if (diff <= 5) return diff + ' 分';
-    return d.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+    return d.toLocaleTimeString('zh-HK', { timeZone: 'Asia/Hong_Kong', hour: '2-digit', minute: '2-digit' });
   };
 
   const isFav = (route: string, stopId: string) => {

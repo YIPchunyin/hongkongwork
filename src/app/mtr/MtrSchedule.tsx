@@ -39,7 +39,7 @@ interface MtrData {
 function fmtTime(s: string): string {
   if (!s) return '--';
   const d = new Date(s);
-  return d.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+  return d.toLocaleTimeString('zh-HK', { timeZone: 'Asia/Hong_Kong', hour: '2-digit', minute: '2-digit' });
 }
 
 export default function MtrSchedule() {

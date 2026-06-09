@@ -117,7 +117,7 @@ export default function WeatherPage() {
   const formatTime = (iso: string) => {
     if (!iso) return '--';
     const d = new Date(iso);
-    return d.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+    return d.toLocaleTimeString('zh-HK', { timeZone: 'Asia/Hong_Kong', hour: '2-digit', minute: '2-digit' });
   };
 
   const getDayName = (dateStr: string) => {

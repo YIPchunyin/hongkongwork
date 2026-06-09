@@ -1,7 +1,8 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '@/components/AuthProvider';
+import ImageEditorModal from '@/components/ImageEditorModal';
 
 interface NoteImage { url: string; key: string; thumbUrl?: string; thumbKey?: string; }
 interface NoteItem { _id: string; title: string; content: string; images: NoteImage[]; createdAt: string; updatedAt: string; }
@@ -34,6 +35,7 @@ export default function NotesPage(){
   const fir=useRef<HTMLInputElement>(null);
   const[li,sLi]=useState<string|null>(null);const[zm,sZm]=useState(1);const[pn,sPn]=useState({x:0,y:0});
   const[di,sDi]=useState<string|null>(null);
+  const[editingImgIdx,setEditingImgIdx]=useState<number|null>(null);
   const ob=useRef<IntersectionObserver|null>(null);const cr=useRef<Map<string,HTMLDivElement>>(new Map);
   const fn=useCallback(async()=>{sF(true);sVc(new Set);
     try{const p=new URLSearchParams({page:String(pg),limit:'50'});if(se)p.set('search',se);const r=await fetch('/api/notes?'+p.toString());const j=await r.json();if(j.success){const d=j.data;sN(d.items);sTp(d.totalPages);sTt(d.total);}}catch{}finally{sF(false);}},[pg,se]);
@@ -52,6 +54,10 @@ export default function NotesPage(){
     try{const b={title:ft,content:fc,images:fi};if(ei){await fetch('/api/notes/'+ei._id,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)});}else{await fetch('/api/notes',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)});}sSm(false);fn();}catch{}finally{sSv(false);}};
   const dn=async(id:string)=>{sDi(null);await fetch('/api/notes/'+id,{method:'DELETE'});fn();};
   const cl=()=>{sLi(null);sZm(1);sPn({x:0,y:0});};
+  const handleEditSave=async(dataUrl:string,idx:number)=>{setEditingImgIdx(null);
+    try{const blob=await fetch(dataUrl).then(r=>r.blob());const fd=new FormData();fd.append('file',blob,'edited_'+Date.now()+'.jpg');
+      const r=await fetch('/api/notes/upload',{method:'POST',body:fd});const j=await r.json();
+      if(j.success)sFi(p=>{const c=[...p];c[idx]=j.data;return c;});}catch{}};
 
   if(loading)return<div className="flex items-center justify-center min-h-[60vh]"><div className="w-12 h-12 border-[3px] border-yellow-300 border-t-pink-400 rounded-full animate-spin" /></div>;
 
@@ -146,7 +152,7 @@ export default function NotesPage(){
             <div><label className="block text-xs font-medium text-gray-400 mb-1.5">💬 内容</label><textarea value={fc} onChange={(e)=>sFc(e.target.value)} placeholder="写点什么..." rows={4} className="w-full px-3 py-2.5 border-2 border-yellow-200 rounded-xl text-sm focus:outline-none focus:border-pink-300 focus:ring-4 focus:ring-pink-50 transition-all duration-300 resize-none" /></div>
             <div>
               <label className="block text-xs font-medium text-gray-400 mb-1.5">🖼️ 图片</label>
-              {fi.length>0&&<div className="flex flex-wrap gap-2 mb-2">{fi.map((img,i)=>(<div key={i} className="relative group/image"><img src={img.thumbUrl || img.url} alt="" className="w-20 h-20 rounded-xl object-cover border-2 border-yellow-100" onError={(e)=>{if(e.currentTarget.src.includes("thumb"))e.currentTarget.src=e.currentTarget.src.replace("thumb_","")}} /><button type="button" onClick={()=>ri(i)} className="absolute -top-2 -right-2 w-5 h-5 bg-red-400 text-white rounded-full flex items-center justify-center opacity-0 group-hover/image:opacity-100 transition-all duration-200 shadow-sm hover:scale-110"><svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg></button></div>))}</div>}
+              {fi.length>0&&<div className="flex flex-wrap gap-2 mb-2">{fi.map((img,i)=>(<div key={i} className="relative group/image"><img src={img.thumbUrl || img.url} alt="" className="w-20 h-20 rounded-xl object-cover border-2 border-yellow-100" onError={(e)=>{if(e.currentTarget.src.includes("thumb"))e.currentTarget.src=e.currentTarget.src.replace("thumb_","")}} /><button type="button" onClick={()=>setEditingImgIdx(i)} className="absolute top-1 left-1 z-10 w-5 h-5 bg-blue-500/90 text-white rounded-full flex items-center justify-center opacity-0 group-hover/image:opacity-100 transition-all duration-200 shadow-sm hover:scale-110 hover:bg-blue-600"><svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg></button><button type="button" onClick={()=>ri(i)} className="absolute -top-2 -right-2 w-5 h-5 bg-red-400 text-white rounded-full flex items-center justify-center opacity-0 group-hover/image:opacity-100 transition-all duration-200 shadow-sm hover:scale-110"><svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg></button></div>))}</div>}
               <div className="flex items-center gap-2">
                 <button type="button" onClick={()=>fir.current?.click()} disabled={up} className="px-4 py-2 border-2 border-dashed border-yellow-200 rounded-xl text-sm text-gray-500 hover:border-pink-300 hover:text-pink-500 hover:bg-pink-50 transition-all duration-300 disabled:opacity-50 flex items-center gap-1.5">{up?(<><div className="w-4 h-4 border-2 border-yellow-300 border-t-pink-400 rounded-full animate-spin" />上传中...</>):(<><svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>添加图片</>)}</button>
                 <input ref={fir} type="file" accept="image/*" multiple onChange={hi} className="hidden" />

@@ -2,9 +2,11 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/components/AuthProvider';
 
 export default function RegisterPage() {
+  const { t } = useTranslation();
   const { register } = useAuth();
   const [username, setUsername] = useState('');
   const [name, setName] = useState('');
@@ -93,8 +95,8 @@ export default function RegisterPage() {
           </form>
 
           <p className="mt-6 text-center text-sm text-gray-500">
-            已有账号？{' '}
-            <Link href="/login" className="text-blue-600 hover:text-blue-700 font-medium">立即登录</Link>
+            {t('auth.hasAccount')}？{' '}
+            <Link href="/login" className="text-blue-600 hover:text-blue-700 font-medium">{t('auth.loginBtn')}</Link>
           </p>
         </div>
       </div>

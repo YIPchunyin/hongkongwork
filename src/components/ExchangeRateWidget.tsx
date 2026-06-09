@@ -1,11 +1,13 @@
 ﻿'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useRouter } from 'next/navigation';
 
 interface ExchangeRateData { hkdToCny: number; updateTime: string; source: string; }
 
 export default function ExchangeRateWidget() {
+  const { t } = useTranslation();
   const router = useRouter();
   const [rate, setRate] = useState<ExchangeRateData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -35,8 +37,8 @@ export default function ExchangeRateWidget() {
   if (!rate) {
     return (
       <div className="bg-gradient-to-br from-emerald-500 to-teal-700 rounded-2xl p-5 sm:p-6 text-white shadow-lg card-hover" onClick={() => router.push('/exchange-rate')}>
-        <p className="text-emerald-100 text-sm font-medium">💱 港币兑人民币</p>
-        <p className="text-white/60 text-sm mt-2">暂无法获取汇率</p>
+        <p className="text-emerald-100 text-sm font-medium">💱 {t('home.exchangeRate')}</p>
+        <p className="text-white/60 text-sm mt-2">{t('home.noData')}</p>
       </div>
     );
   }
@@ -53,7 +55,7 @@ export default function ExchangeRateWidget() {
       <div className="absolute -bottom-6 -right-6 w-16 h-16 bg-emerald-300/10 rounded-full animate-float-slow pointer-events-none" style={{ animationDelay: '1.5s' }} />
 
       <div className="relative">
-        <p className="text-emerald-100 text-xs font-medium mb-1">💱 港币兑人民币</p>
+        <p className="text-emerald-100 text-xs font-medium mb-1">💱 {t('home.exchangeRate')}</p>
         <div className="flex items-center justify-center gap-2 mt-1">
           <span className="text-lg sm:text-xl font-bold">HK$100</span>
           <span className="text-base text-emerald-200 font-medium">=</span>
@@ -64,9 +66,9 @@ export default function ExchangeRateWidget() {
           <span className="w-1 h-1 rounded-full bg-emerald-300/50 animate-sparkle" />
         </div>
         <div className="mt-3 flex items-center justify-between">
-          <p className="text-emerald-200 text-[10px]">更新 {rate.updateTime}</p>
+          <p className="text-emerald-200 text-[10px]">{t('home.updatedAt')} {rate.updateTime}</p>
           <span className="text-emerald-200 text-xs group-hover:text-white transition-colors flex items-center gap-1">
-            查看走势
+            {t('home.viewTrend')}
             <svg className="w-3 h-3 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
             </svg>

@@ -1,6 +1,7 @@
 ﻿'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useRouter } from 'next/navigation';
 import { getLineColor } from '@/lib/mtr-stations';
 
@@ -9,6 +10,7 @@ interface LineInfo { line: string; lineName: string; up: TrainEntry[]; down: Tra
 interface MtrData { station: { code: string; nameTc: string; nameEn: string; lines: { code: string; name: string }[]; }; distanceKm: number; sysTime: string; lines: LineInfo[]; }
 
 export default function MtrWidget() {
+  const { t } = useTranslation();
   const router = useRouter();
   const [data, setData] = useState<MtrData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -52,7 +54,7 @@ export default function MtrWidget() {
   const fmtTime = (s: string) => {
     if (!s) return '--';
     const d = new Date(s);
-    return d.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+    return d.toLocaleTimeString('zh-HK', { timeZone: 'Asia/Hong_Kong', hour: '2-digit', minute: '2-digit' });
   };
 
   if (loading) {
@@ -68,13 +70,14 @@ export default function MtrWidget() {
   if (error || !data) {
     return (
       <div className="bg-gradient-to-br from-orange-500 to-red-600 rounded-2xl p-5 sm:p-6 text-white shadow-lg card-hover" onClick={handleClick}>
-        <p className="text-orange-100 text-sm font-medium">🚇 最近地铁站</p>
-        <p className="text-white/60 text-sm mt-2">定位获取中...</p>
+        <p className="text-orange-100 text-sm font-medium">🚇 {t('mtr.nearbyStation')}</p>
+        <p className="text-white/60 text-sm mt-2">{t('home.loadingData')}...</p>
       </div>
     );
   }
 
   const { station, lines, distanceKm, sysTime } = data;
+  // Up/down trains are computed inline in the JSX below
   const allTrains: { lineName: string; lineCode: string; dest: string; ttnt: number; plat: string; time: string; direction: string }[] = [];
   for (const line of lines) {
     for (const t of line.up) allTrains.push({ lineName: line.lineName, lineCode: line.line, dest: t.dest, ttnt: t.ttnt, plat: t.plat, time: t.time, direction: '上行' });
@@ -121,14 +124,14 @@ export default function MtrWidget() {
               </div>
             </div>
           )) : (
-            <p className="text-orange-200 text-xs text-center py-2">收车时段，暂无列车数据</p>
+            <p className="text-orange-200 text-xs text-center py-2">收车时段，{t('mtr.noData')}</p>
           )}
         </div>
 
         <div className="mt-2 flex items-center justify-between">
-          <p className="text-orange-200 text-[10px]">🔄 每30秒刷新</p>
+          <p className="text-orange-200 text-[10px]">🔄 {t('home.refreshEvery')}</p>
           <span className="text-orange-200 text-xs group-hover:text-white transition-colors flex items-center gap-1">
-            全部班次
+            {t('home.allTimes')}
             <svg className="w-3 h-3 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
             </svg>
