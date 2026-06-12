@@ -3,9 +3,7 @@
 import { useState, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/AuthProvider';
-import Cropper from 'react-easy-crop';
-import type { Area } from 'react-easy-crop';
-import 'react-easy-crop/react-easy-crop.css';
+import ImageEditorModal from '@/components/ImageEditorModal';
 
 interface UploadResult {
   _id: string;
@@ -58,6 +56,12 @@ function rotateBase64Image(base64: string, rotation: number): Promise<string> {
   });
 }
 
+
+
+function getRadianAngle(degreeValue: number): number {
+  return (degreeValue * Math.PI) / 180;
+}
+
 function dataURLtoBlob(dataUrl: string): Blob {
   const arr = dataUrl.split(',');
   const mime = arr[0].match(/:(.*?);/)![1];
@@ -79,9 +83,6 @@ function createImage(url: string): Promise<HTMLImageElement> {
   });
 }
 
-function getRadianAngle(degreeValue: number): number {
-  return (degreeValue * Math.PI) / 180;
-}
 
 function rotateSize(width: number, height: number, rotation: number) {
   const rotRad = getRadianAngle(rotation);
@@ -91,32 +92,6 @@ function rotateSize(width: number, height: number, rotation: number) {
   };
 }
 
-async function getCroppedImg(imageSrc: string, pixelCrop: Area, rotation = 0): Promise<Blob | null> {
-  try {
-    const image = await createImage(imageSrc);
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return null;
-    const rotRad = getRadianAngle(rotation);
-    const bBox = rotateSize(image.width, image.height, rotation);
-    canvas.width = bBox.width;
-    canvas.height = bBox.height;
-    ctx.translate(bBox.width / 2, bBox.height / 2);
-    ctx.rotate(rotRad);
-    ctx.drawImage(image, -image.width / 2, -image.height / 2);
-    const croppedCanvas = document.createElement('canvas');
-    const croppedCtx = croppedCanvas.getContext('2d');
-    if (!croppedCtx) return null;
-    croppedCanvas.width = pixelCrop.width;
-    croppedCanvas.height = pixelCrop.height;
-    croppedCtx.drawImage(canvas, pixelCrop.x, pixelCrop.y, pixelCrop.width, pixelCrop.height, 0, 0, pixelCrop.width, pixelCrop.height);
-    return new Promise((resolve) => {
-      croppedCanvas.toBlob((blob) => resolve(blob), 'image/jpeg', 0.9);
-    });
-  } catch (err) {
-    return null;
-  }
-}
 export default function ExpensesUploadPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
@@ -127,14 +102,8 @@ export default function ExpensesUploadPage() {
   const [uploading, setUploading] = useState(false);
   const [totalAmount, setTotalAmount] = useState(0);
   const [isManualResult, setIsManualResult] = useState(false);
-  const [editorOpen, setEditorOpen] = useState(false);
   const [editIndex, setEditIndex] = useState(-1);
   const [editSrc, setEditSrc] = useState('');
-  const [crop, setCrop] = useState({ x: 0, y: 0 });
-  const [cropZoom, setCropZoom] = useState(1);
-  const [editorRotation, setEditorRotation] = useState(0);
-  const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
-  const [cropAspect, setCropAspect] = useState(4 / 3);
   
   
   const today = new Date().toISOString().split('T')[0];
@@ -177,35 +146,30 @@ export default function ExpensesUploadPage() {
   const openEditor = (index: number) => {
     setEditIndex(index);
     setEditSrc(files[index].preview);
-    setCrop({ x: 0, y: 0 });
-    setCropZoom(1);
-    setEditorRotation(0);
-    setCroppedAreaPixels(null);
-    setEditorOpen(true);
   };
 
-  const applyCrop = async () => {
-    if (!croppedAreaPixels) return;
-    try {
-      const blob = await getCroppedImg(editSrc, croppedAreaPixels, editorRotation);
-      if (blob) {
-        const newPreview = URL.createObjectURL(blob);
-        setFiles((prev) => {
+  const handleSaveCropped = (dataUrl: string) => {
+    if (editIndex < 0 || !editSrc) return;
+    const idx = editIndex;
+    setEditIndex(-1);
+    setEditSrc('');
+    fetch(dataUrl)
+      .then(r => r.blob())
+      .then(blob => {
+        setFiles((prev: any[]) => {
           const updated = [...prev];
-          URL.revokeObjectURL(updated[editIndex].preview);
-          updated[editIndex] = {
-            ...updated[editIndex],
-            preview: newPreview,
-            file: new File([blob], updated[editIndex].file.name, { type: updated[editIndex].file.type }),
-            rotation: 0,
-          };
+          if (idx >= 0 && idx < updated.length) {
+            updated[idx] = {
+              ...updated[idx],
+              preview: dataUrl,
+              file: new File([blob], updated[idx].file.name, { type: updated[idx].file.type }),
+              rotation: 0,
+            };
+          }
           return updated;
         });
-      }
-    } catch (err) {
-      console.error('applyCrop error:', err);
-    }
-    setEditorOpen(false);
+      })
+      .catch(err => console.error('Save cropped image failed:', err));
   };
 
   const rotateFile = (index: number) => {
@@ -550,73 +514,13 @@ export default function ExpensesUploadPage() {
       )}
       
       {/* Image lightbox using yet-another-react-lightbox */}
-      {/* Image editor with crop/rotate/zoom */}
-      {editorOpen && (
-        <div
-          className="fixed inset-0 z-50 bg-black/90 flex flex-col items-center justify-center"
-          onClick={() => setEditorOpen(false)}
-        >
-          <div className="relative w-full h-full flex flex-col" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between px-4 py-3 bg-black/40">
-              <button onClick={() => setEditorOpen(false)} className="text-white/70 hover:text-white text-sm">
-                ✕ 取消
-              </button>
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={() => setEditorRotation((r) => (r + 90) % 360)}
-                  className="text-white/80 hover:text-white text-sm bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-lg transition-colors"
-                >
-                  ↻ 旋转
-                </button>
-                <button
-                  onClick={applyCrop}
-                  className="bg-blue-500 hover:bg-blue-600 text-white text-sm font-medium px-5 py-1.5 rounded-lg transition-colors"
-                >
-                  ✔ 应用
-                </button>
-              </div>
-            </div>
-
-            <div className="flex-1 relative">
-              <Cropper
-                image={editSrc}
-                crop={crop}
-                zoom={cropZoom}
-                rotation={editorRotation}
-                aspect={cropAspect}
-                onCropChange={setCrop}
-                onZoomChange={setCropZoom}
-                onCropComplete={(_: Area, croppedPixels: Area) => setCroppedAreaPixels(croppedPixels)}
-              />
-            </div>
-
-            <div className="px-4 py-3 bg-black/40 flex items-center gap-4 justify-center">
-              <span className="text-white/60 text-xs">缩放</span>
-              <input
-                type="range"
-                min={1}
-                max={3}
-                step={0.01}
-                value={cropZoom}
-                onChange={(e) => setCropZoom(Number(e.target.value))}
-                className="w-32 accent-blue-500"
-              />
-              <span className="text-white/60 text-xs">{Math.round(cropZoom * 100)}%</span>
-              <div className="w-px h-6 bg-white/20" />
-              <span className="text-white/60 text-xs">比例</span>
-              <select
-                value={cropAspect}
-                onChange={(e) => setCropAspect(Number(e.target.value))}
-                className="bg-white/10 text-white text-xs border border-white/20 rounded px-2 py-1"
-              >
-                <option value={4 / 3}>自由</option>
-                <option value={1 / 1}>1:1</option>
-                <option value={3 / 4}>3:4</option>
-                <option value={16 / 9}>16:9</option>
-              </select>
-            </div>
-          </div>
-        </div>
+      {/* Image editor (tui-image-editor) */}
+      {editIndex >= 0 && editSrc && (
+        <ImageEditorModal
+          imageUrl={editSrc}
+          onSave={handleSaveCropped}
+          onClose={() => { setEditIndex(-1); setEditSrc(''); }}
+        />
       )}
 
 
