@@ -866,6 +866,9 @@ const handleTouchEnd=(e:React.TouchEvent)=>{isPinching.current=false;};
             </button>
             <span className="text-sm font-medium text-gray-500">{(dv.createdAt||'').split('T')[0]}</span>
             <div className="flex gap-1">
+              <button onClick={()=>{const shareUrl=window.location.origin+"/share/"+dv._id;if(typeof navigator.share==="function"){navigator.share({title:dv.title||"",text:dv.content||"",url:shareUrl}).catch(()=>{})}else{navigator.clipboard.writeText(shareUrl).then(()=>{alert("分享链接已复制")}).catch(()=>{prompt("复制链接：",shareUrl)})}}} className="p-2 rounded-lg text-gray-500 hover:text-blue-500 hover:bg-blue-50 transition-all">
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" /></svg>
+              </button>
               <button onClick={()=>{sDv(null);oe(dv);}} className="p-2 rounded-lg text-gray-500 hover:text-pink-600 hover:bg-pink-50 transition-all">
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
               </button>
