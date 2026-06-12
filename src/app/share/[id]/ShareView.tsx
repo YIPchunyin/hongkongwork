@@ -82,7 +82,7 @@ export default function ShareView({ id }: { id: string }) {
                 className="w-full shrink-0 transition-transform duration-300"
                 style={{ transform: 'translateX(-' + (imgIdx * 100) + '%)' }}
               >
-                <img src={img.url} alt="" className="w-full h-72 sm:h-96 object-contain bg-black"
+                <img src={img.url} alt="" className="w-full object-contain bg-black max-h-[80vh]"
                   onTouchStart={(e) => setTouchStart(e.touches[0].clientX)}
                   onTouchEnd={(e) => {
                     const diff = e.changedTouches[0].clientX - touchStart;

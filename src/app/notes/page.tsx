@@ -884,7 +884,7 @@ const handleTouchEnd=(e:React.TouchEvent)=>{isPinching.current=false;};
               <div className="flex overflow-x-hidden" onTouchStart={handleDetailTouchStart} onTouchEnd={handleDetailTouchEnd}>
                 {dv.images.map((img, i) => (
                   <div key={i} className="w-full shrink-0 transition-transform duration-300" style={{transform:'translateX(-'+(diIdx*100)+'%)'}}>
-                    <img src={img.url} alt="" className="w-full h-72 sm:h-96 object-contain" onClick={(e)=>{e.stopPropagation();sLi({url:img.url,images:dv.images,idx:i});}} />
+                    <img src={img.url} alt="" className="w-full object-contain max-h-[80vh]" onClick={(e)=>{e.stopPropagation();sLi({url:img.url,images:dv.images,idx:i});}} />
                   </div>
                 ))}
               </div>
