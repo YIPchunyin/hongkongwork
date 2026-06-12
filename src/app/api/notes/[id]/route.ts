@@ -29,7 +29,22 @@ export async function PUT(
 
     if (title !== undefined) note.title = title;
     if (content !== undefined) note.content = content;
-    if (images !== undefined) note.images = images;
+
+    // Delete removed images from R2
+    if (images !== undefined) {
+      const oldKeys = new Set((note.images || []).map((i: any) => i.key).filter(Boolean));
+      const newKeys = new Set((images || []).map((i: any) => i.key).filter(Boolean));
+      const removedKeys = [...oldKeys].filter(k => !newKeys.has(k));
+      if (removedKeys.length > 0) {
+        await Promise.allSettled(removedKeys.map(async (key: string) => {
+          try { await deleteFromR2(key); } catch (e) { console.error("删除R2图片失败:", e); }
+          // Also try to delete thumbnail
+          const thumbKey = key.replace(/([^/]+)$/, "thumb_$1");
+          try { await deleteFromR2(thumbKey); } catch {}
+        }));
+      }
+      note.images = images;
+    }
 
     await note.save();
 

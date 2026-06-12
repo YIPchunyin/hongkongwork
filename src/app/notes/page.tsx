@@ -34,7 +34,10 @@ export default function NotesPage(){
   const[up,sUp]=useState(false);const[sv,sSv]=useState(false);
   const fir=useRef<HTMLInputElement>(null);
   const[li,sLi]=useState<{url:string;images:{url:string;thumbUrl?:string}[];idx:number}|null>(null);const[zm,sZm]=useState(1);const[pn,sPn]=useState({x:0,y:0});
-  const[di,sDi]=useState<string|null>(null);
+  const[di,sDi]=useState<string|null>(null);const[dv,sDv]=useState<NoteItem|null>(null);const[diIdx,sDiIdx]=useState(0);
+  const[touchStartX,setTouchStartX]=useState(0);
+  const handleDetailTouchStart=(e:React.TouchEvent)=>{setTouchStartX(e.touches[0].clientX);};
+  const handleDetailTouchEnd=(e:React.TouchEvent)=>{if(!dv||!dv.images)return;const diff=e.changedTouches[0].clientX-touchStartX;if(Math.abs(diff)>50){if(diff<0&&diIdx<dv.images.length-1)sDiIdx(i=>i+1);if(diff>0&&diIdx>0)sDiIdx(i=>i-1);}};
   const[editingImgIdx,setEditingImgIdx]=useState<number|null>(null);
   const ob=useRef<IntersectionObserver|null>(null);const cr=useRef<Map<string,HTMLDivElement>>(new Map);
   const fn=useCallback(async()=>{sF(true);sVc(new Set);
@@ -251,7 +254,7 @@ const handleTouchEnd=(e:React.TouchEvent)=>{isPinching.current=false;};
               className={[rot,'transition-all duration-700 ease-out',vis?'opacity-100 translate-y-0':'opacity-0 translate-y-8'].join(' ')}
               style={{transitionDelay:Math.min(idx*80,500)+'ms'}}>
               <div className="absolute -top-2 left-1/2 -translate-x-1/2 z-10 w-8 h-4 bg-gray-200/60 rounded-sm opacity-60 shadow-sm" />
-              <div onClick={()=>oe(note)} className={[color.bg,'border-2',color.border,'rounded-2xl','overflow-hidden',color.shadow,'shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 hover:scale-[1.02] group cursor-pointer'].join(' ')}>
+              <div onClick={()=>sDv(note)} className={[color.bg,'border-2',color.border,'rounded-2xl','overflow-hidden',color.shadow,'shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 hover:scale-[1.02] group cursor-pointer'].join(' ')}>
                 <div className="absolute -top-0.5 -right-0.5 w-6 h-6 bg-white/40 rounded-bl-2xl border-l-2 border-b-2 border-white/60 z-10" />
                 {hi&&(<div className={['relative',ih?'h-48 sm:h-56':'h-36 sm:h-40','overflow-hidden'].join(' ')}>
                   <div className="flex h-full">
@@ -324,7 +327,7 @@ const handleTouchEnd=(e:React.TouchEvent)=>{isPinching.current=false;};
                   {note.content&&<p className={['text-sm',note.title?'mt-1.5':'','text-gray-600','line-clamp-3','whitespace-pre-wrap','leading-relaxed'].join(' ')}>{note.content}</p>}
                   <div className="flex items-center justify-between mt-3 pt-2 border-t border-white/50">
                     <span className="text-xs text-gray-400 flex items-center gap-1"><svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>{new Date(note.createdAt).toLocaleDateString('zh-HK',{month:'short',day:'numeric'})}</span>
-                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-x-2 group-hover:translate-x-0">
+                    <div className="flex gap-1 sm:opacity-0 sm:group-hover:opacity-100 opacity-100 transition-all duration-300 sm:translate-x-2 sm:group-hover:translate-x-0 translate-x-0">
                       <button onClick={(e)=>{e.stopPropagation();oe(note);}} className="p-1.5 rounded-lg bg-white/60 backdrop-blur text-gray-500 hover:text-pink-600 hover:bg-pink-50 transition-all duration-200 shadow-sm"><svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg></button>
                       <button onClick={(e)=>{e.stopPropagation();sDi(note._id);}} className="p-1.5 rounded-lg bg-white/60 backdrop-blur text-gray-500 hover:text-red-500 hover:bg-red-50 transition-all duration-200 shadow-sm"><svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button>
                       {editingImgIdx !== null && fi[editingImgIdx] && (
@@ -854,7 +857,68 @@ const handleTouchEnd=(e:React.TouchEvent)=>{isPinching.current=false;};
         />
       )}
     </div>}
-      {li&&<div className="fixed inset-0 z-50 bg-black/85 flex items-center justify-center touch-none select-none animate-fadeIn" onClick={cl}>
+      {dv&&<div className="fixed inset-0 z-50 bg-white animate-fadeIn overflow-y-auto" onClick={()=>sDv(null)}>
+        <div onClick={(e)=>e.stopPropagation()} className="min-h-screen">
+          {/* Header */}
+          <div className="sticky top-0 bg-white/90 backdrop-blur-md z-10 flex items-center justify-between px-4 py-3 border-b border-gray-100">
+            <button onClick={()=>sDv(null)} className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors">
+              <svg className="w-5 h-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+            <span className="text-sm font-medium text-gray-500">{(dv.createdAt||'').split('T')[0]}</span>
+            <div className="flex gap-1">
+              <button onClick={()=>{sDv(null);oe(dv);}} className="p-2 rounded-lg text-gray-500 hover:text-pink-600 hover:bg-pink-50 transition-all">
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+              </button>
+              <button onClick={()=>{sDv(null);sDi(dv._id);}} className="p-2 rounded-lg text-gray-500 hover:text-red-500 hover:bg-red-50 transition-all">
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+              </button>
+            </div>
+          </div>
+
+          {/* Image carousel */}
+          {dv.images && dv.images.length > 0 && (
+            <div className="relative bg-black/5">
+              <div className="flex overflow-x-hidden" onTouchStart={handleDetailTouchStart} onTouchEnd={handleDetailTouchEnd}>
+                {dv.images.map((img, i) => (
+                  <div key={i} className="w-full shrink-0 transition-transform duration-300" style={{transform:'translateX(-'+(diIdx*100)+'%)'}}>
+                    <img src={img.url} alt="" className="w-full h-72 sm:h-96 object-contain" onClick={(e)=>{e.stopPropagation();sLi({url:img.url,images:dv.images,idx:i});}} />
+                  </div>
+                ))}
+              </div>
+              {/* Dots */}
+              {dv.images.length > 1 && (
+                <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
+                  {dv.images.map((_, i) => (
+                    <button key={i} onClick={(e)=>{e.stopPropagation();sDiIdx(i);}} className={'w-2 h-2 rounded-full transition-all duration-300 '+(i===diIdx?'bg-gray-800 w-4':'bg-gray-300')} />
+                  ))}
+                </div>
+              )}
+              {/* Left/Right arrows */}
+              {diIdx > 0 && (
+                <button onClick={(e)=>{e.stopPropagation();sDiIdx(i=>i-1);}} className="absolute left-2 top-1/2 -translate-y-1/2 w-9 h-9 bg-white/80 backdrop-blur rounded-full flex items-center justify-center shadow-lg hover:bg-white transition-all">
+                  <svg className="w-5 h-5 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
+                </button>
+              )}
+              {dv.images && diIdx < dv.images.length - 1 && (
+                <button onClick={(e)=>{e.stopPropagation();sDiIdx(i=>i+1);}} className="absolute right-2 top-1/2 -translate-y-1/2 w-9 h-9 bg-white/80 backdrop-blur rounded-full flex items-center justify-center shadow-lg hover:bg-white transition-all">
+                  <svg className="w-5 h-5 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* Content */}
+          <div className="px-5 py-4">
+            {dv.title && <h1 className="text-lg font-bold text-gray-900 mb-2">{dv.title}</h1>}
+            {dv.content && <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{dv.content}</p>}
+            {!dv.title && !dv.content && <p className="text-sm text-gray-400 italic">暂无文字内容</p>}
+          </div>
+
+          {/* Bottom padding */}
+          <div className="h-8" />
+        </div>
+      </div>}
+{li&&<div className="fixed inset-0 z-50 bg-black/85 flex items-center justify-center touch-none select-none animate-fadeIn" onClick={cl}>
         <button onClick={cl} className="absolute top-4 right-4 z-10 w-10 h-10 bg-white/15 backdrop-blur rounded-full flex items-center justify-center text-white hover:bg-white/30 hover:rotate-90 transition-all duration-300"><svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg></button>
         {li.images.length > 1 && (
           <div className="absolute top-4 left-4 z-10 px-3 py-1.5 bg-white/15 backdrop-blur rounded-full text-white text-xs font-medium">
