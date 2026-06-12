@@ -57,7 +57,6 @@ function rotateBase64Image(base64: string, rotation: number): Promise<string> {
 }
 
 
-
 function getRadianAngle(degreeValue: number): number {
   return (degreeValue * Math.PI) / 180;
 }
@@ -223,11 +222,11 @@ export default function ExpensesUploadPage() {
       const res = await fetch('/api/expenses', { method: 'POST', body: formData });
       const json = await res.json();
       if (json.success) {
-        setResults((prev) => [...(prev || []), ...json.data]);
-        setTotalAmount((prev) => prev + (json.totalAmount || 0));
+        router.push('/expenses');
       } else {
         alert(json.error || '上传失败');
       }
+
     } catch {
       alert('网络错误');
     } finally {
@@ -476,7 +475,7 @@ export default function ExpensesUploadPage() {
                   )}
                   <div className="flex-1 min-w-0 text-sm">
                     <p className="font-medium text-gray-800">{r.merchant || '未填写'}</p>
-                    <p className="text-blue-600 font-semibold">HK$ {r.amount.toFixed(2)}</p>
+                    <p className="text-blue-600 font-semibold">HK$ {(r.amount || 0).toFixed(2)}</p>
                     <p className="text-xs text-gray-400">{r.category}{r.billDate ? ' · ' + r.billDate : ''}</p>
                     {r.error && <p className="text-xs text-red-500 mt-0.5">{r.error}</p>}
                   </div>
