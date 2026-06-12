@@ -26,14 +26,14 @@ interface Stats {
 
 const categoryEmoji: Record<string, string> = {
   '餐饮': '🍽️',
-  '交通': '🚇',
+  '交通': '🚗',
   '购物': '🛍️',
-  '医疗': '🏥',
-  '娱乐': '🎮',
-  '居住': '🏠',
-  '通讯': '📱',
-  '教育': '📚',
-  '其他': '📄',
+  '医疗': '💊',
+  '娱乐': '🎃',
+  '居住': '🏔',
+  '通讯': '📫',
+  '教育': '📎',
+  '其他': '📫',
 };
 
 const categoryColors: Record<string, string> = {
@@ -60,6 +60,7 @@ export default function ExpensesPage() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [reviewCount, setReviewCount] = useState(0);
   const [pendingCount, setPendingCount] = useState(0);
+  const [processingCount, setProcessingCount] = useState(0);
   const [showModal, setShowModal] = useState(false);
   const [editItem, setEditItem] = useState<ExpenseItem | null>(null);
   const [formAmount, setFormAmount] = useState("");
@@ -81,7 +82,7 @@ export default function ExpensesPage() {
   const lastTouch = useRef({ x: 0, y: 0 });
 
   const monthKey = `${year}-${String(month).padStart(2, '0')}`;
-  const monthLabel = `${year}年${String(month).padStart(2, '0')}月`;
+  const monthLabel = `${year}年${String(month).padStart(2, "0")}月`;
 
   const fetchExpenses = useCallback(async () => {
     setFetching(true);
@@ -93,11 +94,26 @@ export default function ExpensesPage() {
         setStats(json.data.stats);
         setReviewCount(json.data.reviewCount || 0);
         setPendingCount(json.data.pendingCount || 0);
+        setProcessingCount(json.data.processingCount || 0);
       }
     } catch {} finally { setFetching(false); }
   }, [monthKey, statusFilter, page]);
 
   useEffect(() => { if (user) fetchExpenses(); }, [user, fetchExpenses]);
+
+  // Auto-refresh & trigger recognition when there are pending/processing items
+  useEffect(() => {
+    if (!user || !expenses) return;
+    const hasPending = expenses.some(e => e.status === "pending" || e.status === "processing");
+    if (!hasPending) return;
+    const t = setInterval(() => {
+      // Trigger background recognition for pending items
+      fetch('/api/expenses/recognize', { method: 'POST' }).catch(() => {});
+      // Refresh data
+      fetchExpenses();
+    }, 5000);
+    return () => clearInterval(t);
+  }, [user, expenses, fetchExpenses]);
 
   const deleteExpense = async (id: string) => {
     if (!confirm('删除这条记录？')) return;
@@ -139,8 +155,8 @@ export default function ExpensesPage() {
       const res = await fetch(url, { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
       const json = await res.json();
       if (json.success) { setShowModal(false); fetchExpenses(); }
-      else { alert(json.error || "保存失败"); }
-    } catch { alert("保存失败"); } finally { setSaving(false); }
+      else { alert(json.error || "保存澶辫触"); }
+    } catch { alert("保存澶辫触"); } finally { setSaving(false); }
   };
 
     const months = Array.from({ length: 12 }, (_, i) => {
@@ -196,7 +212,7 @@ export default function ExpensesPage() {
     setIsPinching(false);
   };
 
-  if (!loading && !user) return <div className="text-center py-20 text-gray-500">请先登录</div>;
+  if (!loading && !user) return <div className="text-center py-20 text-gray-500">璇峰厛鐧诲綍</div>;
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-6 sm:py-8">
@@ -210,7 +226,7 @@ export default function ExpensesPage() {
           </Link>
           <Link href="/expenses/review" className="px-4 py-2 border border-gray-200 text-sm text-gray-600 rounded-xl hover:bg-gray-50 transition-colors min-h-[44px] inline-flex items-center gap-1.5">
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-            待审核 {reviewCount + pendingCount > 0 && `(${reviewCount + pendingCount})`}
+            待审核 {(reviewCount + pendingCount > 0) ? '(' + (reviewCount + pendingCount) + ')' : ''}
           </Link>
         </div>
       </div>
@@ -218,7 +234,7 @@ export default function ExpensesPage() {
       {/* Month selector */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 mb-4">
         <div className="flex items-center gap-3">
-          <span className="text-sm text-gray-500">📅 月份</span>
+          <span className="text-sm text-gray-500">馃搮 月份</span>
           <select
             value={year}
             onChange={(e) => { setYear(parseInt(e.target.value)); setPage(1); }}
@@ -252,7 +268,7 @@ export default function ExpensesPage() {
             'flex-1 py-2 text-sm font-medium rounded-xl transition-colors min-h-[44px] ' +
             (statusFilter === 'pending' ? 'bg-amber-500 text-white shadow-sm' : 'text-gray-500 hover:bg-gray-50')
           }
-        >待审核 {pendingCount > 0 && <span className="ml-1 text-xs opacity-70">({pendingCount})</span>}</button>
+        >待审核{pendingCount > 0 && <span className="ml-1 text-xs opacity-70">({pendingCount})</span>}</button>
         <button
           onClick={() => setStatusFilter('confirmed')}
           className={
@@ -271,14 +287,14 @@ export default function ExpensesPage() {
           </div>
           <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-2xl p-4 border border-purple-200 shadow-sm">
             <p className="text-xs text-purple-500 font-medium">{monthLabel} 总笔数</p>
-            <p className="text-xl sm:text-2xl font-bold text-purple-700 mt-1">{stats.totalCount} 笔</p>
+            <p className="text-xl sm:text-2xl font-bold text-purple-700 mt-1">{stats.totalCount} 绗</p>
           </div>
           <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-2xl p-4 border border-green-200 shadow-sm">
-            <p className="text-xs text-green-500 font-medium">分类数</p>
+            <p className="text-xs text-green-500 font-medium">分类鏁</p>
             <p className="text-xl sm:text-2xl font-bold text-green-700 mt-1">{Object.keys(stats.byCategory).length}</p>
           </div>
           <div className="bg-gradient-to-br from-amber-50 to-amber-100 rounded-2xl p-4 border border-amber-200 shadow-sm">
-            <p className="text-xs text-amber-500 font-medium">平均每笔</p>
+            <p className="text-xs text-amber-500 font-medium">平均每笔瑪</p>
             <p className="text-xl sm:text-2xl font-bold text-amber-700 mt-1">
               HK$ {stats.totalCount > 0 ? (stats.totalAmount / stats.totalCount).toFixed(2) : '0.00'}
             </p>
@@ -289,13 +305,13 @@ export default function ExpensesPage() {
       {/* Category breakdown */}
       {stats && Object.keys(stats.byCategory).length > 0 && (
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6 mb-6">
-          <h2 className="text-sm font-semibold text-gray-700 mb-3">📊 {monthLabel} 分类汇总</h2>
+          <h2 className="text-sm font-semibold text-gray-700 mb-3">馃搳 {monthLabel} 分类姹囨€</h2>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
             {Object.entries(stats.byCategory).map(([cat, data]) => (
               <div key={cat} className="flex items-center justify-between px-3 py-2 bg-gray-50 rounded-lg">
                 <div>
-                  <p className="text-sm text-gray-600">{categoryEmoji[cat] || '📄'} {cat}</p>
-                  <p className="text-xs text-gray-400">{data.count} 笔</p>
+                  <p className="text-sm text-gray-600">{categoryEmoji[cat] || '📫'} {cat}</p>
+                  <p className="text-xs text-gray-400">{data.count} 绗</p>
                 </div>
                 <span className="text-sm font-semibold text-gray-800">HK$ {data.total.toFixed(2)}</span>
               </div>
@@ -304,11 +320,11 @@ export default function ExpensesPage() {
 
           {/* Copy for boss report */}
           <div className="mt-3 p-3 bg-blue-50 rounded-lg">
-            <p className="text-xs text-gray-500 mb-1">📋 老板汇报文案（点击复制）</p>
+            <p className="text-xs text-gray-500 mb-1">馃搵 鑰佹澘姹囨姤鏂囨锛堢偣鍑诲鍒讹級</p>
             <p
               className="text-sm text-gray-800 cursor-pointer hover:text-blue-600"
               onClick={() => {
-                const text = `${monthLabel}杂费汇报：\n总支出：HK$ ${stats.totalAmount.toFixed(2)}（${stats.totalCount} 笔）\n${Object.entries(stats.byCategory).map(([cat, d]) => `${categoryEmoji[cat] || '📄'} ${cat}：HK$ ${d.total.toFixed(2)}（${d.count} 笔）`).join('\n')}`;
+                const text = monthLabel + "杂费汇报：\n总支出：HK$ " + stats.totalAmount.toFixed(2) + "（" + stats.totalCount + " 笔）\n" + Object.entries(stats.byCategory).map(function(e) { var cat = e[0]; var d = e[1]; return (categoryEmoji[cat] || "📫") + " " + cat + "：HK$ " + d.total.toFixed(2) + "（" + d.count + " 笔）"; }).join("\n") + "";
                 navigator.clipboard.writeText(text);
                 alert('已复制到剪贴板！');
               }}
@@ -327,9 +343,9 @@ export default function ExpensesPage() {
           <svg className="w-16 h-16 text-gray-200 mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
           </svg>
-          <p className="text-gray-400">{monthLabel} 没有已确认的账单</p>
+          <p className="text-gray-400">{monthLabel} 娌℃湁宸茬‘璁ょ殑璐﹀崟</p>
           <Link href="/expenses/upload" className="mt-3 inline-block text-sm text-blue-600 font-medium hover:text-blue-700">
-            上传新单据 →
+            上传鏂板崟鎹?鈫?
           </Link>
         </div>
       ) : (
@@ -358,7 +374,7 @@ export default function ExpensesPage() {
                 </div>
               ) : (
                 <div className="aspect-[4/3] bg-gray-50 flex items-center justify-center">
-                  <span className="text-3xl opacity-30">{categoryEmoji[item.category] || '📄'}</span>
+                  <span className="text-3xl opacity-30">{categoryEmoji[item.category] || '📫'}</span>
                 </div>
               )}
 
@@ -366,11 +382,11 @@ export default function ExpensesPage() {
               <div className="p-3">
                 {/* Category badge */}
                 <div className="flex items-center gap-1.5 mb-2">
-                  <span className={`text-xs px-2 py-0.5 rounded-full border font-medium ${categoryColors[item.category] || 'bg-gray-100 text-gray-700 border-gray-200'}`}>
+                  <span className={"text-xs px-2 py-0.5 rounded-full border font-medium " + (categoryColors[item.category] || "bg-gray-100 text-gray-700 border-gray-200")}>
                     {categoryEmoji[item.category] || ''} {item.category}
                   </span>
-                  {item.status === 'pending' && (
-                    <span className="text-xs px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-600 border border-amber-200">待识别</span>
+                  {(item.status === 'pending' || item.status === 'processing') && (
+                    item.status === "processing" ? <span className="text-xs px-1.5 py-0.5 rounded-full bg-purple-50 text-purple-600 border border-purple-200 flex items-center gap-1"><span className="w-1.5 h-1.5 bg-purple-500 rounded-full animate-pulse" />识别中</span> : <span className="text-xs px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-600 border border-amber-200">待识别</span>
                   )}
                   {item.status === 'recognized' && (
                     <span className="text-xs px-1.5 py-0.5 rounded-full bg-blue-50 text-blue-600 border border-blue-200">待审核</span>
@@ -381,8 +397,8 @@ export default function ExpensesPage() {
                 <p className="text-lg font-bold text-blue-600">HK$ {item.amount.toFixed(2)}</p>
 
                 {/* Merchant */}
-                <p className="text-sm font-medium text-gray-800 truncate mt-0.5">{item.merchant || '未填写商户'}</p>
-                {item.project && <p className="text-[10px] text-gray-400 mt-0.5 truncate">\🏗\uFE0F {item.project}</p>}
+                <p className="text-sm font-medium text-gray-800 truncate mt-0.5">{item.merchant || "未填写"}</p>
+                {item.project && <p className="text-[10px] text-gray-400 mt-0.5 truncate">\馃彈\uFE0F {item.project}</p>}
 
                 {/* Date */}
                 <p className="text-xs text-gray-400 mt-1">
@@ -424,14 +440,14 @@ export default function ExpensesPage() {
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40" onClick={() => setShowModal(false)}>
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6" onClick={(e) => e.stopPropagation()}>
-            <h2 className="text-lg font-bold text-gray-900 mb-4">{editItem ? '编辑杂费单' : '✅ 新增杂费'}</h2>
+            <h2 className="text-lg font-bold text-gray-900 mb-4">{editItem ? '编辑杂费单' : '➕ 新增杂费'}</h2>
             <form onSubmit={handleSave} className="space-y-4">
               <div>
                 <label className="block text-xs font-medium text-gray-500 mb-1">日期</label>
                 <input type="date" value={formBillDate} onChange={(e) => setFormBillDate(e.target.value)} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" required />
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-500 mb-1">金额 (HKD)</label>
+                <label className="block text-xs font-medium text-gray-500 mb-1">閲戦 (HKD)</label>
                 <input type="number" step="0.01" value={formAmount} onChange={(e) => setFormAmount(e.target.value)} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" required />
               </div>
               <div>
@@ -445,22 +461,22 @@ export default function ExpensesPage() {
                   value={formCategory}
                   onChange={(e) => setFormCategory(e.target.value)}
                   list="cat-suggestions"
-                  placeholder="工具、交通、其他..."
+                  placeholder="宸ュ叿銆佷氦閫氥€佸叾浠?.."
                   className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
                 />
                 <datalist id="cat-suggestions">
-                  <option value="工具" />
+                  <option value="宸ュ叿" />
                   <option value="交通" />
                   <option value="其他" />
                 </datalist>
               </div>
               <div>
                 <label className="block text-xs font-medium text-gray-500 mb-1">备注</label>
-                <input type="text" value={formDesc} onChange={(e) => setFormDesc(e.target.value)} placeholder="备注信息" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" />
+                <input type="text" value={formDesc} onChange={(e) => setFormDesc(e.target.value)} placeholder="备注淇℃伅" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" />
               </div>
               <div className="flex gap-3 pt-2">
                 <button type="button" onClick={() => setShowModal(false)} className="flex-1 py-2.5 border border-gray-200 text-gray-600 font-medium rounded-xl hover:bg-gray-50 transition-colors text-sm">取消</button>
-                <button type="submit" disabled={saving} className="flex-1 py-2.5 bg-blue-600 text-white font-medium rounded-xl hover:bg-blue-700 disabled:opacity-50 transition-colors text-sm">{saving ? '保存中...' : (editItem ? '保存修改' : '添加记录')}</button>
+                <button type="submit" disabled={saving} className="flex-1 py-2.5 bg-blue-600 text-white font-medium rounded-xl hover:bg-blue-700 disabled:opacity-50 transition-colors text-sm">{saving ? '保存中..' : (editItem ? '保存修改' : '娣诲姞记录')}</button>
               </div>
             </form>
           </div>
@@ -506,7 +522,7 @@ export default function ExpensesPage() {
               onClick={(e) => { e.stopPropagation(); setZoom(1); setPan({ x: 0, y: 0 }); }}
               className="ml-2 px-3 py-1 text-xs text-white/80 hover:text-white bg-white/20 rounded-full hover:bg-white/30 transition-colors"
             >
-              重置
+              閲嶇疆
             </button>
           </div>
 
@@ -516,7 +532,7 @@ export default function ExpensesPage() {
             alt="单据大图"
             className="max-w-[95vw] max-h-[95vh] object-contain cursor-grab active:cursor-grabbing transition-transform duration-100"
             style={{
-              transform: `scale(${zoom}) translate(${pan.x / zoom}px, ${pan.y / zoom}px)`,
+              transform: "scale(" + zoom + ") translate(" + (pan.x / zoom) + "px, " + (pan.y / zoom) + "px)",
             }}
             onClick={(e) => e.stopPropagation()}
             draggable={false}
@@ -526,3 +542,5 @@ export default function ExpensesPage() {
     </div>
   );
 }
+
+

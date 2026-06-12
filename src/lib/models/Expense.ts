@@ -1,6 +1,6 @@
 ﻿import mongoose, { Schema, Document, Model } from 'mongoose';
 
-export type ExpenseStatus = 'pending' | 'recognized' | 'confirmed';
+export type ExpenseStatus = 'pending' | 'processing' | 'recognized' | 'confirmed';
 
 export interface IExpense extends Document {
   userId: string;
@@ -29,7 +29,7 @@ const ExpenseSchema = new Schema<IExpense>(
     userId: { type: String, required: true, index: true },
     status: {
       type: String,
-      enum: ['pending', 'recognized', 'confirmed'],
+      enum: ['pending', 'processing', 'recognized', 'confirmed'],
       default: 'pending',
       index: true,
     },
