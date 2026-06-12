@@ -89,7 +89,26 @@ export default function ImageEditorModal({ imageUrl, onSave, onClose }: ImageEdi
         // Listen for image load
         editor.on('load', () => { if (mounted) setLoading(false); });
         // Fallback timeout
-        setTimeout(() => { if (mounted) setLoading(false); }, 8000);
+        // Add mobile-friendly CSS overrides
+        const style = document.createElement("style");
+        style.textContent = `
+          .tui-image-editor-main-container { touch-action: manipulation; }
+          .tui-image-editor-menu { flex-wrap: wrap !important; gap: 2px !important; padding: 4px !important; }
+          .tui-image-editor-menu > li > div { min-width: 36px !important; min-height: 36px !important; }
+          .tui-image-editor-submenu { overflow-x: auto !important; -webkit-overflow-scrolling: touch !important; }
+          .tui-image-editor-submenu-item { min-width: 40px !important; min-height: 40px !important; }
+          @media (max-width: 640px) {
+            .tui-image-editor-menu > li > div { min-width: 44px !important; min-height: 44px !important; }
+            .tui-image-editor-submenu-item { min-width: 48px !important; min-height: 48px !important; }
+            .tui-image-editor-submenu-item > div > div { width: 24px !important; height: 24px !important; }
+            .tui-image-editor-submenu-label { font-size: 10px !important; }
+            .tui-image-editor-submenu li { padding: 6px 4px !important; }
+            .tui-image-editor-submenu-item svg { width: 22px !important; height: 22px !important; }
+            .tui-image-editor-cancel-btn, .tui-image-editor-apply-btn { min-width: 60px !important; min-height: 40px !important; font-size: 14px !important; padding: 8px 16px !important; }
+          }
+        `;
+        document.head.appendChild(style);
+                setTimeout(() => { if (mounted) setLoading(false); }, 8000);
       } catch (err) {
         console.error('ImageEditor init error:', err);
         if (mounted) {
@@ -140,7 +159,22 @@ export default function ImageEditorModal({ imageUrl, onSave, onClose }: ImageEdi
             <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
           </svg>
         </button>
-        <span className="text-white font-medium text-sm">图片编辑</span>
+        <style dangerouslySetInnerHTML={{__html:
+        ".tui-image-editor-main-container { touch-action: manipulation; }" +
+        ".tui-image-editor-menu { flex-wrap: wrap !important; gap: 2px !important; padding: 4px !important; }" +
+        ".tui-image-editor-menu > li > div { min-width: 36px !important; min-height: 36px !important; }" +
+        ".tui-image-editor-submenu { overflow-x: auto !important; -webkit-overflow-scrolling: touch !important; }" +
+        ".tui-image-editor-submenu-item { min-width: 40px !important; min-height: 40px !important; }" +
+        "@media (max-width: 640px) {" +
+        ".tui-image-editor-menu > li > div { min-width: 44px !important; min-height: 44px !important; }" +
+        ".tui-image-editor-submenu-item { min-width: 48px !important; min-height: 48px !important; }" +
+        ".tui-image-editor-submenu-item > div > div { width: 24px !important; height: 24px !important; }" +
+        ".tui-image-editor-submenu-label { font-size: 10px !important; }" +
+        ".tui-image-editor-submenu li { padding: 6px 4px !important; }" +
+        ".tui-image-editor-submenu-item svg { width: 22px !important; height: 22px !important; }" +
+        ".tui-image-editor-cancel-btn, .tui-image-editor-apply-btn { min-width: 60px !important; min-height: 44px !important; font-size: 14px !important; padding: 8px 16px !important; }" +
+        "}"
+      }}></style><span className="text-white font-medium text-sm">图片编辑</span>
         <button
           onClick={handleSave}
           disabled={saving || loadError}
