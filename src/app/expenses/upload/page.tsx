@@ -274,7 +274,8 @@ export default function ExpensesUploadPage() {
           sum += json.data.amount;
         }
       }
-      router.push("/expenses");    } catch {
+      router.push("/expenses");
+      } catch {
       alert('网络错误');
     } finally {
       setUploading(false);

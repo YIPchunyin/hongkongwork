@@ -103,8 +103,8 @@ export default function ExpensesPage() {
 
   // Auto-refresh & trigger recognition when there are pending/processing items
   useEffect(() => {
-    if (!user || !expenses) return;
-    const hasPending = expenses.some(e => e.status === "pending" || e.status === "processing");
+    if (!user) return;
+    const hasPending = pendingCount > 0 || processingCount > 0;
     if (!hasPending) return;
     const t = setInterval(() => {
       // Trigger background recognition for pending items
@@ -113,7 +113,7 @@ export default function ExpensesPage() {
       fetchExpenses();
     }, 5000);
     return () => clearInterval(t);
-  }, [user, expenses, fetchExpenses]);
+  }, [user, pendingCount, processingCount, fetchExpenses]);
 
   const deleteExpense = async (id: string) => {
     if (!confirm('删除这条记录？')) return;
