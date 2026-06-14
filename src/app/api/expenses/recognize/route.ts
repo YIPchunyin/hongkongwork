@@ -5,7 +5,7 @@ import { getTokenFromRequest, verifyToken } from '@/lib/auth';
 
 const API_BASE_URL = process.env.AI_API_BASE_URL || 'https://api-ai.7e.ink';
 const API_KEY = process.env.AI_API_KEY || '';
-const MODEL = process.env.AI_MODEL || 'qwen3.5-4';
+const MODEL = process.env.AI_MODEL || 'hunyuanocr';
 
 export const dynamic = 'force-dynamic';
 
@@ -29,6 +29,28 @@ function extractAmountFromText(text: string): number {
   }
   const anyNum = text.match(/\b(\d+(?:\.\d{1,2})?)\b/);
   if (anyNum) return parseFloat(anyNum[1]);
+  return 0;
+}
+
+/**
+ * More aggressive amount extraction
+ */
+function extractAnyAmount(text: string): number {
+  const allPatterns = [
+    /[hkHkHK]*[$＄币]\s*([0-9]+(?:[,.][0-9]{1,2})?)/,
+    /(?:金额|合计|总计|总价|总额|实付|付款|消费)[：: ]*[$＄￥¥]?\s*([0-9]+(?:[,.][0-9]{1,2})?)/,
+    /(?:total|amount|sum|paid|price|cost)[：: ]*[$＄￥¥]?\s*([0-9]+(?:[,.][0-9]{1,2})?)/i,
+    /[$＄￥¥]([0-9]+(?:[,.][0-9]{1,2})?)\s*(?:元|港币|hkd)?/,
+    /([0-9]+(?:[,.][0-9]{1,2})?)\s*(?:元|港币|hkd)/i,
+    /\b([1-9][0-9]*(?:[,.][0-9]{1,2})?)\b/,
+  ];
+  for (const p of allPatterns) {
+    const m = text.match(p);
+    if (m) {
+      const num = parseFloat(m[1].replace(/,/g, ""));
+      if (num > 0 && num < 1000000) return num;
+    }
+  }
   return 0;
 }
 
@@ -126,6 +148,9 @@ export async function POST(request: NextRequest) {
 
             if (expense.amount === 0 && aiRaw) {
               expense.amount = extractAmountFromText(aiRaw);
+            }
+            if (expense.amount === 0 && aiRaw) {
+              expense.amount = extractAnyAmount(aiRaw);
             }
 
             expense.aiRaw = aiRaw;

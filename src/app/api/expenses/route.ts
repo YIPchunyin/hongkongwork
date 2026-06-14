@@ -7,7 +7,7 @@ import { uploadToR2, isR2Configured } from '@/lib/r2Storage';
 
 const API_BASE_URL = process.env.AI_API_BASE_URL || 'https://api-ai.7e.ink';
 const API_KEY = process.env.AI_API_KEY || '';
-const MODEL = process.env.AI_MODEL || 'qwen3.5-4';
+const MODEL = process.env.AI_MODEL || 'hunyuanocr';
 
 export const dynamic = 'force-dynamic';
 
@@ -113,6 +113,40 @@ function extractAmountFromText(text: string): number {
 }
 
 /**
+ * More aggressive amount extraction - tries harder to find numbers
+ */
+function extractAnyAmount(text: string): number {
+  // Try all currency patterns first
+  const allPatterns = [
+    // HK$ / $ / HKD with number
+    /[hkHkHK]*[$＄币]\s*([0-9]+(?:[,.][0-9]{1,2})?)/,
+    /(?:金额|合计|总计|总价|总额|实付|付款|消费)[：: ]*[$＄￥¥]?\s*([0-9]+(?:[,.][0-9]{1,2})?)/,
+    /(?:total|amount|sum|paid|price|cost)[：: ]*[$＄￥¥]?\s*([0-9]+(?:[,.][0-9]{1,2})?)/i,
+    /[$＄￥¥]([0-9]+(?:[,.][0-9]{1,2})?)\s*(?:元|港币|hkd)?/,
+    /([0-9]+(?:[,.][0-9]{1,2})?)\s*(?:元|港币|hkd)/i,
+    // Any decimal number that looks like currency (between 0.5 and 99999)
+    /\b([1-9][0-9]*(?:[,.][0-9]{1,2})?)\s*(?:元|港币|hkd)?/,
+  ];
+  for (const p of allPatterns) {
+    const m = text.match(p);
+    if (m) {
+      const num = parseFloat(m[1].replace(/,/g, "").replace(/,/g, "."));
+      if (num > 0 && num < 1000000) return num;
+    }
+  }
+  // Last resort: find any positive number
+  const nums = text.match(/\b([1-9][0-9]*(?:[.,][0-9]{1,2})?)\b/g);
+  if (nums) {
+    for (const n of nums) {
+      const num = parseFloat(n.replace(/,/g, ""));
+      if (num > 0 && num < 1000000) return num;
+    }
+  }
+  return 0;
+}
+
+
+/**
  * Background AI recognition - processes pending expenses asynchronously.
  * This runs as a fire-and-forget task after the POST response is sent.
  */
@@ -190,7 +224,11 @@ async function recognizeExpensesInBackground(expenseIds: string[]) {
           // Fallback: extract amount from raw text
           if (expense.amount === 0 && aiRaw) {
             expense.amount = extractAmountFromText(aiRaw);
-            console.log(`[Expense AI] Fallback extracted amount for ${expense._id}:`, expense.amount);
+            console.log(`[Expense AI] Fallback1 extracted amount for ${expense._id}:`, expense.amount);
+          }
+          if (expense.amount === 0 && aiRaw) {
+            expense.amount = extractAnyAmount(aiRaw);
+            console.log(`[Expense AI] Fallback2 extracted amount for ${expense._id}:`, expense.amount);
           }
 
           expense.aiRaw = aiRaw;
