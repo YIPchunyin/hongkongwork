@@ -30,8 +30,8 @@ export async function GET(request: NextRequest) {
 
     const query: Record<string, unknown> = { userId: payload.userId };
     if (statusFilter === 'confirmed') query.status = 'confirmed';
-    else if (statusFilter === 'pending') query.status = { $in: ['pending', 'processing', 'recognized'] };
-    else query.status = { $in: ['pending', 'processing', 'recognized', 'confirmed'] };
+    else if (statusFilter === 'pending') query.status = 'recognized';
+    else query.status = { $in: ['recognized', 'confirmed'] };
     if (month) {
       const year = parseInt(month.split('-')[0]);
       const mo = parseInt(month.split('-')[1]);

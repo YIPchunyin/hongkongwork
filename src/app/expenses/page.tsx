@@ -226,7 +226,7 @@ export default function ExpensesPage() {
           </Link>
           <Link href="/expenses/review" className="px-4 py-2 border border-gray-200 text-sm text-gray-600 rounded-xl hover:bg-gray-50 transition-colors min-h-[44px] inline-flex items-center gap-1.5">
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-            待审核 {(reviewCount + pendingCount > 0) ? '(' + (reviewCount + pendingCount) + ')' : ''}
+            待审核 {(reviewCount > 0) ? '(' + reviewCount + ')' : ''}
           </Link>
         </div>
       </div>
@@ -261,14 +261,14 @@ export default function ExpensesPage() {
             'flex-1 py-2 text-sm font-medium rounded-xl transition-colors min-h-[44px] ' +
             (statusFilter === 'all' ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-500 hover:bg-gray-50')
           }
-        >全部 {reviewCount + pendingCount > 0 && <span className="ml-1 text-xs opacity-70">({reviewCount + pendingCount})</span>}</button>
+        >全部 {reviewCount > 0 && <span className="ml-1 text-xs opacity-70">({reviewCount})</span>}</button>
         <button
           onClick={() => setStatusFilter('pending')}
           className={
             'flex-1 py-2 text-sm font-medium rounded-xl transition-colors min-h-[44px] ' +
             (statusFilter === 'pending' ? 'bg-amber-500 text-white shadow-sm' : 'text-gray-500 hover:bg-gray-50')
           }
-        >待审核{pendingCount > 0 && <span className="ml-1 text-xs opacity-70">({pendingCount})</span>}</button>
+        >待审核{reviewCount > 0 && <span className="ml-1 text-xs opacity-70">({reviewCount})</span>}</button>
         <button
           onClick={() => setStatusFilter('confirmed')}
           className={
@@ -277,6 +277,24 @@ export default function ExpensesPage() {
           }
         >已确认</button>
       </div>
+
+      {/* Processing indicator */}
+      {processingCount > 0 && (
+        <div className="mb-4 p-3 bg-purple-50 border border-purple-200 rounded-xl flex items-center gap-3">
+          <span className="w-2.5 h-2.5 bg-purple-500 rounded-full animate-pulse" />
+          <span className="text-sm text-purple-700">
+            AI 正在识别 {processingCount > 0 ? processingCount + " 张" : ""}单据...
+          </span>
+        </div>
+      )}
+      {pendingCount > 0 && processingCount === 0 && (
+        <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-xl flex items-center gap-2">
+          <svg className="w-5 h-5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+          <span className="text-sm text-amber-700">
+            有 {pendingCount} 张单据等待识别
+          </span>
+        </div>
+      )}
 
       {/* Stats */}
       {stats && (
