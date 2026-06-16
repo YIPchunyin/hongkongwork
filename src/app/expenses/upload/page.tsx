@@ -62,7 +62,7 @@ function getRadianAngle(degreeValue: number): number {
 }
 
 function dataURLtoBlob(dataUrl: string): Blob {
-  const arr = dataUrl.split(',');
+  const arr = dataUrl.split(",");
   const mime = arr[0].match(/:(.*?);/)![1];
   const bstr = atob(arr[1]);
   const n = bstr.length;
@@ -71,7 +71,53 @@ function dataURLtoBlob(dataUrl: string): Blob {
   return new Blob([u8arr], { type: mime });
 }
 
-
+function compressImage(blob: Blob, maxSizeMB: number = 1): Promise<Blob> {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      let w = img.width;
+      let h = img.height;
+      const MAX_DIM = 1920;
+      if (w > MAX_DIM || h > MAX_DIM) {
+        if (w > h) { h = (h / w) * MAX_DIM; w = MAX_DIM; }
+        else { w = (w / h) * MAX_DIM; h = MAX_DIM; }
+      }
+      const canvas = document.createElement("canvas");
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext("2d")!;
+      ctx.drawImage(img, 0, 0, w, h);
+      const targetBytes = maxSizeMB * 1024 * 1024;
+      const tryQuality = (q: number): Promise<Blob> => {
+        return new Promise((resolve2) => {
+          canvas.toBlob((compressedBlob) => {
+            if (compressedBlob) resolve2(compressedBlob);
+            else resolve2(blob);
+          }, "image/jpeg", q);
+        });
+      };
+      (async () => {
+        let compressed = await tryQuality(0.8);
+        if (compressed.size > targetBytes) {
+          let low = 0.1, high = 0.8;
+          for (let i = 0; i < 5; i++) {
+            const mid = (low + high) / 2;
+            const testBlob = await tryQuality(mid);
+            if (testBlob.size <= targetBytes) {
+              compressed = testBlob;
+              low = mid + 0.05;
+            } else {
+              high = mid - 0.05;
+            }
+          }
+        }
+        resolve(compressed);
+      })();
+    };
+    img.onerror = () => resolve(blob);
+    img.src = URL.createObjectURL(blob);
+  });
+}
 
 function createImage(url: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
@@ -216,17 +262,20 @@ export default function ExpensesUploadPage() {
     for (const f of aiFiles) {
       try {
         const formData = new FormData();
+        let uploadBlob: Blob;
         if (f.rotation !== 0) {
           try {
             const rotatedDataUrl = await rotateBase64Image(f.preview, f.rotation);
-            const rotatedBlob = dataURLtoBlob(rotatedDataUrl);
-            formData.append('files', rotatedBlob, f.file.name);
+            uploadBlob = dataURLtoBlob(rotatedDataUrl);
           } catch {
-            formData.append('files', f.file);
+            uploadBlob = f.file;
           }
         } else {
-          formData.append('files', f.file);
+          uploadBlob = f.file;
         }
+        // Compress to ~1MB before upload
+        try { uploadBlob = await compressImage(uploadBlob, 1); } catch {}
+        formData.append('files', uploadBlob, f.file.name);
         const res = await fetch('/api/expenses', { method: 'POST', body: formData });
         const json = await res.json();
         if (json.success) {
@@ -260,17 +309,20 @@ export default function ExpensesUploadPage() {
       let sum = 0;
       for (const f of manualFiles) {
         const formData = new FormData();
+        let uploadBlob: Blob;
         if (f.rotation !== 0) {
           try {
             const rotatedDataUrl = await rotateBase64Image(f.preview, f.rotation);
-            const rotatedBlob = dataURLtoBlob(rotatedDataUrl);
-            formData.append('file', rotatedBlob, f.file.name);
+            uploadBlob = dataURLtoBlob(rotatedDataUrl);
           } catch {
-            formData.append('file', f.file);
+            uploadBlob = f.file;
           }
         } else {
-          formData.append('file', f.file);
+          uploadBlob = f.file;
         }
+        // Compress to ~1MB before upload
+        try { uploadBlob = await compressImage(uploadBlob, 1); } catch {}
+        formData.append('file', uploadBlob, f.file.name);
         formData.append('amount', f.manualAmount);
         formData.append('merchant', f.manualMerchant);
         formData.append('category', f.manualCategory);
