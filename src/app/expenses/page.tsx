@@ -465,7 +465,7 @@ export default function ExpensesPage() {
                 <input type="date" value={formBillDate} onChange={(e) => setFormBillDate(e.target.value)} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" required />
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-500 mb-1">閲戦 (HKD)</label>
+                <label className="block text-xs font-medium text-gray-500 mb-1">金额 (HKD)</label>
                 <input type="number" step="0.01" value={formAmount} onChange={(e) => setFormAmount(e.target.value)} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" required />
               </div>
               <div>
@@ -483,14 +483,14 @@ export default function ExpensesPage() {
                   className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
                 />
                 <datalist id="cat-suggestions">
-                  <option value="宸ュ叿" />
+                  <option value="工具" />
                   <option value="交通" />
                   <option value="其他" />
                 </datalist>
               </div>
               <div>
                 <label className="block text-xs font-medium text-gray-500 mb-1">备注</label>
-                <input type="text" value={formDesc} onChange={(e) => setFormDesc(e.target.value)} placeholder="备注淇℃伅" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" />
+                <input type="text" value={formDesc} onChange={(e) => setFormDesc(e.target.value)} placeholder="备注信息" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" />
               </div>
               <div className="flex gap-3 pt-2">
                 <button type="button" onClick={() => setShowModal(false)} className="flex-1 py-2.5 border border-gray-200 text-gray-600 font-medium rounded-xl hover:bg-gray-50 transition-colors text-sm">取消</button>
@@ -540,7 +540,7 @@ export default function ExpensesPage() {
               onClick={(e) => { e.stopPropagation(); setZoom(1); setPan({ x: 0, y: 0 }); }}
               className="ml-2 px-3 py-1 text-xs text-white/80 hover:text-white bg-white/20 rounded-full hover:bg-white/30 transition-colors"
             >
-              閲嶇疆
+              重置
             </button>
           </div>
 

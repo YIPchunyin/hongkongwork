@@ -1,6 +1,6 @@
 ﻿'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/AuthProvider';
 
@@ -23,6 +23,16 @@ export default function ReviewPage() {
   const [items, setItems] = useState<ReviewItem[]>([]);
   const [fetching, setFetching] = useState(true);
   const [expandedImg, setExpandedImg] = useState<string | null>(null);
+  const [confirming, setConfirming] = useState(false);
+  const debounceTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+
+  const debouncedUpdate = (id: string, field: string, value: string | number) => {
+    const key = id + "_" + field;
+    if (debounceTimers.current[key]) clearTimeout(debounceTimers.current[key]);
+    debounceTimers.current[key] = setTimeout(() => {
+      updateItem(id, field, value);
+    }, 500);
+  };
 
   useEffect(() => {
     if (user) fetchReviewItems();
@@ -58,18 +68,27 @@ export default function ReviewPage() {
     setItems((prev) => prev.filter((i) => i._id !== id));
   };
 
-  const confirmAll = async () => {
-    for (const item of items) {
-      if (item.status !== 'confirmed') {
-        await fetch(`/api/expenses/${item._id}`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ status: 'confirmed' }),
-        });
-      }
+    const confirmAll = async () => {
+    setConfirming(true);
+    const unconfirmed = items.filter((i) => i.status !== "confirmed");
+    const results = await Promise.allSettled(
+      unconfirmed.map((item) =>
+        fetch(`/api/expenses/${item._id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status: "confirmed" }),
+        }).then((r) => r.json())
+      )
+    );
+    const succeeded = results.filter((r) => r.status === "fulfilled" && r.value.success).length;
+    const failed = results.filter((r) => r.status === "rejected" || !r.value?.success).length;
+    setItems((prev) => prev.map((i) => ({ ...i, status: "confirmed" })));
+    setConfirming(false);
+    if (failed === 0) {
+      alert(`全部 ${succeeded} 条账单已确认！`);
+    } else {
+      alert(`已确认 ${succeeded} 条，${failed} 条失败，请重试`);
     }
-    setItems((prev) => prev.map((i) => ({ ...i, status: 'confirmed' })));
-    alert('所有账单已确认！');
   };
 
   const categories = ['餐饮', '交通', '购物', '医疗', '娱乐', '居住', '通讯', '教育', '其他'];
@@ -133,7 +152,7 @@ export default function ReviewPage() {
                       <label className="text-xs text-gray-400 block mb-0.5">商户</label>
                       <input
                         type="text" value={item.merchant}
-                        onChange={(e) => updateItem(item._id, 'merchant', e.target.value)}
+                        onChange={(e) => { const v = e.target.value; setItems((prev) => prev.map((it) => it._id === item._id ? { ...it, merchant: v } : it)); debouncedUpdate(item._id, 'merchant', v); }}
                         className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                       />
                     </div>
@@ -141,7 +160,7 @@ export default function ReviewPage() {
                       <label className="text-xs text-gray-400 block mb-0.5">金额 (HK$)</label>
                       <input
                         type="number" step="0.01" value={item.amount}
-                        onChange={(e) => updateItem(item._id, 'amount', parseFloat(e.target.value) || 0)}
+                        onChange={(e) => { const v = e.target.value; setItems((prev) => prev.map((it) => it._id === item._id ? { ...it, amount: parseFloat(v) || 0 } : it)); debouncedUpdate(item._id, 'amount', parseFloat(v) || 0); }}
                         className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm font-semibold text-blue-600 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                       />
                     </div>
@@ -168,7 +187,7 @@ export default function ReviewPage() {
                     <label className="text-xs text-gray-400 block mb-0.5">备注</label>
                     <input
                       type="text" value={item.description}
-                      onChange={(e) => updateItem(item._id, 'description', e.target.value)}
+                      onChange={(e) => { const v = e.target.value; setItems((prev) => prev.map((it) => it._id === item._id ? { ...it, description: v } : it)); debouncedUpdate(item._id, 'description', v); }}
                       className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                       placeholder="消费内容备注"
                     />
@@ -203,8 +222,8 @@ export default function ReviewPage() {
           {/* Bulk confirm */}
           {items.filter((i) => i.status !== 'confirmed').length > 0 && (
             <div className="text-center pt-2">
-              <button onClick={confirmAll} className="px-8 py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-colors">
-                确认全部 ({items.filter((i) => i.status !== 'confirmed').length} 条)
+              <button onClick={confirmAll} disabled={confirming} className="px-8 py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 disabled:opacity-50 transition-colors">
+                {confirming ? "确认中..." : "确认全部"} ({items.filter((i) => i.status !== 'confirmed').length} 条)
               </button>
             </div>
           )}
