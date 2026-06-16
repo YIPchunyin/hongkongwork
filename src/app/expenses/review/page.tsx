@@ -70,24 +70,25 @@ export default function ReviewPage() {
 
     const confirmAll = async () => {
     setConfirming(true);
-    const unconfirmed = items.filter((i) => i.status !== "confirmed");
-    const results = await Promise.allSettled(
-      unconfirmed.map((item) =>
-        fetch(`/api/expenses/${item._id}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ status: "confirmed" }),
-        }).then((r) => r.json())
-      )
-    );
-    const succeeded = results.filter((r) => r.status === "fulfilled" && r.value.success).length;
-    const failed = results.filter((r) => r.status === "rejected" || !r.value?.success).length;
-    setItems((prev) => prev.map((i) => ({ ...i, status: "confirmed" })));
-    setConfirming(false);
-    if (failed === 0) {
-      alert(`全部 ${succeeded} 条账单已确认！`);
-    } else {
-      alert(`已确认 ${succeeded} 条，${failed} 条失败，请重试`);
+    try {
+      const unconfirmedIds = items.filter((i) => i.status !== "confirmed").map((i) => i._id);
+      if (unconfirmedIds.length === 0) { setConfirming(false); return; }
+      const res = await fetch("/api/expenses/review", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: unconfirmedIds }),
+      });
+      const json = await res.json();
+      if (json.success) {
+        setItems((prev) => prev.map((i) => ({ ...i, status: "confirmed" })));
+        alert(json.message || `已确认 ${json.data.modifiedCount} 张单据`);
+      } else {
+        alert(json.error || "批量确认失败");
+      }
+    } catch {
+      alert("网络错误，请重试");
+    } finally {
+      setConfirming(false);
     }
   };
 

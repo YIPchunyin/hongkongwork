@@ -31,3 +31,43 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ success: false, error: '获取失败' }, { status: 500 });
   }
 }
+
+
+// POST /api/expenses/review/batch-confirm - Confirm all pending items in one operation
+export async function POST(request: NextRequest) {
+  try {
+    const token = getTokenFromRequest(request);
+    if (!token) return NextResponse.json({ success: false, error: "未登录" }, { status: 401 });
+    const payload = verifyToken(token);
+    if (!payload) return NextResponse.json({ success: false, error: "登录已过期" }, { status: 401 });
+
+    const body = await request.json();
+    const ids: string[] = body.ids || [];
+
+    await connectDB();
+
+    let result;
+    if (ids.length > 0) {
+      // Confirm specific IDs
+      result = await Expense.updateMany(
+        { _id: { $in: ids }, userId: payload.userId },
+        { $set: { status: "confirmed" } }
+      );
+    } else {
+      // Confirm ALL pending/recognized items for this user
+      result = await Expense.updateMany(
+        { userId: payload.userId, status: { $in: ["pending", "recognized"] } },
+        { $set: { status: "confirmed" } }
+      );
+    }
+
+    return NextResponse.json({
+      success: true,
+      data: { matchedCount: result.matchedCount, modifiedCount: result.modifiedCount },
+      message: `已确认 ${result.modifiedCount} 张单据`,
+    });
+  } catch (error) {
+    console.error("批量确认失败:", error);
+    return NextResponse.json({ success: false, error: "批量确认失败" }, { status: 500 });
+  }
+}
