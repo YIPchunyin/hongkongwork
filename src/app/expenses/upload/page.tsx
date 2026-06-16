@@ -99,6 +99,7 @@ export default function ExpensesUploadPage() {
   const [files, setFiles] = useState<ImageFile[]>([]);
   const [results, setResults] = useState<UploadResult[] | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState({ current: 0, total: 0 });
   const [totalAmount, setTotalAmount] = useState(0);
   const [isManualResult, setIsManualResult] = useState(false);
   const [editIndex, setEditIndex] = useState(-1);
@@ -208,36 +209,42 @@ export default function ExpensesUploadPage() {
     const aiFiles = files.filter((f) => f.mode === 'ai');
     if (aiFiles.length === 0) { alert('请选择要 AI 识别的图片'); return; }
     setUploading(true);
-    const formData = new FormData();
+    let uploaded = 0;
+    let hasError = false;
+    const total = aiFiles.length;
+    setUploadProgress({ current: 0, total });
     for (const f of aiFiles) {
-      if (f.rotation !== 0) {
-        try {
-          const rotatedDataUrl = await rotateBase64Image(f.preview, f.rotation);
-          const rotatedBlob = dataURLtoBlob(rotatedDataUrl);
-          formData.append('files', rotatedBlob, f.file.name);
-        } catch {
+      try {
+        const formData = new FormData();
+        if (f.rotation !== 0) {
+          try {
+            const rotatedDataUrl = await rotateBase64Image(f.preview, f.rotation);
+            const rotatedBlob = dataURLtoBlob(rotatedDataUrl);
+            formData.append('files', rotatedBlob, f.file.name);
+          } catch {
+            formData.append('files', f.file);
+          }
+        } else {
           formData.append('files', f.file);
         }
-      } else {
-        formData.append('files', f.file);
+        const res = await fetch('/api/expenses', { method: 'POST', body: formData });
+        const json = await res.json();
+        if (json.success) {
+          uploaded++;
+          setUploadProgress({ current: uploaded, total });
+        }
+      } catch {
+        hasError = true;
       }
     }
-    try {
-      const res = await fetch('/api/expenses', { method: 'POST', body: formData });
-      const json = await res.json();
-      if (json.success) {
-        router.push('/expenses');
-      } else {
-        alert(json.error || '上传失败');
-      }
-
-    } catch {
+    if (uploaded > 0) {
+      router.push('/expenses');
+    }
+    if (hasError && uploaded === 0) {
       alert('网络错误');
-    } finally {
-      setUploading(false);
     }
+    setUploading(false);
   };
-
   const handleManualUpload = async () => {
     const manualFiles = files.filter((f) => f.mode === 'manual');
     if (manualFiles.length === 0) { alert('请选择手动填写的图片'); return; }
@@ -279,7 +286,7 @@ export default function ExpensesUploadPage() {
         }
       }
       router.push("/expenses");
-      } catch {
+    } catch {
       alert('网络错误');
     } finally {
       setUploading(false);
@@ -448,7 +455,14 @@ export default function ExpensesUploadPage() {
                         处理中...
                       </span>
                     ) : (
-                      '🤖 AI 识别 (' + aiCount + ' 张)'
+                      uploading ? (
+                        <span className="flex items-center justify-center gap-2">
+                          <svg className="animate-spin w-5 h-5" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
+                          <span>处理中 {uploadProgress.current}/{uploadProgress.total}</span>
+                        </span>
+                      ) : (
+                        '🤖 AI 识别 (' + aiCount + ' 张)'
+                      )
                     )}
                   </button>
                 )}
