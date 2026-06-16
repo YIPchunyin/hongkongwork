@@ -212,7 +212,7 @@ export default function ExpensesPage() {
     setIsPinching(false);
   };
 
-  if (!loading && !user) return <div className="text-center py-20 text-gray-500">璇峰厛鐧诲綍</div>;
+  if (!loading && !user) return <div className="text-center py-20 text-gray-500">请先登录</div>;
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-6 sm:py-8">
@@ -234,7 +234,7 @@ export default function ExpensesPage() {
       {/* Month selector */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 mb-4">
         <div className="flex items-center gap-3">
-          <span className="text-sm text-gray-500">馃搮 月份</span>
+          <span className="text-sm text-gray-500">月份</span>
           <select
             value={year}
             onChange={(e) => { setYear(parseInt(e.target.value)); setPage(1); }}
@@ -305,14 +305,14 @@ export default function ExpensesPage() {
           </div>
           <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-2xl p-4 border border-purple-200 shadow-sm">
             <p className="text-xs text-purple-500 font-medium">{monthLabel} 总笔数</p>
-            <p className="text-xl sm:text-2xl font-bold text-purple-700 mt-1">{stats.totalCount} 绗</p>
+            <p className="text-xl sm:text-2xl font-bold text-purple-700 mt-1">{stats.totalCount} 笔</p>
           </div>
           <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-2xl p-4 border border-green-200 shadow-sm">
-            <p className="text-xs text-green-500 font-medium">分类鏁</p>
+            <p className="text-xs text-green-500 font-medium">分类数</p>
             <p className="text-xl sm:text-2xl font-bold text-green-700 mt-1">{Object.keys(stats.byCategory).length}</p>
           </div>
           <div className="bg-gradient-to-br from-amber-50 to-amber-100 rounded-2xl p-4 border border-amber-200 shadow-sm">
-            <p className="text-xs text-amber-500 font-medium">平均每笔瑪</p>
+            <p className="text-xs text-amber-500 font-medium">平均每笔</p>
             <p className="text-xl sm:text-2xl font-bold text-amber-700 mt-1">
               HK$ {stats.totalCount > 0 ? (stats.totalAmount / stats.totalCount).toFixed(2) : '0.00'}
             </p>
@@ -323,13 +323,13 @@ export default function ExpensesPage() {
       {/* Category breakdown */}
       {stats && Object.keys(stats.byCategory).length > 0 && (
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6 mb-6">
-          <h2 className="text-sm font-semibold text-gray-700 mb-3">馃搳 {monthLabel} 分类姹囨€</h2>
+          <h2 className="text-sm font-semibold text-gray-700 mb-3">分类汇总</h2>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
             {Object.entries(stats.byCategory).map(([cat, data]) => (
               <div key={cat} className="flex items-center justify-between px-3 py-2 bg-gray-50 rounded-lg">
                 <div>
                   <p className="text-sm text-gray-600">{categoryEmoji[cat] || '📫'} {cat}</p>
-                  <p className="text-xs text-gray-400">{data.count} 绗</p>
+                  <p className="text-xs text-gray-400">{data.count} 笔</p>
                 </div>
                 <span className="text-sm font-semibold text-gray-800">HK$ {data.total.toFixed(2)}</span>
               </div>
@@ -338,7 +338,7 @@ export default function ExpensesPage() {
 
           {/* Copy for boss report */}
           <div className="mt-3 p-3 bg-blue-50 rounded-lg">
-            <p className="text-xs text-gray-500 mb-1">馃搵 鑰佹澘姹囨姤鏂囨锛堢偣鍑诲鍒讹級</p>
+            <p className="text-xs text-gray-500 mb-1">老板汇报文案（点击复制）</p>
             <p
               className="text-sm text-gray-800 cursor-pointer hover:text-blue-600"
               onClick={() => {
@@ -361,9 +361,9 @@ export default function ExpensesPage() {
           <svg className="w-16 h-16 text-gray-200 mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
           </svg>
-          <p className="text-gray-400">{monthLabel} 娌℃湁宸茬‘璁ょ殑璐﹀崟</p>
+          <p className="text-gray-400">{monthLabel} 没有已确认的账单</p>
           <Link href="/expenses/upload" className="mt-3 inline-block text-sm text-blue-600 font-medium hover:text-blue-700">
-            上传鏂板崟鎹?鈫?
+            上传新单据 →
           </Link>
         </div>
       ) : (
@@ -416,7 +416,7 @@ export default function ExpensesPage() {
 
                 {/* Merchant */}
                 <p className="text-sm font-medium text-gray-800 truncate mt-0.5">{item.merchant || "未填写"}</p>
-                {item.project && <p className="text-[10px] text-gray-400 mt-0.5 truncate">\馃彈\uFE0F {item.project}</p>}
+                {item.project && <p className="text-[10px] text-gray-400 mt-0.5 truncate">📸️ {item.project}</p>}
 
                 {/* Date */}
                 <p className="text-xs text-gray-400 mt-1">
@@ -479,7 +479,7 @@ export default function ExpensesPage() {
                   value={formCategory}
                   onChange={(e) => setFormCategory(e.target.value)}
                   list="cat-suggestions"
-                  placeholder="宸ュ叿銆佷氦閫氥€佸叾浠?.."
+                  placeholder="工具、交通、其他..."
                   className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
                 />
                 <datalist id="cat-suggestions">
