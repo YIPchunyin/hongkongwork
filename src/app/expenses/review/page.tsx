@@ -71,17 +71,15 @@ export default function ReviewPage() {
     const confirmAll = async () => {
     setConfirming(true);
     try {
-      const unconfirmedIds = items.filter((i) => i.status !== "confirmed").map((i) => i._id);
-      if (unconfirmedIds.length === 0) { setConfirming(false); return; }
       const res = await fetch("/api/expenses/review", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ids: unconfirmedIds }),
+        body: JSON.stringify({}), // confirm all pending/recognized for this user
       });
       const json = await res.json();
       if (json.success) {
-        setItems((prev) => prev.map((i) => ({ ...i, status: "confirmed" })));
-        alert(json.message || `已确认 ${json.data.modifiedCount} 张单据`);
+        setItems([]);
+        alert(json.message || "全部确认成功");
       } else {
         alert(json.error || "批量确认失败");
       }

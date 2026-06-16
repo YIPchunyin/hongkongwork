@@ -32,18 +32,13 @@ export async function GET(request: NextRequest) {
     if (statusFilter === 'confirmed') query.status = 'confirmed';
     else if (statusFilter === 'pending') query.status = 'recognized';
     else query.status = { $in: ['recognized', 'confirmed'] };
+    let monthStart, monthEnd;
     if (month) {
-      const year = parseInt(month.split('-')[0]);
-      const mo = parseInt(month.split('-')[1]);
-      const monthStart = new Date(year, mo - 1, 1);
-      const monthEnd = new Date(year, mo, 0, 23, 59, 59);
-      query["$or"] = [
-        { billDate: { "$regex": `^${month}-` } },
-        { 
-          billDate: { $in: ['', null, undefined] },
-          createdAt: { $gte: monthStart, $lte: monthEnd }
-        }
-      ];
+      const year = parseInt(month.split("-")[0]);
+      const mo = parseInt(month.split("-")[1]);
+      monthStart = new Date(year, mo - 1, 1);
+      monthEnd = new Date(year, mo, 0, 23, 59, 59);
+      query.createdAt = { $gte: monthStart, $lte: monthEnd };
     }
     if (category) query.category = category;
 
@@ -60,7 +55,7 @@ export async function GET(request: NextRequest) {
     const allConfirmed = await Expense.find({
       userId: payload.userId,
       status: { $in: ['recognized', 'confirmed'] },
-      ...(month ? { billDate: { $regex: `^${month}-` } } : {}),
+      ...(month ? { createdAt: { $gte: monthStart, $lte: monthEnd } } : {}),
     }).lean();
     const totalAmount = allConfirmed.reduce((sum, item) => sum + (item.amount || 0), 0);
     const byCategory: Record<string, { count: number; total: number }> = {};
