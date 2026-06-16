@@ -192,6 +192,10 @@ export default function ExpensesUploadPage() {
     });
   };
 
+  const setAllToAi = () => {
+    setFiles((prev) => prev.map((f) => ({ ...f, mode: "ai" })));
+  };
+
   const updateManualField = (index: number, field: string, value: string) => {
     setFiles((prev) => {
       const updated = [...prev];
@@ -421,6 +425,15 @@ export default function ExpensesUploadPage() {
                 ))}
               </div>
 
+              {/* Quick actions */}
+              {files.length > 1 && !files.every((f) => f.mode === "ai") && (
+                <button
+                  onClick={setAllToAi}
+                  className="w-full mb-3 py-2.5 border-2 border-dashed border-blue-300 text-blue-600 font-medium rounded-xl hover:bg-blue-50 transition-colors text-sm"
+                >
+                  🔄 全部切换为 AI 识别
+                </button>
+              )}
               {/* Action buttons */}
               <div className="flex gap-3">
                 {hasAiFiles && (
