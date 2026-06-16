@@ -155,8 +155,8 @@ export default function ExpensesPage() {
       const res = await fetch(url, { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
       const json = await res.json();
       if (json.success) { setShowModal(false); fetchExpenses(); }
-      else { alert(json.error || "保存澶辫触"); }
-    } catch { alert("保存澶辫触"); } finally { setSaving(false); }
+      else { alert(json.error || "保存失败"); }
+    } catch { alert("保存失败"); } finally { setSaving(false); }
   };
 
     const months = Array.from({ length: 12 }, (_, i) => {
