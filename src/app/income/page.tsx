@@ -299,7 +299,7 @@ export default function IncomePage() {
       )}
 
       {/* Advanced Analytics */}
-      <div className="hidden md:block">
+      <div>
       {stats && month && year && (
         <div className="grid grid-cols-2 gap-2 mb-3">
           {(() => {
