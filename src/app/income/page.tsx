@@ -222,8 +222,8 @@ export default function IncomePage() {
         <div className="absolute top-1/3 -right-32 w-[500px] h-[500px] rounded-full bg-gradient-to-bl from-blue-300/15 via-cyan-300/10 to-transparent blur-3xl animate-aurora-delayed" />
         <div className="absolute -bottom-40 left-1/4 w-[700px] h-[700px] rounded-full bg-gradient-to-tr from-purple-300/10 via-pink-300/10 to-transparent blur-3xl animate-aurora-slow" />
       </div>
-      <div className="relative z-10 animate-fade-in flex-1 flex flex-col min-h-0">
-        <div className="max-w-5xl mx-auto px-3 sm:px-4 md:h-auto flex flex-col md:block md:overflow-visible"
+      <div className="relative z-10 animate-fade-in">
+        <div className="max-w-5xl mx-auto px-3 sm:px-4"
       onTouchStart={(e) => setTouchStart(e.touches[0].clientX)}
       onTouchMove={(e) => setTouchEnd(e.touches[0].clientX)}
       onTouchEnd={() => {
@@ -335,7 +335,7 @@ export default function IncomePage() {
       {fetching ? (
         <div className="text-center py-12"><div className="w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto" /></div>
       ) : (
-        <div className="bg-white rounded-xl md:rounded-2xl shadow-sm border border-gray-100 overflow-hidden p-1 sm:p-3 md:flex-1 flex flex-col">
+        <div className="bg-white rounded-xl md:rounded-2xl shadow-sm border border-gray-100 overflow-hidden p-1 sm:p-3">
           {/* Calendar toolbar */}
           <div className="flex items-center justify-end mb-0.5 md:mb-1 flex-shrink-0 px-0.5">
             <button onClick={() => setShowAmount(!showAmount)}
