@@ -213,7 +213,7 @@ export default function IncomePage() {
   ] : [];
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-6 sm:py-8"
+    <div className="max-w-5xl mx-auto px-3 sm:px-4 h-dvh md:h-auto flex flex-col md:block overflow-hidden md:overflow-visible"
       onTouchStart={(e) => setTouchStart(e.touches[0].clientX)}
       onTouchMove={(e) => setTouchEnd(e.touches[0].clientX)}
       onTouchEnd={() => {
@@ -226,7 +226,7 @@ export default function IncomePage() {
         setTouchEnd(null);
       }}>
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+      <div className="hidden md:flex md:flex-row md:items-center justify-between gap-4 mb-6">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-gradient-to-br from-green-400 to-emerald-600 rounded-xl flex items-center justify-center shadow-lg shadow-green-200/50">
             <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -242,7 +242,7 @@ export default function IncomePage() {
       </div>
 
       {/* Month selector */}
-      <div className="rounded-2xl p-2.5 sm:p-3 mb-2 shadow-lg bg-gradient-to-r from-green-600 to-emerald-700 text-white">
+      <div className="rounded-xl md:rounded-2xl px-2.5 py-1.5 md:p-3 mb-1.5 md:mb-2 shadow-lg bg-gradient-to-r from-green-600 to-emerald-700 text-white flex-shrink-0">
         <div className="flex items-center justify-between">
           <button onClick={prevMonth} className={'p-2 hover:bg-white/70 rounded-xl transition-all hover:shadow-sm active:scale-90' + (month === null ? ' opacity-30 pointer-events-none' : '')}>
             <svg className="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
@@ -260,7 +260,7 @@ export default function IncomePage() {
 
       {/* Stats cards */}
       {stats && (
-        <div className="flex flex-col gap-2 mb-2 sm:mb-3">
+        <div className="hidden md:flex md:flex-col gap-2 mb-2 sm:mb-3">
           {/* First card full width */}
           {(() => {
             const bgClasses = [
@@ -289,6 +289,7 @@ export default function IncomePage() {
       )}
 
       {/* Advanced Analytics */}
+      <div className="hidden md:block">
       {stats && month && year && (
         <div className="grid grid-cols-2 gap-2 mb-3">
           {(() => {
@@ -319,13 +320,14 @@ export default function IncomePage() {
         </div>
       )}
 
+      </div>
       {/* Calendar View */}
       {fetching ? (
         <div className="text-center py-12"><div className="w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto" /></div>
       ) : (
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden p-1.5 sm:p-3">
+        <div className="bg-white rounded-xl md:rounded-2xl shadow-sm border border-gray-100 overflow-hidden p-1 sm:p-3 flex-1 md:flex-none flex flex-col min-h-0">
           {/* Calendar toolbar */}
-          <div className="flex items-center justify-end mb-1 px-0.5">
+          <div className="flex items-center justify-end mb-0.5 md:mb-1 flex-shrink-0 px-0.5">
             <button onClick={() => setShowAmount(!showAmount)}
               className="text-xs px-2 py-1 rounded-lg font-medium transition-all flex items-center gap-1 hover:bg-gray-100 active:scale-95"
               title={showAmount ? '隐藏金额' : '显示金额'}>
@@ -340,11 +342,12 @@ export default function IncomePage() {
             </button>
           </div>
           {/* Day headers */}
-          <div className="grid grid-cols-7 gap-0.5 sm:gap-1 mb-1">
+          <div className="grid grid-cols-7 gap-0.5 sm:gap-1 mb-1 flex-shrink-0">
             {['日','一','二','三','四','五','六'].map(d => (
               <div key={d} className="text-center text-[10px] sm:text-xs font-bold text-gray-400 py-1 uppercase tracking-wider">{d}</div>
             ))}</div>
           {/* Calendar grid */}
+          <div className="flex-1 min-h-0 overflow-y-auto md:overflow-visible">
           {(() => { const dailyTotalMap = {} as Record<string, number>; incomes.forEach(i => { const d = i.date?.substring(0, 10); if (d) dailyTotalMap[d] = (dailyTotalMap[d] || 0) + i.amount; }); const maxAmountInMonth = Math.max(...Object.values(dailyTotalMap), 0); return month && year && buildCalendarDays(year, month, incomes).map((week, wi) => (
             <div key={wi} className="grid grid-cols-7 gap-1 mb-1">
               {week.map((day, di) => {
@@ -395,6 +398,7 @@ export default function IncomePage() {
               })}
             </div>
           )); })()}
+          </div>
         </div>
       )}
 
