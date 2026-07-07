@@ -236,7 +236,7 @@ export default function IncomePage() {
         setTouchEnd(null);
       }}>
       {/* Header */}
-      <div className="hidden md:flex md:flex-row md:items-center justify-between gap-4 mb-6">
+      <div className="flex flex-row items-center justify-between gap-4 mb-6">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-gradient-to-br from-green-400 to-emerald-600 rounded-xl flex items-center justify-center shadow-lg shadow-green-200/50">
             <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -270,7 +270,7 @@ export default function IncomePage() {
 
       {/* Stats cards */}
       {stats && (
-        <div className="hidden md:flex md:flex-col gap-2 mb-2 sm:mb-3">
+        <div className="flex flex-col gap-2 mb-2 sm:mb-3">
           {/* First card full width */}
           {(() => {
             const bgClasses = [
