@@ -439,7 +439,7 @@ export default function IncomePage() {
                   <div className="flex items-center gap-2">
                     <span className="w-3 h-3 rounded-sm flex-shrink-0" style={{ backgroundColor: companyColor(item.company), boxShadow: '0 1px 3px rgba(0,0,0,0.3)' }} />
                     <span className="text-xs px-1.5 py-0.5 rounded bg-green-50 text-green-700 font-medium">{item.category || '未分类'}</span>
-                    {item.shift && <span className="text-xs text-gray-400">{item.shift}</span>}
+                    {item.shift && <span className="text-xs text-white/40">{item.shift}</span>}
                     {item.company && <span className="text-xs text-gray-400">{item.company}</span>}
                   </div>
                   <div className="flex justify-between items-center mt-1">
