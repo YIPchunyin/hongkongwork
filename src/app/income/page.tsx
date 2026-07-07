@@ -213,7 +213,7 @@ export default function IncomePage() {
   ] : [];
 
   return (
-    <div className="relative min-h-dvh bg-[#f9fafb] flex flex-col">
+    <div className="bg-[#f9fafb] pb-20">
       {/* Wave reveal overlay */}
       <div className="fixed inset-0 z-50 bg-[#f9fafb] animate-wave-reveal pointer-events-none" />
       {/* Aurora backgrounds */}
@@ -223,7 +223,7 @@ export default function IncomePage() {
         <div className="absolute -bottom-40 left-1/4 w-[700px] h-[700px] rounded-full bg-gradient-to-tr from-purple-300/10 via-pink-300/10 to-transparent blur-3xl animate-aurora-slow" />
       </div>
       <div className="relative z-10 animate-fade-in">
-        <div className="max-w-5xl mx-auto px-3 sm:px-4"
+        <div className="max-w-5xl mx-auto px-3 sm:px-6 pt-4"
       onTouchStart={(e) => setTouchStart(e.touches[0].clientX)}
       onTouchMove={(e) => setTouchEnd(e.touches[0].clientX)}
       onTouchEnd={() => {
