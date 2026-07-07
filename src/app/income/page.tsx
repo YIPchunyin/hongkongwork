@@ -235,21 +235,6 @@ export default function IncomePage() {
         setTouchStart(null);
         setTouchEnd(null);
       }}>
-      {/* Header */}
-      <div className="flex flex-row items-center justify-between gap-4 mb-6">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-gradient-to-br from-green-400 to-emerald-600 rounded-xl flex items-center justify-center shadow-lg shadow-green-200/50">
-            <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          </div>
-          <div>
-            <h1 className="text-lg sm:text-2xl font-bold text-gray-900">收入记录</h1>
-            <p className="text-xs sm:text-sm text-gray-400">📊 记录每一笔收入 · 轻松掌控财务</p>
-          </div>
-        </div>
-
-      </div>
 
       {/* Month selector */}
       <div className="rounded-xl md:rounded-2xl px-2.5 py-1.5 md:p-3 mb-1.5 md:mb-2 shadow-lg bg-gradient-to-r from-green-600 to-emerald-700 text-white flex-shrink-0">
