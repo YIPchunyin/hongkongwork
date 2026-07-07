@@ -213,7 +213,7 @@ export default function IncomePage() {
   ] : [];
 
   return (
-    <div className="bg-[#f9fafb] pb-20">
+    <div className="bg-gradient-to-br from-slate-50 via-white to-emerald-50/40 pb-20">
       {/* Wave reveal overlay */}
       <div className="fixed inset-0 z-50 bg-[#f9fafb] animate-wave-reveal pointer-events-none" />
       {/* Aurora backgrounds */}
@@ -221,6 +221,17 @@ export default function IncomePage() {
         <div className="absolute -top-40 -left-40 w-[600px] h-[600px] rounded-full bg-gradient-to-br from-green-300/20 via-emerald-300/15 to-transparent blur-3xl animate-aurora" />
         <div className="absolute top-1/3 -right-32 w-[500px] h-[500px] rounded-full bg-gradient-to-bl from-blue-300/15 via-cyan-300/10 to-transparent blur-3xl animate-aurora-delayed" />
         <div className="absolute -bottom-40 left-1/4 w-[700px] h-[700px] rounded-full bg-gradient-to-tr from-purple-300/10 via-pink-300/10 to-transparent blur-3xl animate-aurora-slow" />
+      </div>
+      {/* Floating particles */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none z-[1]">
+        <div className="absolute top-[15%] left-[10%] w-1.5 h-1.5 bg-emerald-400/40 rounded-full animate-particle"></div>
+        <div className="absolute top-[25%] right-[15%] w-2 h-2 bg-blue-400/30 rounded-full animate-particle-d1"></div>
+        <div className="absolute top-[45%] left-[20%] w-1 h-1 bg-purple-400/40 rounded-full animate-particle-d2"></div>
+        <div className="absolute top-[55%] right-[25%] w-1.5 h-1.5 bg-emerald-400/30 rounded-full animate-particle-d1"></div>
+        <div className="absolute top-[75%] left-[30%] w-2 h-2 bg-blue-400/20 rounded-full animate-particle-d2"></div>
+        <div className="absolute top-[35%] left-[60%] w-1 h-1 bg-pink-400/30 rounded-full animate-particle"></div>
+        <div className="absolute top-[65%] right-[10%] w-1.5 h-1.5 bg-emerald-400/25 rounded-full animate-particle-d1"></div>
+        <div className="absolute top-[85%] left-[50%] w-1 h-1 bg-purple-400/20 rounded-full animate-particle-d2"></div>
       </div>
       <div className="relative z-10 animate-fade-in">
         <div className="max-w-5xl mx-auto px-3 sm:px-6 pt-4"
@@ -237,7 +248,7 @@ export default function IncomePage() {
       }}>
 
       {/* Month selector */}
-      <div className="rounded-xl md:rounded-2xl px-2.5 py-1.5 md:p-3 mb-1.5 md:mb-2 shadow-lg bg-gradient-to-r from-green-600 to-emerald-700 text-white flex-shrink-0">
+      <div className="rounded-xl md:rounded-2xl px-2.5 py-1.5 md:p-3 mb-1.5 md:mb-2 text-white flex-shrink-0 glass-border-gradient" style={{background: "linear-gradient(135deg, rgba(16,185,129,0.85), rgba(5,150,105,0.9))", backdropFilter: "blur(20px)"}}>
         <div className="flex items-center justify-between">
           <button onClick={prevMonth} className={'p-2 hover:bg-white/70 rounded-xl transition-all hover:shadow-sm active:scale-90' + (month === null ? ' opacity-30 pointer-events-none' : '')}>
             <svg className="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
@@ -255,7 +266,7 @@ export default function IncomePage() {
 
       {/* Stats cards */}
       {stats && (
-        <div className="flex flex-col gap-2 mb-2 sm:mb-3">
+        <div className="flex flex-col gap-2 mb-2 sm:mb-3 glass-card rounded-2xl p-3">
           {/* First card full width */}
           {(() => {
             const bgClasses = [
@@ -320,7 +331,7 @@ export default function IncomePage() {
       {fetching ? (
         <div className="text-center py-12"><div className="w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto" /></div>
       ) : (
-        <div className="bg-white rounded-xl md:rounded-2xl shadow-sm border border-gray-100 overflow-hidden p-1 sm:p-3 ">
+        <div className="rounded-xl md:rounded-2xl overflow-hidden p-1 sm:p-3 glass-card">
           {/* Calendar toolbar */}
           <div className="flex items-center justify-end mb-0.5 md:mb-1 flex-shrink-0 px-0.5">
             <button onClick={() => setShowAmount(!showAmount)}
@@ -400,7 +411,7 @@ export default function IncomePage() {
       {/* Day Detail Popup */}
       {selectedDay && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40" onClick={() => setSelectedDay(null)}>
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-5 max-h-[70vh] overflow-y-auto border border-green-100" onClick={e => e.stopPropagation()}>
+          <div className="rounded-2xl w-full max-w-sm p-5 max-h-[70vh] overflow-y-auto glass-card shadow-2xl" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 bg-gradient-to-br from-green-400 to-emerald-600 rounded-xl flex items-center justify-center shadow-md">
@@ -451,7 +462,7 @@ export default function IncomePage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 mb-4 w-full max-w-full">
           {/* Monthly Trend */}
           {Object.keys(stats.monthlyTotals).length > 1 && (
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden p-3 sm:p-5 card-hover">
+            <div className="rounded-2xl overflow-hidden p-3 sm:p-5 glass-card glass-hover">
               <h3 className="text-xs sm:text-sm font-bold text-gray-700 mb-2 sm:mb-3 flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-green-500" />
                 📈 月度收入趋势
@@ -464,7 +475,7 @@ export default function IncomePage() {
           )}
 
           {/* Industry Distribution */}
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden p-4 sm:p-5">
+          <div className="rounded-2xl overflow-hidden p-4 sm:p-5 glass-card glass-hover">
             <h3 className="text-sm font-semibold text-gray-700 mb-3">🏭 行业分布</h3>
             {Object.keys(stats.industryTotals).length > 0 && (
               <div className="flex items-center gap-4">
@@ -491,7 +502,7 @@ export default function IncomePage() {
           </div>
 
           {/* Company Breakdown */}
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden p-4 sm:p-5">
+          <div className="rounded-2xl overflow-hidden p-4 sm:p-5 glass-card glass-hover">
             <h3 className="text-sm font-semibold text-gray-700 mb-3">🏢 公司收入</h3>
             {Object.keys(stats.companyTotals).sort().map((com, i) => {
               const amt = stats.companyTotals[com];
@@ -511,7 +522,7 @@ export default function IncomePage() {
           </div>
 
           {/* Hourly Rate Trend */}
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden p-4 sm:p-5">
+          <div className="rounded-2xl overflow-hidden p-4 sm:p-5 glass-card glass-hover">
             <h3 className="text-sm font-semibold text-gray-700 mb-3">💵 时薪走势</h3>
             {(function() {
               const dailyRates: Record<string, { income: number; hours: number }> = {};
@@ -551,7 +562,7 @@ export default function IncomePage() {
           </div>
 
           {/* Weekday Analysis */}
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden p-4 sm:p-5">
+          <div className="rounded-2xl overflow-hidden p-4 sm:p-5 glass-card glass-hover">
             <h3 className="text-sm font-semibold text-gray-700 mb-3">📅 星期分布</h3>
             {(function() {
               const weekdayNames = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"];
@@ -583,7 +594,7 @@ export default function IncomePage() {
           </div>
 
           {/* Top Paying Days */}
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden p-4 sm:p-5">
+          <div className="rounded-2xl overflow-hidden p-4 sm:p-5 glass-card glass-hover">
             <h3 className="text-sm font-semibold text-gray-700 mb-3">最高收入日</h3>
             {(function() {
               const dayTotals: Record<string, { amount: number; count: number; companies: string[] }> = {};
@@ -622,7 +633,7 @@ export default function IncomePage() {
       {/* Add/Edit Modal */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40" onClick={() => setShowModal(false)}>
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-5 max-h-[90vh] overflow-y-auto border border-green-100" onClick={e => e.stopPropagation()}>
+          <div className="rounded-2xl w-full max-w-md p-5 max-h-[90vh] overflow-y-auto glass-card shadow-2xl" onClick={e => e.stopPropagation()}>
             <div className="flex items-center gap-2 mb-5">
               <div className="w-8 h-8 bg-gradient-to-br from-green-400 to-emerald-600 rounded-xl flex items-center justify-center shadow-md">
                 <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
@@ -712,7 +723,7 @@ export default function IncomePage() {
       </div>
       {/* FAB */}
       <button onClick={openAdd}
-        className="fixed bottom-20 md:bottom-6 right-4 z-50 w-12 h-12 bg-emerald-600 text-white rounded-full hover:bg-emerald-700 active:scale-95 transition-all duration-200 flex items-center justify-center shadow-lg shadow-emerald-600/30"
+        className="fixed bottom-20 md:bottom-6 right-4 z-50 w-12 h-12 text-white rounded-full hover:scale-110 active:scale-95 transition-all duration-300 flex items-center justify-center shadow-lg shadow-emerald-500/40" style={{background: "linear-gradient(135deg, #10B981, #059669)", boxShadow: "0 8px 32px rgba(16,185,129,0.3)"}}
       >
         <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
