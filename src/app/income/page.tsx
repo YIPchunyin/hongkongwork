@@ -9,6 +9,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/AuthProvider';
 import QuickAddCards from '@/components/QuickAddCards';
+import LazyLoad from '@/components/LazyLoad';
 
 interface IncomeItem {
   _id: string;
@@ -437,6 +438,7 @@ export default function IncomePage() {
         </div>
       )}
 
+      <LazyLoad>
       {/* Charts & Analysis */}
       {stats && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 mb-4 w-full max-w-full">
@@ -609,6 +611,7 @@ export default function IncomePage() {
           </div>
         </div>
       )}
+      </LazyLoad>
 
       {/* Add/Edit Modal */}
       {showModal && (
