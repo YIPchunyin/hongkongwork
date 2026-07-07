@@ -266,27 +266,38 @@ export default function IncomePage() {
 
       {/* Stats cards */}
       {stats && (
-        <div className="flex flex-col gap-2 mb-2 sm:mb-3 glass-card rounded-2xl p-3">
-          {/* First card full width */}
+        <div className="flex flex-col gap-2 mb-3">
           {(() => {
-            const bgClasses = [
-              'bg-gradient-to-r from-green-600 to-emerald-700 text-white',
-              'bg-gradient-to-r from-blue-600 to-cyan-700 text-white',
-              'bg-gradient-to-r from-purple-600 to-pink-700 text-white',
-            ];
+            const today = new Date();
+            const isCurrentMonth = year === today.getFullYear() && month === today.getMonth() + 1;
+            const maxDay = isCurrentMonth ? today.getDate() : new Date(year, month || 1, 0).getDate();
+            const totalDays = isCurrentMonth ? today.getDate() - 1 : maxDay;
+            const workDates = new Set(incomes.map((i) => i.date?.substring(0, 10)).filter(Boolean));
+            const adjustedWorkDays = [...workDates].filter(d => parseInt(d.substring(8)) <= totalDays).length;
+            const restDays = Math.max(0, totalDays - adjustedWorkDays);
+            const workRate = totalDays > 0 ? (adjustedWorkDays / totalDays * 100).toFixed(0) : '0';
             return (
               <>
-                <div className="rounded-xl p-3 sm:p-4 shadow-lg card-hover bg-gradient-to-r from-green-600 to-emerald-700 text-white">
+                {/* Income - full width */}
+                <div className="rounded-xl p-3 sm:p-4 shadow-lg glass-hover" style={{background: "linear-gradient(135deg, #059669, #10B981)"}}>
                   <p className="text-[10px] sm:text-xs text-white/80 font-medium uppercase tracking-wide">{showAmount ? statCards[0].label : statCards[0].label.replace('收入', '')}</p>
-                  <p className="text-lg sm:text-2xl font-black mt-0.5 text-white">{showAmount ? statCards[0].value : '💪 做牛做马中...'}</p>
+                  <p className="text-lg sm:text-2xl font-black mt-0.5 text-white">{showAmount ? statCards[0].value : '💪 做牛做马...'}</p>
                 </div>
-                <div className="grid grid-cols-2 gap-2">
-                  {statCards.slice(1).map((card, i) => (
-                    <div key={i} className={'rounded-xl p-3 sm:p-4 shadow-lg card-hover ' + bgClasses[i + 1]}>
-                      <p className="text-[10px] sm:text-xs text-white/80 font-medium uppercase tracking-wide">{card.label}</p>
-                      <p className="text-lg sm:text-2xl font-black mt-0.5 text-white">{card.value}</p>
-                    </div>
-                  ))}
+                {/* 3 cards row */}
+                <div className="grid grid-cols-3 gap-2">
+                  <div className="rounded-xl p-3 shadow-lg glass-hover" style={{background: "linear-gradient(135deg, #2563EB, #0891B2)"}}>
+                    <p className="text-[10px] text-white/80 font-medium uppercase tracking-wide">{statCards[1].label}</p>
+                    <p className="text-lg sm:text-xl font-black mt-0.5 text-white">{statCards[1].value}</p>
+                  </div>
+                  <div className="rounded-xl p-3 shadow-lg glass-hover" style={{background: "linear-gradient(135deg, #7C3AED, #DB2777)"}}>
+                    <p className="text-[10px] text-white/80 font-medium uppercase tracking-wide">{statCards[2].label}</p>
+                    <p className="text-lg sm:text-xl font-black mt-0.5 text-white">{statCards[2].value}</p>
+                  </div>
+                  <div className="rounded-xl p-3 shadow-lg glass-hover" style={{background: "linear-gradient(135deg, #4F46E5, #7C3AED)"}}>
+                    <p className="text-[10px] text-white/80 font-medium uppercase tracking-wide">💼 工作天数</p>
+                    <p className="text-lg sm:text-xl font-black mt-0.5 text-white">{adjustedWorkDays}<span className="text-xs font-medium text-white/60"> / {totalDays}天</span></p>
+                    <p className="text-[10px] text-white/70 mt-0.5">出勤率 {workRate}%</p>
+                  </div>
                 </div>
               </>
             );
@@ -294,39 +305,8 @@ export default function IncomePage() {
         </div>
       )}
 
-      {/* Advanced Analytics */}
-      <div>
-      {stats && month && year && (
-        <div className="grid grid-cols-2 gap-2 mb-3">
-          {(() => {
-            const today = new Date(); const isCurrentMonth = year === today.getFullYear() && month === today.getMonth() + 1; const maxDay = isCurrentMonth ? today.getDate() : new Date(year, month, 0).getDate(); const totalDays = isCurrentMonth ? today.getDate() - 1 : maxDay;
-            const workDates = new Set(incomes.map((i) => i.date?.substring(0, 10)).filter(Boolean));
-            const adjustedWorkDays = [...workDates].filter(d => parseInt(d.substring(8)) <= totalDays).length;
-            const restDays = Math.max(0, totalDays - adjustedWorkDays);
-            const workRate = totalDays > 0 ? (adjustedWorkDays / totalDays * 100).toFixed(0) : '0';
-            const dailyTotals: Record<string, number> = {};
-            incomes.forEach((i) => {
-              const key = i.date?.substring(0, 10);
-              if (key) dailyTotals[key] = (dailyTotals[key] || 0) + i.amount;
-            });
-            return <>
-              <div className="rounded-xl p-3 shadow-lg bg-gradient-to-br from-indigo-600 to-purple-700 text-white">
-                <p className="text-[10px] text-white/80 font-medium">💼 工作天数</p>
-                <p className="text-lg font-extrabold text-white mt-0.5">{adjustedWorkDays}<span className="text-xs font-medium text-white/60"> / {totalDays + '天'}</span></p>
-                <p className="text-[10px] text-white/70 mt-0.5">出勤率 {workRate}%</p>
-              </div>
-              <div className="bg-gradient-to-br from-amber-600 to-orange-700 rounded-xl p-3 shadow-lg text-white">
-                <p className="text-[10px] text-white/80 font-medium">🌙 放假天数</p>
-                <p className="text-lg font-extrabold text-white mt-0.5">{restDays}<span className="text-xs font-medium text-white/60"> 天</span></p>
-                <p className="text-[10px] text-white/70 mt-0.5">{'☾'.repeat(Math.min(Math.max(restDays, 0), 5))}{restDays > 5 ? '...' : ''}</p>
-              </div>
+      {/* Rest days & Advanced */}
 
-            </>
-          })()}
-        </div>
-      )}
-
-      </div>
       {/* Calendar View */}
       {fetching ? (
         <div className="text-center py-12"><div className="w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto" /></div>
