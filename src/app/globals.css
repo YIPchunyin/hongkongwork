@@ -1,4 +1,4 @@
-﻿@import "tailwindcss";
+@import "tailwindcss";
 
 @theme inline {
   --color-background: var(--background);
@@ -234,14 +234,52 @@ body {
   animation: slideUp 0.4s cubic-bezier(0.16,1,0.3,1) forwards;
 }
 
-/* Aurora animation */
-@keyframes aurora {
-  0%   { transform: translate(0%, 0%) scale(1); opacity: 0.4; }
-  25%  { transform: translate(5%, -5%) scale(1.05); opacity: 0.5; }
-  50%  { transform: translate(-5%, 5%) scale(0.95); opacity: 0.3; }
-  75%  { transform: translate(-3%, -3%) scale(1.02); opacity: 0.45; }
-  100% { transform: translate(0%, 0%) scale(1); opacity: 0.4; }
+/* ========== PAGE ENTRANCE WAVE ========== */
+@keyframes waveExpand {
+  0%   { clip-path: circle(0% at 50% 50%); }
+  60%  { clip-path: circle(70% at 50% 50%); }
+  100% { clip-path: circle(100% at 50% 50%); }
+}
+.animate-wave {
+  animation: waveExpand 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Wave reveal (reverse - overlay that shrinks to reveal content) */
+@keyframes waveReveal {
+  0%   { clip-path: circle(150% at 50% 50%); }
+  50%  { clip-path: circle(70% at 50% 50%); }
+  100% { clip-path: circle(0% at 50% 50%); }
+}
+.animate-wave-reveal {
+  animation: waveReveal 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* ========== AURORA FLOAT EFFECT ========== */
+@keyframes auroraFloat {
+  0%   { transform: translate(0%, 0%) scale(1); opacity: 0.35; }
+  25%  { transform: translate(4%, -4%) scale(1.05); opacity: 0.45; }
+  50%  { transform: translate(-4%, 4%) scale(0.95); opacity: 0.25; }
+  75%  { transform: translate(-2%, -2%) scale(1.02); opacity: 0.4; }
+  100% { transform: translate(0%, 0%) scale(1); opacity: 0.35; }
 }
 .animate-aurora {
-  animation: aurora 12s ease-in-out infinite;
+  animation: auroraFloat 10s ease-in-out infinite;
 }
+.animate-aurora-delayed {
+  animation: auroraFloat 12s ease-in-out infinite;
+  animation-delay: -3s;
+}
+.animate-aurora-slow {
+  animation: auroraFloat 14s ease-in-out infinite;
+  animation-delay: -6s;
+}
+
+/* Content fade in after wave */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in {
+  animation: fadeInUp 0.6s ease-out 0.3s both;
+}
+

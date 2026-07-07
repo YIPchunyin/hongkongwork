@@ -9,8 +9,6 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/AuthProvider';
 import QuickAddCards from '@/components/QuickAddCards';
-import PageEntrance from '@/components/ui/PageEntrance';
-import AuroraBackground from '@/components/ui/AuroraBackground';
 
 interface IncomeItem {
   _id: string;
@@ -215,9 +213,17 @@ export default function IncomePage() {
   ] : [];
 
   return (
-    <PageEntrance>
-      <AuroraBackground showAurora={true} className="min-h-screen">
-    <div className="max-w-5xl mx-auto px-3 sm:px-4 h-dvh md:h-auto flex flex-col md:block overflow-hidden md:overflow-visible"
+    <div className="relative min-h-screen bg-[#f9fafb] overflow-hidden">
+      {/* Wave reveal overlay */}
+      <div className="fixed inset-0 z-50 bg-[#f9fafb] animate-wave-reveal pointer-events-none" />
+      {/* Aurora backgrounds */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
+        <div className="absolute -top-40 -left-40 w-[600px] h-[600px] rounded-full bg-gradient-to-br from-green-300/20 via-emerald-300/15 to-transparent blur-3xl animate-aurora" />
+        <div className="absolute top-1/3 -right-32 w-[500px] h-[500px] rounded-full bg-gradient-to-bl from-blue-300/15 via-cyan-300/10 to-transparent blur-3xl animate-aurora-delayed" />
+        <div className="absolute -bottom-40 left-1/4 w-[700px] h-[700px] rounded-full bg-gradient-to-tr from-purple-300/10 via-pink-300/10 to-transparent blur-3xl animate-aurora-slow" />
+      </div>
+      <div className="relative z-10 animate-fade-in">
+        <div className="max-w-5xl mx-auto px-3 sm:px-4 h-dvh md:h-auto flex flex-col md:block overflow-hidden md:overflow-visible"
       onTouchStart={(e) => setTouchStart(e.touches[0].clientX)}
       onTouchMove={(e) => setTouchEnd(e.touches[0].clientX)}
       onTouchEnd={() => {
@@ -757,9 +763,9 @@ export default function IncomePage() {
           <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
         </svg>
       </button>
+        </div>
+      </div>
     </div>
-    </AuroraBackground>
-  </PageEntrance>
   );
 }
 
