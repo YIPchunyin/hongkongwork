@@ -520,14 +520,6 @@ export default function IncomePage() {
                   <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
                     <div className="h-full rounded-full transition-all" style={{ width: pct.toFixed(1) + '%', backgroundColor: chartColors[i % chartColors.length] }} />
                   </div>
-                  {/* FAB */}
-      <button onClick={openAdd}
-        className="fixed bottom-20 md:bottom-6 right-4 z-40 w-10 h-10 md:w-12 md:h-12 bg-emerald-600 text-white rounded-full hover:bg-emerald-700 active:scale-95 transition-all duration-200 flex items-center justify-center"
-        >
-        <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-        </svg>
-      </button>
     </div>
   );
 })}
@@ -568,14 +560,6 @@ export default function IncomePage() {
                       }]
                     }} options={{ responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { callback: (v) => "HK$" + v } } } }} />
                   ) : <p className="text-sm text-gray-400 text-center py-4">暂无工时数据</p>}
-                  {/* FAB */}
-      <button onClick={openAdd}
-        className="fixed bottom-20 md:bottom-6 right-4 z-40 w-10 h-10 md:w-12 md:h-12 bg-emerald-600 text-white rounded-full hover:bg-emerald-700 active:scale-95 transition-all duration-200 flex items-center justify-center"
-        >
-        <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-        </svg>
-      </button>
     </div>
   );
 })()}
@@ -608,14 +592,6 @@ export default function IncomePage() {
                       borderRadius: 4,
                     }]
                   }} options={{ responsive: true, plugins: { legend: { display: false }, tooltip: { callbacks: { label: (ctx) => "HK$ " + ctx.raw + " (" + weekdayCounts[ctx.dataIndex] + "次)" } } }, scales: { y: { beginAtZero: true, ticks: { callback: (v) => "HK$" + v } } } }} />
-                  {/* FAB */}
-      <button onClick={openAdd}
-        className="fixed bottom-20 md:bottom-6 right-4 z-40 w-10 h-10 md:w-12 md:h-12 bg-emerald-600 text-white rounded-full hover:bg-emerald-700 active:scale-95 transition-all duration-200 flex items-center justify-center"
-        >
-        <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-        </svg>
-      </button>
     </div>
   );
 })()}
@@ -651,14 +627,6 @@ export default function IncomePage() {
                   ))
           }
                   {topDays.length === 0 && <p className="text-sm text-gray-400 text-center py-4">暂无数据</p>}
-                  {/* FAB */}
-      <button onClick={openAdd}
-        className="fixed bottom-20 md:bottom-6 right-4 z-40 w-10 h-10 md:w-12 md:h-12 bg-emerald-600 text-white rounded-full hover:bg-emerald-700 active:scale-95 transition-all duration-200 flex items-center justify-center"
-        >
-        <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-        </svg>
-      </button>
     </div>
   );
 })()}
