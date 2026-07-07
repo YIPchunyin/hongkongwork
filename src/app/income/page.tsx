@@ -9,6 +9,8 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/AuthProvider';
 import QuickAddCards from '@/components/QuickAddCards';
+import PageEntrance from '@/components/ui/PageEntrance';
+import AuroraBackground from '@/components/ui/AuroraBackground';
 
 interface IncomeItem {
   _id: string;
@@ -213,6 +215,8 @@ export default function IncomePage() {
   ] : [];
 
   return (
+    <PageEntrance>
+      <AuroraBackground showAurora={true} className="min-h-screen">
     <div className="max-w-5xl mx-auto px-3 sm:px-4 h-dvh md:h-auto flex flex-col md:block overflow-hidden md:overflow-visible"
       onTouchStart={(e) => setTouchStart(e.touches[0].clientX)}
       onTouchMove={(e) => setTouchEnd(e.touches[0].clientX)}
@@ -754,6 +758,8 @@ export default function IncomePage() {
         </svg>
       </button>
     </div>
+    </AuroraBackground>
+  </PageEntrance>
   );
 }
 
