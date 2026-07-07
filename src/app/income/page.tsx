@@ -723,16 +723,16 @@ export default function IncomePage() {
           </div>
         </div>
       )}
+        </div>
+      </div>
       {/* FAB */}
       <button onClick={openAdd}
-        className="fixed bottom-20 md:bottom-6 right-4 z-40 w-10 h-10 md:w-12 md:h-12 bg-emerald-600 text-white rounded-full hover:bg-emerald-700 active:scale-95 transition-all duration-200 flex items-center justify-center"
-        >
+        className="fixed bottom-20 md:bottom-6 right-4 z-50 w-12 h-12 bg-emerald-600 text-white rounded-full hover:bg-emerald-700 active:scale-95 transition-all duration-200 flex items-center justify-center shadow-lg shadow-emerald-600/30"
+      >
         <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
         </svg>
       </button>
-        </div>
-      </div>
     </div>
   );
 }
