@@ -335,7 +335,7 @@ export default function IncomePage() {
       {fetching ? (
         <div className="text-center py-12"><div className="w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto" /></div>
       ) : (
-        <div className="bg-white rounded-xl md:rounded-2xl shadow-sm border border-gray-100 overflow-hidden p-1 sm:p-3">
+        <div className="bg-white rounded-xl md:rounded-2xl shadow-sm border border-gray-100 overflow-hidden p-1 sm:p-3 flex flex-col h-[60vh] md:h-auto">
           {/* Calendar toolbar */}
           <div className="flex items-center justify-end mb-0.5 md:mb-1 flex-shrink-0 px-0.5">
             <button onClick={() => setShowAmount(!showAmount)}
