@@ -11,6 +11,8 @@ import { useAuth } from '@/components/AuthProvider';
 import QuickAddCards from '@/components/QuickAddCards';
 import LazyLoad from '@/components/LazyLoad';
 
+
+
 interface IncomeItem {
   _id: string;
   date: string;
@@ -228,7 +230,7 @@ export default function IncomePage() {
         <div className="absolute top-[15%] left-[10%] w-1.5 h-1.5 bg-emerald-400/40 rounded-full animate-particle"></div>
         <div className="absolute top-[25%] right-[15%] w-2 h-2 bg-blue-400/30 rounded-full animate-particle-d1"></div>
         <div className="absolute top-[45%] left-[20%] w-1 h-1 bg-purple-400/40 rounded-full animate-particle-d2"></div>
-        <div className="absolute top-[55%] right-[25%] w-1.5 h-1.5 bg-emerald-400/30 rounded-full animate-particle-d1"></div>
+        <div className="absolute top-[55%] right-[25%] w-1.5 h-1.5 bg-blue-400/30 rounded-full animate-particle-d1"></div>
         <div className="absolute top-[75%] left-[30%] w-2 h-2 bg-blue-400/20 rounded-full animate-particle-d2"></div>
         <div className="absolute top-[35%] left-[60%] w-1 h-1 bg-pink-400/30 rounded-full animate-particle"></div>
         <div className="absolute top-[65%] right-[10%] w-1.5 h-1.5 bg-emerald-400/25 rounded-full animate-particle-d1"></div>
@@ -284,20 +286,19 @@ export default function IncomePage() {
                   <p className="text-[10px] sm:text-xs text-white/80 font-medium uppercase tracking-wide">{showAmount ? statCards[0].label : statCards[0].label.replace('收入', '')}</p>
                   <p className="text-lg sm:text-2xl font-black mt-0.5 text-white">{showAmount ? statCards[0].value : '💪 做牛做马...'}</p>
                 </div>
-                {/* 3 cards row */}
-                <div className="grid grid-cols-3 gap-2">
-                  <div className="rounded-xl p-3 shadow-lg glass-hover" style={{background: "linear-gradient(135deg, #2563EB, #0891B2)"}}>
-                    <p className="text-[10px] text-white/80 font-medium uppercase tracking-wide">{statCards[1].label}</p>
-                    <p className="text-lg sm:text-xl font-black mt-0.5 text-white">{statCards[1].value}</p>
+                {/* 3 stats row */}
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex-1 rounded-xl p-3 shadow-sm" style={{background: "linear-gradient(135deg, #2563EB, #0891B2)"}}>
+                    <p className="text-xs text-white/80 font-medium">{statCards[1].label}</p>
+                    <p className="text-lg font-black text-white">{statCards[1].value}</p>
                   </div>
-                  <div className="rounded-xl p-3 shadow-lg glass-hover" style={{background: "linear-gradient(135deg, #7C3AED, #DB2777)"}}>
-                    <p className="text-[10px] text-white/80 font-medium uppercase tracking-wide">{statCards[2].label}</p>
-                    <p className="text-lg sm:text-xl font-black mt-0.5 text-white">{statCards[2].value}</p>
+                  <div className="flex-1 rounded-xl p-3 shadow-sm" style={{background: "linear-gradient(135deg, #7C3AED, #DB2777)"}}>
+                    <p className="text-xs text-white/80 font-medium">{statCards[2].label}</p>
+                    <p className="text-lg font-black text-white">{statCards[2].value}</p>
                   </div>
-                  <div className="rounded-xl p-3 shadow-lg glass-hover" style={{background: "linear-gradient(135deg, #4F46E5, #7C3AED)"}}>
-                    <p className="text-[10px] text-white/80 font-medium uppercase tracking-wide">💼 工作天数</p>
-                    <p className="text-lg sm:text-xl font-black mt-0.5 text-white">{adjustedWorkDays}<span className="text-xs font-medium text-white/60"> / {totalDays}天</span></p>
-                    <p className="text-[10px] text-white/70 mt-0.5">出勤率 {workRate}%</p>
+                  <div className="flex-1 rounded-xl p-3 shadow-sm" style={{background: "linear-gradient(135deg, #4F46E5, #7C3AED)"}}>
+                    <p className="text-xs text-white/80 font-medium">💼 天数</p>
+                    <p className="text-lg font-black text-white">{adjustedWorkDays}<span className="text-sm text-white/60"> / {totalDays}</span></p>
                   </div>
                 </div>
               </>
@@ -618,7 +619,7 @@ export default function IncomePage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40" onClick={() => setShowModal(false)}>
           <div className="rounded-2xl w-full max-w-md p-5 max-h-[90vh] overflow-y-auto bg-white shadow-2xl" onClick={e => e.stopPropagation()}>
             <div className="flex items-center gap-2 mb-5">
-              <div className="w-8 h-8 bg-gradient-to-br from-green-400 to-emerald-600 rounded-xl flex items-center justify-center shadow-md">
+              <div className="w-8 h-8 rounded-xl flex items-center justify-center shadow-md">
                 <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
               </div>
               <h2 className="text-lg font-bold text-gray-900">{editItem ? '编辑收入' : '✨ 新增收入'}</h2>

@@ -275,12 +275,12 @@ body {
 }
 
 /* Content fade in after wave */
-@keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(20px); }
-  to   { opacity: 1; transform: translateY(0); }
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
 .animate-fade-in {
-  animation: fadeInUp 0.6s ease-out 0.3s both;
+  animation: fadeIn 0.6s ease-out 0.3s both;
 }
 
 
@@ -435,3 +435,5 @@ body {
   mask-composite: exclude;
   pointer-events: none;
 }
+
+
