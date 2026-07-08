@@ -272,7 +272,7 @@ export default function IncomePage() {
             const today = new Date();
             const isCurrentMonth = year === today.getFullYear() && month === today.getMonth() + 1;
             const maxDay = isCurrentMonth ? today.getDate() : new Date(year, month || 1, 0).getDate();
-            const totalDays = isCurrentMonth ? today.getDate() - 1 : maxDay;
+            const totalDays = isCurrentMonth ? today.getDate() : maxDay;
             const workDates = new Set(incomes.map((i) => i.date?.substring(0, 10)).filter(Boolean));
             const adjustedWorkDays = [...workDates].filter(d => parseInt(d.substring(8)) <= totalDays).length;
             const restDays = Math.max(0, totalDays - adjustedWorkDays);
