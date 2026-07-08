@@ -391,7 +391,7 @@ export default function IncomePage() {
 
       {/* Day Detail Popup */}
       {selectedDay && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70" onClick={() => setSelectedDay(null)}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black" onClick={() => setSelectedDay(null)}>
           <div className="rounded-2xl w-full max-w-sm p-5 max-h-[70vh] overflow-y-auto glass-card shadow-2xl" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
