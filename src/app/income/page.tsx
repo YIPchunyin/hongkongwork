@@ -391,8 +391,8 @@ export default function IncomePage() {
 
       {/* Day Detail Popup */}
       {selectedDay && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black" onClick={() => setSelectedDay(null)}>
-          <div className="rounded-2xl w-full max-w-sm p-5 max-h-[70vh] overflow-y-auto glass-card shadow-2xl" onClick={e => e.stopPropagation()}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" onClick={() => setSelectedDay(null)}>
+          <div className="rounded-2xl w-full max-w-sm p-5 max-h-[70vh] overflow-y-auto bg-white shadow-2xl" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 bg-gradient-to-br from-green-400 to-emerald-600 rounded-xl flex items-center justify-center shadow-md">
@@ -616,7 +616,7 @@ export default function IncomePage() {
       {/* Add/Edit Modal */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40" onClick={() => setShowModal(false)}>
-          <div className="rounded-2xl w-full max-w-md p-5 max-h-[90vh] overflow-y-auto glass-card shadow-2xl" onClick={e => e.stopPropagation()}>
+          <div className="rounded-2xl w-full max-w-md p-5 max-h-[90vh] overflow-y-auto bg-white shadow-2xl" onClick={e => e.stopPropagation()}>
             <div className="flex items-center gap-2 mb-5">
               <div className="w-8 h-8 bg-gradient-to-br from-green-400 to-emerald-600 rounded-xl flex items-center justify-center shadow-md">
                 <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
