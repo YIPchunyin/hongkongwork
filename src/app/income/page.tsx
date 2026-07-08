@@ -251,7 +251,7 @@ export default function IncomePage() {
       }}>
 
       {/* Month selector */}
-      <div className="rounded-xl md:rounded-2xl px-2.5 py-1.5 md:p-3 mb-1.5 md:mb-2 text-white flex-shrink-0 glass-border-gradient" style={{background: "linear-gradient(135deg, rgba(16,185,129,0.85), rgba(5,150,105,0.9))", backdropFilter: "blur(20px)"}}>
+      <div className="rounded-xl md:rounded-2xl px-2.5 py-[18px] md:py-[24px] md:px-3 mb-1.5 md:mb-2 text-white flex-shrink-0 glass-border-gradient" style={{background: "linear-gradient(135deg, rgba(16,185,129,0.85), rgba(5,150,105,0.9))", backdropFilter: "blur(20px)"}}>
         <div className="flex items-center justify-between">
           <button onClick={prevMonth} className={'p-2 hover:bg-white/70 rounded-xl transition-all hover:shadow-sm active:scale-90' + (month === null ? ' opacity-30 pointer-events-none' : '')}>
             <svg className="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
@@ -383,7 +383,7 @@ export default function IncomePage() {
                 return (
                   <button key={di}
                     onClick={() => hasData && setSelectedDay(day)}
-                    className={'min-h-[60px] sm:min-h-[80px] rounded-lg p-1 text-left transition-all overflow-hidden relative flex items-center justify-center ' + (hasData ? 'hover:shadow-md hover:ring-2 hover:ring-green-300 cursor-pointer bg-white' : 'bg-gradient-to-b from-gray-50 to-white')}
+                    className={'min-h-[60px] sm:min-h-[80px] rounded-lg p-3 text-left transition-all overflow-hidden relative flex items-center justify-center ' + (hasData ? 'hover:shadow-md hover:ring-2 hover:ring-green-300 cursor-pointer bg-white' : 'bg-gradient-to-b from-gray-50 to-white')}
                   >
                     <span className={'absolute top-0.5 left-0.5 z-20 text-sm sm:text-base font-black ' + (hasData ? 'text-gray-900' : 'text-gray-400')} style={{ textShadow: hasData ? '0 0 6px rgba(255,255,255,0.9)' : 'none' }}>{dateNum}</span>{!hasData && new Date(year, (month || 1) - 1, dateNum) < new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate()) && <span className="absolute inset-0 flex items-center justify-center text-xl text-gray-200 pt-4">🌙</span>}
                     {hasData && (
@@ -436,7 +436,7 @@ export default function IncomePage() {
                 <div key={item._id} className="pt-2 first:pt-0">
                   <div className="flex items-center gap-2">
                     <span className="w-3 h-3 rounded-sm flex-shrink-0" style={{ backgroundColor: companyColor(item.company), boxShadow: '0 1px 3px rgba(0,0,0,0.3)' }} />
-                    <span className="text-xs px-1.5 py-0.5 rounded bg-green-50 text-green-700 font-medium">{item.category || '未分类'}</span>
+                    <span className="text-xs px-1.5 py-0.5 rounded bg-green-50 text-green-700 font-medium">{item.industry}</span>
                     {item.shift && <span className="text-xs text-white/40">{item.shift}</span>}
                     {item.company && <span className="text-xs text-gray-400">{item.company}</span>}
                   </div>
