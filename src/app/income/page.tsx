@@ -395,7 +395,7 @@ export default function IncomePage() {
                           cumPct += pct;
                           return (
                             <div key={com} className="absolute left-0 right-0 transition-all duration-300" style={{ top: top + '%', height: pct + '%', background: companyGradient(com), minHeight: '4px' }}>
-                              <span className="absolute inset-0 flex items-center justify-center text-[8px] sm:text-[9px] font-bold leading-tight" style={{ color: 'white', textShadow: '0 1px 3px rgba(0,0,0,0.7)'}}>{showAmount ? ('+' + amt.toFixed(0)) : com}</span>
+                              <span className="absolute inset-0 flex items-center justify-center text-[11px] sm:text-[12px] font-bold leading-tight" style={{ color: 'white', textShadow: '0 1px 3px rgba(0,0,0,0.7)'}}>{showAmount ? ('+' + amt.toFixed(0)) : com}</span>
                             </div>
                           );
                         })}
