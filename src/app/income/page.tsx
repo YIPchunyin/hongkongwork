@@ -209,7 +209,7 @@ export default function IncomePage() {
   if (!loading && !user) return <div className="text-center py-20 text-gray-500">请先登录</div>;
 
   const statCards = stats ? [
-    { label: '💰 ' + monthLabel + ' 收入', value: 'HK$ ' + stats.totalIncome.toFixed(2), color: 'text-white' },
+    { label: '💰 ' + monthLabel + ' 收入', value: '$ ' + stats.totalIncome.toFixed(0), color: 'text-white' },
     { label: '⏱️ ' + monthLabel + ' 工时', value: stats.totalHours.toFixed(1) + ' h', color: 'text-blue-600' },
     { label: '📋 ' + monthLabel + ' 笔数', value: stats.totalRecords + ' 笔', color: 'text-gray-800' },
 
@@ -281,24 +281,44 @@ export default function IncomePage() {
             const workRate = totalDays > 0 ? (adjustedWorkDays / totalDays * 100).toFixed(0) : '0';
             return (
               <>
-                {/* Income - full width */}
-                <div className="rounded-xl p-3 sm:p-4 shadow-lg glass-hover" style={{background: "linear-gradient(135deg, #059669, #10B981)"}}>
-                  <p className="text-[10px] sm:text-xs text-white/80 font-medium uppercase tracking-wide">{showAmount ? statCards[0].label : statCards[0].label.replace('收入', '')}</p>
-                  <p className="text-lg sm:text-2xl font-black mt-0.5 text-white">{showAmount ? statCards[0].value : '💪 做牛做马...'}</p>
-                </div>
-                {/* 3 stats row */}
-                <div className="flex items-center justify-between gap-2">
-                  <div className="flex-1 rounded-xl p-3 shadow-sm" style={{background: "linear-gradient(135deg, #2563EB, #0891B2)"}}>
-                    <p className="text-xs text-white/80 font-medium">{statCards[1].label}</p>
-                    <p className="text-lg font-black text-white">{statCards[1].value}</p>
+                {/* 2x2 stats grid */}
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="rounded-xl p-3 shadow-lg flex items-center justify-center gap-4" style={{background: "linear-gradient(135deg, #059669, #10B981)"}}>
+                    {showAmount ? (
+                      <>
+                    <div className="flex flex-col items-center shrink-0">
+                      <span className="text-lg">💰</span>
+                      <span className="text-[10px] text-white/70 font-medium">收入</span>
+                    </div>
+                    <span className="text-lg sm:text-xl font-black text-white shrink-0">{statCards[0].value}</span>
+                      </>
+                    ) : (
+                      <>
+                    <span className="text-lg shrink-0">💪</span>
+                    <span className="text-base sm:text-lg font-black text-white shrink-0">做牛做马</span>
+                      </>
+                    )}
                   </div>
-                  <div className="flex-1 rounded-xl p-3 shadow-sm" style={{background: "linear-gradient(135deg, #7C3AED, #DB2777)"}}>
-                    <p className="text-xs text-white/80 font-medium">{statCards[2].label}</p>
-                    <p className="text-lg font-black text-white">{statCards[2].value}</p>
+                  <div className="rounded-xl p-3 shadow-lg flex items-center justify-center gap-4" style={{background: "linear-gradient(135deg, #4F46E5, #7C3AED)"}}>
+                    <div className="flex flex-col items-center shrink-0">
+                      <span className="text-lg">💼</span>
+                      <span className="text-[10px] text-white/70 font-medium">天数</span>
+                    </div>
+                    <span className="text-lg sm:text-xl font-black text-white shrink-0">{adjustedWorkDays}<span className="text-sm font-bold text-white/60"> / {totalDays} 天</span></span>
                   </div>
-                  <div className="flex-1 rounded-xl p-3 shadow-sm" style={{background: "linear-gradient(135deg, #4F46E5, #7C3AED)"}}>
-                    <p className="text-xs text-white/80 font-medium">💼 天数</p>
-                    <p className="text-lg font-black text-white">{adjustedWorkDays}<span className="text-sm text-white/60"> / {totalDays}</span></p>
+                  <div className="rounded-xl p-3 shadow-lg flex items-center justify-center gap-4" style={{background: "linear-gradient(135deg, #2563EB, #0891B2)"}}>
+                    <div className="flex flex-col items-center shrink-0">
+                      <span className="text-lg">⏱️</span>
+                      <span className="text-[10px] text-white/70 font-medium">工时</span>
+                    </div>
+                    <span className="text-lg sm:text-xl font-black text-white shrink-0">{statCards[1].value}</span>
+                  </div>
+                  <div className="rounded-xl p-3 shadow-lg flex items-center justify-center gap-4" style={{background: "linear-gradient(135deg, #7C3AED, #DB2777)"}}>
+                    <div className="flex flex-col items-center shrink-0">
+                      <span className="text-lg">📋</span>
+                      <span className="text-[10px] text-white/70 font-medium">笔数</span>
+                    </div>
+                    <span className="text-lg sm:text-xl font-black text-white shrink-0">{statCards[2].value}</span>
                   </div>
                 </div>
               </>
@@ -313,7 +333,7 @@ export default function IncomePage() {
       {fetching ? (
         <div className="text-center py-12"><div className="w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto" /></div>
       ) : (
-        <div className="rounded-xl md:rounded-2xl overflow-hidden p-1 sm:p-3 glass-card">
+        <div className="rounded-xl md:rounded-2xl overflow-hidden p-1 sm:p-3 glass-card mb-4">
           {/* Calendar toolbar */}
           <div className="flex items-center justify-end mb-0.5 md:mb-1 flex-shrink-0 px-0.5">
             <button onClick={() => setShowAmount(!showAmount)}
