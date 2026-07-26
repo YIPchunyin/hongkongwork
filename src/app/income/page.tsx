@@ -84,6 +84,7 @@ export default function IncomePage() {
   const [showAmount, setShowAmount] = useState(false);
   const [industryFilter, setIndustryFilter] = useState<string | null>(null);
   const [showFilter, setShowFilter] = useState(false);
+  const [showCharts, setShowCharts] = useState(false);
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
 
@@ -529,7 +530,16 @@ export default function IncomePage() {
         </div>
       )}
 
-      {stats && <IncomeCharts incomes={incomes} stats={stats} />}
+      {stats && (showCharts ? (
+        <IncomeCharts incomes={incomes} stats={stats} />
+      ) : (
+        <button onClick={() => setShowCharts(true)}
+          className='w-full py-3 px-4 rounded-2xl border-2 border-dashed border-gray-200 text-gray-400 hover:text-gray-600 hover:border-gray-300 hover:bg-gray-50/50 transition-all text-sm font-medium flex items-center justify-center gap-2 group'>
+          <svg className='w-4 h-4 transition-transform group-hover:scale-110' fill='none' viewBox='0 0 24 24' stroke='currentColor' strokeWidth={2}><path strokeLinecap='round' strokeLinejoin='round' d='M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z' /></svg>
+          📊 显示数据分析图表
+          <svg className='w-4 h-4 transition-transform group-hover:translate-y-0.5' fill='none' viewBox='0 0 24 24' stroke='currentColor' strokeWidth={2}><path strokeLinecap='round' strokeLinejoin='round' d='M19 9l-7 7-7-7' /></svg>
+        </button>
+      ))}
 
       {/* Add/Edit Modal */}
       {showModal && (
@@ -635,6 +645,7 @@ export default function IncomePage() {
     </div>
   );
 }
+
 
 
 
