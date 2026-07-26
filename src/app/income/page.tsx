@@ -173,7 +173,7 @@ export default function IncomePage() {
 
   const openAdd = () => {
     setEditItem(null);
-    setFormDate(new Date().toISOString().slice(0, 16).replace('T', ' '));
+    setFormDate(new Date().toISOString().slice(0, 10));
     setFormAmount('');
     setFormNote('');
     setFormShift('早班');
@@ -185,7 +185,7 @@ export default function IncomePage() {
 
   const openEdit = (item: IncomeItem) => {
     setEditItem(item);
-    setFormDate(item.date);
+    setFormDate(item.date?.substring(0, 10) || '');
     setFormAmount(String(item.amount));
     setFormNote(item.note);
     setFormShift(item.shift);
@@ -524,17 +524,17 @@ export default function IncomePage() {
 
       {/* Add/Edit Modal */}
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40" onClick={() => setShowModal(false)}>
-          <div className="rounded-2xl w-full max-w-md p-5 max-h-[90vh] overflow-y-auto bg-white shadow-2xl" onClick={e => e.stopPropagation()}>
-            <div className="flex items-center gap-2 mb-5">
-              <div className="w-8 h-8 rounded-xl flex items-center justify-center shadow-md">
-                <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 md:p-4 bg-black/40" onClick={() => setShowModal(false)}>
+          <div className="rounded-2xl w-full max-w-md p-3 md:p-5 bg-white shadow-2xl overflow-y-auto" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center gap-1.5 mb-3 md:mb-5">
+              <div className="w-7 h-7 md:w-8 md:h-8 rounded-xl flex items-center justify-center shadow-md" style={{background: "linear-gradient(135deg, #10B981, #059669)"}}>
+                <svg className="w-3.5 h-3.5 md:w-4 md:h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
               </div>
-              <h2 className="text-lg font-bold text-gray-900">{editItem ? '编辑收入' : '✨ 新增收入'}</h2>
+              <h2 className="text-base md:text-lg font-bold text-gray-900">{editItem ? '编辑收入' : '✨ 新增收入'}</h2>
             </div>
-            <form onSubmit={handleSave} className="space-y-4">
+            <form onSubmit={handleSave} className="space-y-2.5 md:space-y-4">
               <QuickAddCards incomes={incomes} onSelect={(item) => {
-                setFormDate(item.date || '');
+                setFormDate((item.date || '').substring(0, 10));
                 setFormAmount(item.amount ? String(item.amount) : '');
                 setFormShift(item.shift || '早班');
                 setFormHours(item.hours ? String(item.hours) : '');
@@ -544,66 +544,68 @@ export default function IncomePage() {
                 setEditItem(null);
               }} />
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">日期时间</label>
-                <input type="datetime-local" value={formDate.replace(' ', 'T')} onChange={e => setFormDate(e.target.value.replace('T', ' '))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none" required />
-              </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-2 md:gap-3">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">金额 (HK$)</label>
-                  <input type="number" step="0.01" value={formAmount} onChange={e => setFormAmount(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 outline-none" required />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">工时 (小时)</label>
-                  <input type="number" step="0.5" value={formHours} onChange={e => setFormHours(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 outline-none" />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">行业</label>
-                  <select value={formIndustry} onChange={e => setFormIndustry(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 outline-none">
-                    <option>地盘</option>
-                    <option>酒楼</option>
-                    <option>补贴</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">公司</label>
-                  <select value={formCompany} onChange={e => setFormCompany(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 outline-none">
-                    <option>国益</option>
-                    <option>煌府</option>
-                    <option>益哥</option>
-                  </select>
-                </div>
-              </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">班次</label>
+                  <label className="block text-xs md:text-sm font-medium text-gray-700 mb-0.5">班次</label>
                   <select value={formShift} onChange={e => setFormShift(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 outline-none">
+                    className="w-full px-3 py-1.5 md:py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 outline-none">
                     <option>早班</option>
                     <option>晚班</option>
                     <option>半工</option>
                     <option>日班</option>
                     <option>补贴</option>
                   </select>
+                </div>
+                <div>
+                  <label className="block text-xs md:text-sm font-medium text-gray-700 mb-0.5">日期</label>
+                  <input type="date" value={formDate} onChange={e => setFormDate(e.target.value)}
+                    className="w-full px-3 py-1.5 md:py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none" required />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-2 md:gap-3">
+                <div>
+                  <label className="block text-xs md:text-sm font-medium text-gray-700 mb-0.5">金额 (HK$)</label>
+                  <input type="number" step="0.01" value={formAmount} onChange={e => setFormAmount(e.target.value)}
+                    className="w-full px-3 py-1.5 md:py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 outline-none" required />
+                </div>
+                <div>
+                  <label className="block text-xs md:text-sm font-medium text-gray-700 mb-0.5">工时 (小时)</label>
+                  <input type="number" step="0.5" value={formHours} onChange={e => setFormHours(e.target.value)}
+                    className="w-full px-3 py-1.5 md:py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 outline-none" />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-2 md:gap-3">
+                <div>
+                  <label className="block text-xs md:text-sm font-medium text-gray-700 mb-0.5">行业</label>
+                  <select value={formIndustry} onChange={e => setFormIndustry(e.target.value)}
+                    className="w-full px-3 py-1.5 md:py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 outline-none">
+                    <option>地盘</option>
+                    <option>酒楼</option>
+                    <option>补贴</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs md:text-sm font-medium text-gray-700 mb-0.5">公司</label>
+                  <select value={formCompany} onChange={e => setFormCompany(e.target.value)}
+                    className="w-full px-3 py-1.5 md:py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 outline-none">
+                    <option>国益</option>
+                    <option>煌府</option>
+                    <option>益哥</option>
+                  </select>
+                </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">备注</label>
+                <label className="block text-xs md:text-sm font-medium text-gray-700 mb-0.5">备注</label>
                 <input type="text" value={formNote} onChange={e => setFormNote(e.target.value)} placeholder="选填"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 outline-none" />
+                  className="w-full px-3 py-1.5 md:py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 outline-none" />
               </div>
-              <div className="flex gap-3 pt-2">
+              <div className="flex gap-2 md:gap-3 pt-1 md:pt-2">
                 <button type="submit" disabled={saving}
-                  className="flex-1 py-2.5 bg-green-600 text-white font-medium rounded-xl hover:bg-green-700 disabled:opacity-50 transition-colors">
+                  className="flex-1 py-2 md:py-2.5 bg-green-600 text-white text-sm font-medium rounded-xl hover:bg-green-700 disabled:opacity-50 transition-colors">
                   {saving ? '保存中...' : (editItem ? '保存修改' : '添加记录')}
                 </button>
                 <button type="button" onClick={() => setShowModal(false)}
-                  className="px-6 py-2.5 bg-gray-100 text-gray-700 font-medium rounded-xl hover:bg-gray-200 transition-colors">
+                  className="px-5 md:px-6 py-2 md:py-2.5 bg-gray-100 text-gray-700 text-sm font-medium rounded-xl hover:bg-gray-200 transition-colors">
                   取消
                 </button>
               </div>
@@ -624,6 +626,7 @@ export default function IncomePage() {
     </div>
   );
 }
+
 
 
 
