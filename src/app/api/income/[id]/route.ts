@@ -1,7 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server';
+﻿import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import Income from '@/lib/models/Income';
 import { getTokenFromRequest, verifyToken } from '@/lib/auth';
+import { clearUserCache } from '@/lib/incomeCache';
 
 export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -22,6 +23,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     if (body.industry !== undefined) updateData.industry = body.industry;
     if (body.company !== undefined) updateData.company = body.company;
 
+    clearUserCache(payload.userId);
     await connectDB();
 
     const record = await Income.findOneAndUpdate(
@@ -52,6 +54,7 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     const payload = verifyToken(token);
     if (!payload) return NextResponse.json({ success: false, error: '\u767b\u5f55\u5df2\u8fc7\u671f' }, { status: 401 });
 
+    clearUserCache(payload.userId);
     await connectDB();
 
     const record = await Income.findOneAndDelete({ _id: id, userId: payload.userId });
@@ -65,3 +68,4 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     return NextResponse.json({ success: false, error: '\u5220\u9664\u5931\u8d25' }, { status: 500 });
   }
 }
+
