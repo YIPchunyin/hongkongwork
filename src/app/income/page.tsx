@@ -23,6 +23,14 @@ async function cachedFetch(url: string): Promise<any> {
   return json;
 }
 
+// Clear all cached income API responses (force refetch after save/delete)
+function clearIncomeCache() {
+  for (const key of fetchCache.keys()) {
+    if (key.includes('/api/income?')) fetchCache.delete(key);
+  }
+}
+
+
 
 
 interface IncomeItem {
@@ -215,6 +223,7 @@ export default function IncomePage() {
       const json = await res.json();
       if (json.success) {
         setShowModal(false);
+        clearIncomeCache();
         fetchIncomes();
       } else {
         alert(json.error || '保存失败');
@@ -228,7 +237,7 @@ export default function IncomePage() {
     try {
       const res = await fetch('/api/income/' + id, { method: 'DELETE' });
       const json = await res.json();
-      if (json.success) fetchIncomes();
+      clearIncomeCache(); if (json.success) fetchIncomes();
       else alert(json.error || '删除失败');
     } catch { alert('删除失败'); }
   };
@@ -626,6 +635,7 @@ export default function IncomePage() {
     </div>
   );
 }
+
 
 
 
