@@ -17,7 +17,7 @@ async function cachedFetch(url: string): Promise<any> {
     return cached.data;
   }
   // Deduplicate in-flight requests
-  const res = await fetch(url);
+  const res = await fetch(url, { cache: 'no-cache' });
   const json = await res.json();
   fetchCache.set(url, { data: json, timestamp: Date.now() });
   return json;
@@ -645,6 +645,7 @@ export default function IncomePage() {
     </div>
   );
 }
+
 
 
 
