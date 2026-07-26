@@ -50,8 +50,47 @@ export default function NotesPage(){
   const hs=(e:React.FormEvent)=>{e.preventDefault();sPg(1);sSe(si);sVc(new Set);};
   const oa=()=>{sEi(null);sFt('');sFc('');sFi([]);sSm(true);};
   const oe=(item:NoteItem)=>{sEi(item);sFt(item.title||'');sFc(item.content||'');sFi(item.images||[]);sSm(true);};
-  const hi=async(e:React.ChangeEvent<HTMLInputElement>)=>{const fl=e.target.files;if(!fl||fl.length===0)return;sUp(true);
-    try{for(let i=0;i<fl.length;i++){const f=fl[i];const fd=new FormData();fd.append('file',f);const r=await fetch('/api/notes/upload',{method:'POST',body:fd});const j=await r.json();if(j.success)sFi(p=>[...p,j.data]);}}catch{}finally{sUp(false);}if(fir.current)fir.current.value='';};
+  
+const compressImg = (file: File): Promise<Blob> => {
+  return new Promise((res, rej) => {
+    const img = new Image();
+    img.onload = () => {
+      const MAX = 1920;
+      let w = img.naturalWidth, h = img.naturalHeight;
+      if (w > MAX || h > MAX) {
+        if (w > h) { w = MAX; h = Math.round(img.naturalHeight * MAX / img.naturalWidth); }
+        else { h = MAX; w = Math.round(img.naturalWidth * MAX / img.naturalHeight); }
+      }
+      const c = document.createElement('canvas');
+      c.width = w; c.height = h;
+      const ctx = c.getContext('2d')!;
+      ctx.drawImage(img, 0, 0, w, h);
+      c.toBlob(b => { if (b) res(b); else rej(new Error('Compress failed')); }, 'image/jpeg', 0.8);
+    };
+    img.onerror = () => rej(new Error('Load failed'));
+    img.src = URL.createObjectURL(file);
+  });
+};
+const hi = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const fl = e.target.files;
+  if (!fl || fl.length === 0) return;
+  sUp(true);
+  try {
+    for (let i = 0; i < fl.length; i++) {
+      const f = fl[i];
+      const compressed = await compressImg(f);
+      const fd = new FormData();
+      fd.append('file', compressed, f.name);
+      const r = await fetch('/api/notes/upload', { method: 'POST', body: fd });
+      const j = await r.json();
+      if (j.success) { sFi(p => [...p, j.data]); }
+      else { console.error('Upload fail:', j); alert('上传失败: ' + (j.error || '未知错误')); }
+    }
+  } catch (err) { console.error('Upload err:', err); alert('上传异常: ' + err); }
+  finally { sUp(false); }
+  if (fir.current) fir.current.value = '';
+};
+
   const ri=(i:number)=>sFi(p=>p.filter((_,idx)=>idx!==i));
   const hsv=async(e:React.FormEvent)=>{e.preventDefault();if(!fc&&fi.length===0){alert('请输入内容或添加图片');return;}sSv(true);
     try{const b={title:ft,content:fc,images:fi};if(ei){await fetch('/api/notes/'+ei._id,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)});}else{await fetch('/api/notes',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)});}sSm(false);fn();}catch{}finally{sSv(false);}};

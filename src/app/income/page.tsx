@@ -1,15 +1,27 @@
 ﻿'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement, PointElement, LineElement } from 'chart.js';
-import { Bar, Doughnut, Line } from 'react-chartjs-2';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 
-ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement, PointElement, LineElement);
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/AuthProvider';
 import QuickAddCards from '@/components/QuickAddCards';
-import LazyLoad from '@/components/LazyLoad';
+import IncomeCharts from '@/components/IncomeCharts';
+// Simple in-memory fetch cache with deduplication
+const fetchCache = new Map<string, { data: any; timestamp: number }>();
+const FETCH_CACHE_TTL = 15_000; // 15 seconds
+
+async function cachedFetch(url: string): Promise<any> {
+  const cached = fetchCache.get(url);
+  if (cached && Date.now() - cached.timestamp < FETCH_CACHE_TTL) {
+    return cached.data;
+  }
+  // Deduplicate in-flight requests
+  const res = await fetch(url);
+  const json = await res.json();
+  fetchCache.set(url, { data: json, timestamp: Date.now() });
+  return json;
+}
 
 
 
@@ -37,9 +49,7 @@ interface Stats {
   monthlyTotals: Record<string, number>;
 }
 
-  const chartColors = ['#10B981', '#3B82F6', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#14B8A6', '#F97316', '#6366F1', '#84CC16'];
-  const chartBgColors = chartColors.map(c => c + '33');
-
+  
 export default function IncomePage() {
   const { user, loading } = useAuth();
   const router = useRouter();
@@ -64,6 +74,8 @@ export default function IncomePage() {
   const [saving, setSaving] = useState(false);
   const [selectedDay, setSelectedDay] = useState<any>(null);
   const [showAmount, setShowAmount] = useState(false);
+  const [industryFilter, setIndustryFilter] = useState<string | null>(null);
+  const [showFilter, setShowFilter] = useState(false);
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
 
@@ -129,16 +141,35 @@ export default function IncomePage() {
   const fetchIncomes = useCallback(async () => {
     setFetching(true);
     try {
-      const res = await fetch('/api/income?year=' + (year || '') + '&month=' + (month ? String(month) : '') + '&page=' + page + '&limit=50');
-      const json = await res.json();
-      if (json.success) {
-        setIncomes(json.data.items);
-        setStats(json.data.stats);
+      const res = await cachedFetch('/api/income?year=' + (year || '') + '&month=' + (month ? String(month) : '') + '&page=' + page + '&limit=500' + (industryFilter ? '&industry=' + encodeURIComponent(industryFilter) : ''));
+      
+      if (res.success) {
+        setIncomes(res.data.items);
+        setStats(res.data.stats);
       }
     } catch {} finally { setFetching(false); }
-  }, [year, month, page]);
+  }, [year, month, page, industryFilter]);
 
   useEffect(() => { if (user) fetchIncomes(); }, [user, fetchIncomes]);
+  // Memoized calendar weeks
+  const calendarWeeks = useMemo(() => {
+    if (!month || !year || incomes.length === 0) return [];
+    return buildCalendarDays(year, month, incomes);
+  }, [year, month, incomes]);
+  // Memoized daily totals for calendar
+  const dailyTotalMap = useMemo(() => {
+    const map = {} as Record<string, number>;
+    incomes.forEach(i => {
+      const d = i.date?.substring(0, 10);
+      if (d) map[d] = (map[d] || 0) + i.amount;
+    });
+    return map;
+  }, [incomes]);
+
+  const maxAmountInMonth = useMemo(() => {
+    const vals = Object.values(dailyTotalMap);
+    return vals.length > 0 ? Math.max(...vals) : 0;
+  }, [dailyTotalMap]);
 
   const openAdd = () => {
     setEditItem(null);
@@ -331,11 +362,41 @@ export default function IncomePage() {
 
       {/* Calendar View */}
       {fetching ? (
-        <div className="text-center py-12"><div className="w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto" /></div>
+        <div className="flex items-center justify-center min-h-[400px]"><div className="w-14 h-14 border-[5px] border-blue-200 border-t-blue-600 rounded-full animate-spin" /></div>
       ) : (
         <div className="rounded-xl md:rounded-2xl overflow-hidden p-1 sm:p-3 glass-card mb-4">
-          {/* Calendar toolbar */}
-          <div className="flex items-center justify-end mb-0.5 md:mb-1 flex-shrink-0 px-0.5">
+          <div className="flex items-center justify-between mb-0.5 md:mb-1 flex-shrink-0 px-0.5 gap-1">
+            {/* 🏭 Industry filter dropdown */}
+            <div className="relative">
+              <button onClick={() => setShowFilter(!showFilter)}
+                className="text-xs px-2 py-1 rounded-lg font-medium transition-all flex items-center gap-1 hover:bg-gray-100 active:scale-95"
+                title={industryFilter || '筛选行业'}>
+                <span className="text-base">{industryFilter === '地盘' ? '🏗️' : industryFilter === '酒楼' ? '🍽️' : industryFilter === '补贴' ? '💰' : '🏭'}</span>
+                <svg className={`w-3 h-3 text-gray-400 transition-transform ${showFilter ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
+              </button>
+              {showFilter && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setShowFilter(false)} />
+                  <div className="absolute top-full left-0 mt-1 z-50 bg-white rounded-xl shadow-lg border border-gray-100 py-1 min-w-[100px] overflow-hidden">
+                    {[null, '地盘', '酒楼', '补贴'].map((ind) => {
+                      const label = ind || '全部';
+                      const emoji = ind === '地盘' ? '🏗️' : ind === '酒楼' ? '🍽️' : ind === '补贴' ? '💰' : '🏭';
+                      const active = industryFilter === ind;
+                      return (
+                        <button key={label} onClick={() => { setIndustryFilter(ind); setShowFilter(false); }}
+                          className={`w-full text-left px-3 py-2 text-sm transition-colors flex items-center gap-2 ${
+                            active ? 'bg-green-50 text-green-700 font-medium' : 'text-gray-600 hover:bg-gray-50'
+                          }`}>
+                          <span>{emoji}</span>
+                          <span>{label}</span>
+                          {active && <svg className="w-3.5 h-3.5 ml-auto text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </>
+              )}
+            </div>
             <button onClick={() => setShowAmount(!showAmount)}
               className="text-xs px-2 py-1 rounded-lg font-medium transition-all flex items-center gap-1 hover:bg-gray-100 active:scale-95"
               title={showAmount ? '隐藏金额' : '显示金额'}>
@@ -356,7 +417,7 @@ export default function IncomePage() {
             ))}</div>
           {/* Calendar grid */}
           <div className="flex-1 min-h-0 overflow-y-auto md:overflow-visible">
-          {(() => { const dailyTotalMap = {} as Record<string, number>; incomes.forEach(i => { const d = i.date?.substring(0, 10); if (d) dailyTotalMap[d] = (dailyTotalMap[d] || 0) + i.amount; }); const maxAmountInMonth = Math.max(...Object.values(dailyTotalMap), 0); return month && year && buildCalendarDays(year, month, incomes).map((week, wi) => (
+          {calendarWeeks.map((week, wi) => (
             <div key={wi} className="grid grid-cols-7 gap-1 mb-1">
               {week.map((day, di) => {
                 if (!day) return <div key={di} className="min-h-[60px] sm:min-h-[80px]" />;
@@ -385,7 +446,7 @@ export default function IncomePage() {
                     onClick={() => hasData && setSelectedDay(day)}
                     className={'min-h-[60px] sm:min-h-[80px] rounded-lg p-3 text-left transition-all overflow-hidden relative flex items-center justify-center ' + (hasData ? 'hover:shadow-md hover:ring-2 hover:ring-green-300 cursor-pointer bg-white' : 'bg-gradient-to-b from-gray-50 to-white')}
                   >
-                    <span className={'absolute top-0.5 left-0.5 z-20 text-sm sm:text-base font-black ' + (hasData ? 'text-gray-900' : 'text-gray-400')} style={{ textShadow: hasData ? '0 0 6px rgba(255,255,255,0.9)' : 'none' }}>{dateNum}</span>{!hasData && new Date(year, (month || 1) - 1, dateNum) < new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate()) && <span className="absolute inset-0 flex items-center justify-center text-xl text-gray-200 pt-4">🌙</span>}
+                    <span className={'absolute top-0.5 left-0.5 z-20 text-[13px] sm:text-[15px] font-black ' + (hasData ? 'text-gray-900' : 'text-gray-400')} style={{ textShadow: hasData ? '0 0 6px rgba(255,255,255,0.9)' : 'none' }}>{dateNum}</span>{!hasData && new Date(year, (month || 1) - 1, dateNum) < new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate()) && <span className="absolute inset-0 flex items-center justify-center text-xl text-gray-200 pt-4">🌙</span>}
                     {hasData && (
                       <div className="absolute inset-0 overflow-hidden rounded-lg">
                         {allBars.map(({ com, amt }) => {
@@ -405,7 +466,7 @@ export default function IncomePage() {
                 );
               })}
             </div>
-          )); })()}
+          ))}
           </div>
         </div>
       )}
@@ -459,180 +520,7 @@ export default function IncomePage() {
         </div>
       )}
 
-      <LazyLoad>
-      {/* Charts & Analysis */}
-      {stats && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 mb-4 w-full max-w-full">
-          {/* Monthly Trend */}
-          {Object.keys(stats.monthlyTotals).length > 1 && (
-            <div className="rounded-2xl overflow-hidden p-3 sm:p-5 glass-card glass-hover">
-              <h3 className="text-xs sm:text-sm font-bold text-gray-700 mb-2 sm:mb-3 flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-green-500" />
-                📈 月度收入趋势
-              </h3>
-              <Bar data={{
-                labels: Object.keys(stats.monthlyTotals).sort(),
-                datasets: [{ label: '收入 (HK$)', data: Object.keys(stats.monthlyTotals).sort().map(m => stats.monthlyTotals[m]), backgroundColor: '#10B98133', borderColor: '#10B981', borderWidth: 2, borderRadius: 4 }]
-              }} options={{ responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { callback: (v: any) => 'HK$' + v } } } }} />
-            </div>
-          )}
-
-          {/* Industry Distribution */}
-          <div className="rounded-2xl overflow-hidden p-4 sm:p-5 glass-card glass-hover">
-            <h3 className="text-sm font-semibold text-gray-700 mb-3">🏭 行业分布</h3>
-            {Object.keys(stats.industryTotals).length > 0 && (
-              <div className="flex items-center gap-4">
-                <div className="w-32 h-32 flex-shrink-0">
-                  <Doughnut data={{
-                    labels: Object.keys(stats.industryTotals),
-                    datasets: [{ data: Object.values(stats.industryTotals), backgroundColor: chartColors.slice(0, Object.keys(stats.industryTotals).length), borderWidth: 0 }]
-                  }} options={{ responsive: true, plugins: { legend: { display: false } } }} />
-                </div>
-                <div className="flex-1 space-y-2">
-                  {Object.entries(stats.industryTotals).sort((a: any, b: any) => b[1] - a[1]).map(([ind, total], i) => (
-                    <div key={ind} className="flex items-center justify-between text-sm">
-                      <div className="flex items-center gap-2">
-                        <span className="w-3 h-3 rounded-full" style={{ backgroundColor: chartColors[i % chartColors.length] }} />
-                        <span className="text-gray-600">{ind}</span>
-                      </div>
-                      <span className="font-medium text-gray-800">HK$ {Number(total).toFixed(2)}</span>
-                    </div>
-                  ))
-          }
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Company Breakdown */}
-          <div className="rounded-2xl overflow-hidden p-4 sm:p-5 glass-card glass-hover">
-            <h3 className="text-sm font-semibold text-gray-700 mb-3">🏢 公司收入</h3>
-            {Object.keys(stats.companyTotals).sort().map((com, i) => {
-              const amt = stats.companyTotals[com];
-              const pct = stats.totalIncome > 0 ? (amt / stats.totalIncome * 100) : 0;
-              return (
-                <div key={com} className="mb-2">
-                  <div className="flex justify-between text-sm mb-1">
-                    <span className="text-gray-600">{com}</span>
-                    <span className="font-medium">HK$ {amt.toFixed(2)} ({pct.toFixed(1)}%)</span>
-                  </div>
-                  <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
-                    <div className="h-full rounded-full transition-all" style={{ width: pct.toFixed(1) + '%', backgroundColor: chartColors[i % chartColors.length] }} />
-                  </div>
-    </div>
-  );
-})}
-          </div>
-
-          {/* Hourly Rate Trend */}
-          <div className="rounded-2xl overflow-hidden p-4 sm:p-5 glass-card glass-hover">
-            <h3 className="text-sm font-semibold text-gray-700 mb-3">💵 时薪走势</h3>
-            {(function() {
-              const dailyRates: Record<string, { income: number; hours: number }> = {};
-              incomes.filter((i) => i.hours > 0).forEach((i) => {
-                const day = i.date?.substring(0, 10);
-                if (!day) return;
-                if (!dailyRates[day]) dailyRates[day] = { income: 0, hours: 0 };
-                dailyRates[day].income += i.amount;
-                dailyRates[day].hours += i.hours;
-              });
-              const sortedDays = Object.keys(dailyRates).sort();
-              const rates = sortedDays.map(d => dailyRates[d].hours > 0 ? (dailyRates[d].income / dailyRates[d].hours) : 0);
-              const avgRate = rates.length > 0 ? rates.reduce((a, b) => a + b, 0) / rates.length : 0;
-              return (
-                <div>
-                  <div className="flex items-center gap-3 mb-3 text-xs text-gray-500">
-                    <span>平均时薪: <span className="font-bold text-blue-600">HK$ {avgRate.toFixed(2)}</span></span>
-                    <span className="w-px h-3 bg-gray-200" />
-                    <span>共 {sortedDays.length} 个工作日</span>
-                  </div>
-                  {sortedDays.length > 0 ? (
-                    <Bar data={{
-                      labels: sortedDays.map(d => d.substring(5)),
-                      datasets: [{
-                        label: "时薪 (HK$)",
-                        data: rates.map(r => Number(r.toFixed(2))),
-                        backgroundColor: rates.map(r => r >= avgRate ? "#3B82F633" : "#EF444433"),
-                        borderColor: rates.map(r => r >= avgRate ? "#3B82F6" : "#EF4444"),
-                        borderWidth: 1.5,
-                        borderRadius: 3,
-                      }]
-                    }} options={{ responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { callback: (v) => "HK$" + v } } } }} />
-                  ) : <p className="text-sm text-gray-400 text-center py-4">暂无工时数据</p>}
-    </div>
-  );
-})()}
-          </div>
-
-          {/* Weekday Analysis */}
-          <div className="rounded-2xl overflow-hidden p-4 sm:p-5 glass-card glass-hover">
-            <h3 className="text-sm font-semibold text-gray-700 mb-3">📅 星期分布</h3>
-            {(function() {
-              const weekdayNames = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"];
-              const weekdayTotals = [0, 0, 0, 0, 0, 0, 0];
-              const weekdayCounts = [0, 0, 0, 0, 0, 0, 0];
-              incomes.forEach((i) => {
-                if (!i.date) return;
-                const d = new Date(i.date);
-                const wd = d.getDay();
-                weekdayTotals[wd] += i.amount;
-                weekdayCounts[wd]++;
-              });
-              return (
-                <div>
-                  <Bar data={{
-                    labels: weekdayNames,
-                    datasets: [{
-                      label: "收入 (HK$)",
-                      data: weekdayTotals,
-                      backgroundColor: ["#EF444433","#F59E0B33","#10B98133","#3B82F633","#8B5CF633","#EC489933","#EF444433"],
-                      borderColor: ["#EF4444","#F59E0B","#10B981","#3B82F6","#8B5CF6","#EC4899","#EF4444"],
-                      borderWidth: 2,
-                      borderRadius: 4,
-                    }]
-                  }} options={{ responsive: true, plugins: { legend: { display: false }, tooltip: { callbacks: { label: (ctx) => "HK$ " + ctx.raw + " (" + weekdayCounts[ctx.dataIndex] + "次)" } } }, scales: { y: { beginAtZero: true, ticks: { callback: (v) => "HK$" + v } } } }} />
-    </div>
-  );
-})()}
-          </div>
-
-          {/* Top Paying Days */}
-          <div className="rounded-2xl overflow-hidden p-4 sm:p-5 glass-card glass-hover">
-            <h3 className="text-sm font-semibold text-gray-700 mb-3">最高收入日</h3>
-            {(function() {
-              const dayTotals: Record<string, { amount: number; count: number; companies: string[] }> = {};
-              incomes.forEach((i) => {
-                const day = i.date?.substring(0, 10);
-                if (!day) return;
-                if (!dayTotals[day]) dayTotals[day] = { amount: 0, count: 0, companies: [] };
-                dayTotals[day].amount += i.amount;
-                dayTotals[day].count++;
-                if (i.company && !dayTotals[day].companies.includes(i.company)) dayTotals[day].companies.push(i.company);
-              });
-              const topDays = Object.entries(dayTotals).sort((a, b) => b[1].amount - a[1].amount).slice(0, 5);
-              return (
-                <div className="space-y-2">
-                  {topDays.map(([day, data], i) => (
-                    <div key={day} className="flex items-center justify-between px-3 py-2.5 bg-gradient-to-r from-amber-50 to-yellow-50 rounded-xl border border-amber-100/50">
-                      <div className="flex items-center gap-2.5">
-                        <span className="text-xs font-bold text-amber-600 w-5 text-center">#{i + 1}</span>
-                        <div>
-                          <p className="text-sm font-medium text-gray-800">{day}</p>
-                          <p className="text-xs text-gray-400">{data.count} 笔 · {data.companies.join(" ")}</p>
-                        </div>
-                      </div>
-                      <span className="text-base font-bold text-amber-700">HK$ {data.amount.toFixed(0)}</span>
-                    </div>
-                  ))
-          }
-                  {topDays.length === 0 && <p className="text-sm text-gray-400 text-center py-4">暂无数据</p>}
-    </div>
-  );
-})()}
-          </div>
-        </div>
-      )}
-      </LazyLoad>
+      {stats && <IncomeCharts incomes={incomes} stats={stats} />}
 
       {/* Add/Edit Modal */}
       {showModal && (
@@ -736,6 +624,33 @@ export default function IncomePage() {
     </div>
   );
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

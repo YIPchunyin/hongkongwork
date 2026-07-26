@@ -3,7 +3,15 @@ import connectDB from '@/lib/mongodb';
 import Income from '@/lib/models/Income';
 import { getTokenFromRequest, verifyToken } from '@/lib/auth';
 
-export const dynamic = 'force-dynamic';
+// In-memory cache for income queries (per server instance)
+const queryCache = new Map<string, { data: any; timestamp: number }>();
+const CACHE_TTL = 30_000; // 30 seconds
+
+function getCached(key: string) {
+  const entry = queryCache.get(key);
+  if (entry && Date.now() - entry.timestamp < CACHE_TTL) return entry.data;
+  return null;
+}
 
 export async function GET(request: NextRequest) {
   try {
@@ -11,6 +19,15 @@ export async function GET(request: NextRequest) {
     if (!token) return NextResponse.json({ success: false, error: '未登录' }, { status: 401 });
     const payload = verifyToken(token);
     if (!payload) return NextResponse.json({ success: false, error: '登录已过期' }, { status: 401 });
+
+    // Check in-memory cache
+    const cacheKey = request.url + '|' + payload.userId;
+    const cached = getCached(cacheKey);
+    if (cached) {
+      return NextResponse.json(cached, {
+        headers: { 'Cache-Control': 'private, max-age=30', 'X-Cache': 'HIT' },
+      });
+    }
 
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get('page') || '1');
@@ -107,23 +124,12 @@ export async function GET(request: NextRequest) {
       accumulate(s.monthlyTotals, monthlyTotals);
     }
 
-    return NextResponse.json({
-      success: true,
-      data: {
-        items,
-        total, page, limit,
-        totalPages: Math.ceil(total / limit),
-        stats: {
-          totalIncome, totalHours, totalRecords,
-          industries: Object.keys(industryTotals).sort(),
-          companies: Object.keys(companyTotals).sort(),
-          industryTotals,
-          companyTotals,
-          shiftTotals,
-          monthlyTotals,
-        },
-      },
-    });
+    const responseData = { success: true, data: { items, total, page, limit, totalPages: Math.ceil(total / limit), stats: { totalIncome, totalHours, totalRecords, industries: Object.keys(industryTotals).sort(), companies: Object.keys(companyTotals).sort(), industryTotals, companyTotals, shiftTotals, monthlyTotals } } };
+
+    // Cache the response
+    queryCache.set(cacheKey, { data: responseData, timestamp: Date.now() });
+
+    return NextResponse.json(responseData, { headers: { 'Cache-Control': 'private, max-age=30' } });
   } catch (error) {
     console.error('获取收入记录失败:', error);
     return NextResponse.json({ success: false, error: '获取收入记录失败' }, { status: 500 });
@@ -165,3 +171,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: false, error: '创建失败' }, { status: 500 });
   }
 }
+
+
+
+
