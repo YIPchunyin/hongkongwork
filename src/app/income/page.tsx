@@ -553,7 +553,6 @@ export default function IncomePage() {
             </div>
             <form onSubmit={handleSave} className="space-y-2.5 md:space-y-4">
               <QuickAddCards incomes={incomes} onSelect={(item) => {
-                setFormDate((item.date || '').substring(0, 10));
                 setFormAmount(item.amount ? String(item.amount) : '');
                 setFormShift(item.shift || '早班');
                 setFormHours(item.hours ? String(item.hours) : '');
