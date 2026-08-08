@@ -1,25 +1,20 @@
+// Shared local file storage helpers (works on Vercel serverless via /tmp)
 import fs from 'fs';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 
-const UPLOAD_BASE_DIR = path.join(process.cwd(), 'public', 'uploads');
+// On Vercel, public/ is read-only — use /tmp instead
+const isServerless = !!(process.env.VERCEL || process.env.RENDER);
+const UPLOAD_BASE_DIR = isServerless
+  ? path.join('/tmp', 'uploads')
+  : path.join(process.cwd(), 'public', 'uploads');
 
-/**
- * 确保上传目录存在
- */
 function ensureDir(dir: string): void {
   if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir, { recursive: true });
   }
 }
 
-/**
- * 保存文件到本地磁盘
- * @param fileBuffer 文件内容
- * @param originalName 原始文件名
- * @param type 'image' | 'video'
- * @returns { filePath, publicUrl, relativePath, size }
- */
 export async function saveFileToLocal(
   fileBuffer: Buffer,
   originalName: string,
@@ -36,14 +31,12 @@ export async function saveFileToLocal(
   const ext = path.extname(originalName).toLowerCase() || '.jpg';
   const uniqueName = `${uuidv4()}${ext}`;
 
-  // 根据类型分目录存储
   const dir = path.join(UPLOAD_BASE_DIR, type === 'video' ? 'videos' : 'images', year, month);
   ensureDir(dir);
 
   const filePath = path.join(dir, uniqueName);
   fs.writeFileSync(filePath, fileBuffer);
 
-  // public 目录下的文件可直接通过 /uploads/... 访问
   const folder = type === 'video' ? 'videos' : 'images';
   const relativePath = `uploads/${folder}/${year}/${month}/${uniqueName}`;
   const publicUrl = `/${relativePath}`;
@@ -56,28 +49,20 @@ export async function saveFileToLocal(
   };
 }
 
-/**
- * 读取上传的文件 Buffer
- */
 export async function fileToBuffer(file: File): Promise<Buffer> {
   const arrayBuffer = await file.arrayBuffer();
   return Buffer.from(arrayBuffer);
 }
 
-/**
- * 删除本地文件
- * @param relativePath 相对于 public 的路径，如 uploads/images/2024/01/xxx.jpg
- */
 export function deleteFileFromLocal(relativePath: string): void {
-  const fullPath = path.join(process.cwd(), 'public', relativePath);
+  const base = isServerless ? path.join('/tmp', 'uploads') : path.join(process.cwd(), 'public', 'uploads');
+  const fullPath = path.join(base, relativePath.replace(/^uploads\//, ''));
   if (fs.existsSync(fullPath)) {
     fs.unlinkSync(fullPath);
   }
 }
 
-/**
- * 获取文件完整路径
- */
 export function getFullPath(relativePath: string): string {
-  return path.join(process.cwd(), 'public', relativePath);
+  const base = isServerless ? path.join('/tmp', 'uploads') : path.join(process.cwd(), 'public', 'uploads');
+  return path.join(base, relativePath.replace(/^uploads\//, ''));
 }

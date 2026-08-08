@@ -21,7 +21,10 @@ export async function POST(request: NextRequest) {
 
     // Try R2 upload first
     try {
-      const { uploadToR2 } = await import('@/lib/r2Storage');
+      const { isR2Configured, uploadToR2 } = await import('@/lib/r2Storage');
+      if (!isR2Configured()) {
+        throw new Error('R2 is not configured, use local storage');
+      }
       const { generateThumbnail, fixOrientation, optimizeForWeb, getImageInfo } = await import('@/lib/imageUtils');
 
       const fixedBuffer = await fixOrientation(buffer);

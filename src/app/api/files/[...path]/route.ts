@@ -2,10 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
 
-// 基准目录是 public/（URL 中已含 uploads 前缀，不要再加）
-const UPLOAD_BASE = path.join(process.cwd(), 'public');
+// public/ is read-only on Vercel serverless, so serve from /tmp there
+const UPLOAD_BASE = process.env.VERCEL
+  ? path.join('/tmp')
+  : path.join(process.cwd(), 'public');
 
-// MIME 类型映射
+// MIME type mapping
 const MIME_TYPES: Record<string, string> = {
   '.jpg': 'image/jpeg',
   '.jpeg': 'image/jpeg',
@@ -23,19 +25,20 @@ const MIME_TYPES: Record<string, string> = {
 
 export const dynamic = 'force-dynamic';
 
-// GET /api/files/[...path] - 通过 API 提供上传文件访问
+// GET /api/files/[...path] - serve uploaded files through the API
 export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ path: string[] }> }
 ) {
   const { path: pathSegments } = await params;
 
-  // 安全检查：防止路径遍历攻击
+  // Security: prevent path traversal
   const relativePath = pathSegments.join('/');
+  const resolvedBase = path.resolve(UPLOAD_BASE);
   const filePath = path.resolve(UPLOAD_BASE, relativePath);
 
-  // 确保文件在 uploads 目录内
-  if (!filePath.startsWith(UPLOAD_BASE)) {
+  // Ensure the file stays inside the uploads base directory
+  if (filePath !== resolvedBase && !filePath.startsWith(resolvedBase + path.sep)) {
     return new NextResponse('Forbidden', { status: 403 });
   }
 
@@ -47,7 +50,7 @@ export async function GET(
   const ext = path.extname(filePath).toLowerCase();
   const contentType = MIME_TYPES[ext] || 'application/octet-stream';
 
-  // 读取文件并返回
+  // Read the file and return it
   const fileBuffer = fs.readFileSync(filePath);
 
   return new NextResponse(fileBuffer, {
