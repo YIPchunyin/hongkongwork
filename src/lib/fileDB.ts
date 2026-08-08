@@ -2,7 +2,10 @@ import fs from 'fs';
 import path from 'path';
 import { MediaItem } from '@/lib/types';
 
-const DATA_DIR = path.join(process.cwd(), 'data');
+// public/ is read-only on Vercel serverless, so use /tmp there
+const DATA_DIR = (process.env.VERCEL || process.env.RENDER)
+  ? path.join('/tmp', 'data')
+  : path.join(process.cwd(), 'data');
 const DATA_FILE = path.join(DATA_DIR, 'media.json');
 
 function ensureDataFile(): void {
