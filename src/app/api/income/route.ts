@@ -2,7 +2,7 @@
 import connectDB from '@/lib/mongodb';
 import Income from '@/lib/models/Income';
 import { getTokenFromRequest, verifyToken } from '@/lib/auth';
-import { getCached, setCache, clearUserCache } from '@/lib/incomeCache';
+import { clearUserCache } from '@/lib/incomeCache';
 
 export async function GET(request: NextRequest) {
   try {
@@ -10,15 +10,6 @@ export async function GET(request: NextRequest) {
     if (!token) return NextResponse.json({ success: false, error: '未登录' }, { status: 401 });
     const payload = verifyToken(token);
     if (!payload) return NextResponse.json({ success: false, error: '登录已过期' }, { status: 401 });
-
-    // Check in-memory cache
-    const cacheKey = request.url + '|' + payload.userId;
-    const cached = getCached(cacheKey);
-    if (cached) {
-      return NextResponse.json(cached, {
-        headers: { 'Cache-Control': 'private, max-age=30', 'X-Cache': 'HIT' },
-      });
-    }
 
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get('page') || '1');
@@ -117,10 +108,7 @@ export async function GET(request: NextRequest) {
 
     const responseData = { success: true, data: { items, total, page, limit, totalPages: Math.ceil(total / limit), stats: { totalIncome, totalHours, totalRecords, industries: Object.keys(industryTotals).sort(), companies: Object.keys(companyTotals).sort(), industryTotals, companyTotals, shiftTotals, monthlyTotals } } };
 
-    // Cache the response
-    setCache(cacheKey, responseData);
-
-    return NextResponse.json(responseData, { headers: { 'Cache-Control': 'private, max-age=30' } });
+    return NextResponse.json(responseData, { headers: { 'Cache-Control': 'no-store' } });
   } catch (error) {
     console.error('获取收入记录失败:', error);
     return NextResponse.json({ success: false, error: '获取收入记录失败' }, { status: 500 });
@@ -141,6 +129,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: '日期和金额不能为空' }, { status: 400 });
     }
 
+    clearUserCache(payload.userId);
     await connectDB();
 
     const record = await Income.create({
@@ -162,6 +151,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: false, error: '创建失败' }, { status: 500 });
   }
 }
+
+
 
 
 
