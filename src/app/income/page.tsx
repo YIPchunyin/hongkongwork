@@ -446,10 +446,12 @@ export default function IncomePage() {
                 const morningComps = groupByCompany(morningRecs);
                 const nightComps = groupByCompany(nightRecs);
                 const otherComps = groupByCompany(otherRecs);
-                const allBars: { com: string; amt: number }[] = [];
-                morningComps.forEach(([c, a]) => allBars.push({ com: c, amt: a }));
-                nightComps.forEach(([c, a]) => allBars.push({ com: c, amt: a }));
-                otherComps.forEach(([c, a]) => allBars.push({ com: c, amt: a }));
+                // 同一家公司可能同时出现在多个班次分组（如某天煌府既有早班又有晚班），
+                // 所以 key 必须带上分组前缀，否则同一格子里会出现重复 key。
+                const allBars: { com: string; amt: number; grp: string }[] = [];
+                morningComps.forEach(([c, a]) => allBars.push({ com: c, amt: a, grp: 'morning' }));
+                nightComps.forEach(([c, a]) => allBars.push({ com: c, amt: a, grp: 'night' }));
+                otherComps.forEach(([c, a]) => allBars.push({ com: c, amt: a, grp: 'other' }));
                 let cumPct = 0;
                 return (
                   <button key={di}
@@ -459,13 +461,13 @@ export default function IncomePage() {
                     <span className={'absolute top-0.5 left-0.5 z-20 text-[13px] sm:text-[15px] font-black ' + (hasData ? 'text-gray-900' : 'text-gray-400')} style={{ textShadow: hasData ? '0 0 6px rgba(255,255,255,0.9)' : 'none' }}>{dateNum}</span>{!hasData && new Date(year, (month || 1) - 1, dateNum) < new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate()) && <span className="absolute inset-0 flex items-center justify-center text-xl text-gray-200 pt-4">🌙</span>}
                     {hasData && (
                       <div className="absolute inset-0 overflow-hidden rounded-lg">
-                        {allBars.map(({ com, amt }) => {
+                        {allBars.map(({ com, amt, grp }) => {
                           const pct = Math.min((amt / maxAmt) * 100, 100);
                           if (pct <= 0) return null;
                           const top = cumPct;
                           cumPct += pct;
                           return (
-                            <div key={com} className="absolute left-0 right-0 transition-all duration-300" style={{ top: top + '%', height: pct + '%', background: companyGradient(com), minHeight: '4px' }}>
+                            <div key={grp + '-' + com} className="absolute left-0 right-0 transition-all duration-300" style={{ top: top + '%', height: pct + '%', background: companyGradient(com), minHeight: '4px' }}>
                               <span className="absolute inset-0 flex items-center justify-center text-[11px] sm:text-[12px] font-bold leading-tight" style={{ color: 'white', textShadow: '0 1px 3px rgba(0,0,0,0.7)'}}>{showAmount ? ('+' + amt.toFixed(0)) : com}</span>
                             </div>
                           );
