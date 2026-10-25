@@ -180,54 +180,6 @@ export default function IncomePage() {
     return vals.length > 0 ? Math.max(...vals) : 0;
   }, [dailyTotalMap]);
 
-  // 半月结算汇总：上半月 1-15 号 / 下半月 16-月底
-  // 地盘工资半个月截一次，这里按自然半月拆分，跟随顶部行业筛选取数
-  const halfMonthStats = useMemo(() => {
-    if (!month || !year) return null;
-    const daysInMonth = new Date(year, month, 0).getDate();
-    const HALF_END = 15;
-
-    type Bucket = { income: number; hours: number; days: Set<string>; count: number };
-    const makeBucket = (): Bucket => ({ income: 0, hours: 0, days: new Set<string>(), count: 0 });
-
-    const first = makeBucket();
-    const second = makeBucket();
-
-    incomes.forEach((i) => {
-      const dayKey = i.date?.substring(0, 10);
-      if (!dayKey) return;
-      const dayNum = parseInt(dayKey.substring(8, 10), 10);
-      if (!Number.isFinite(dayNum)) return;
-      const bucket = dayNum <= HALF_END ? first : second;
-      bucket.income += i.amount || 0;
-      bucket.hours += i.hours || 0;
-      bucket.days.add(dayKey);
-      bucket.count += 1;
-    });
-
-    const summarize = (b: Bucket) => ({
-      income: b.income,
-      hours: b.hours,
-      days: b.days.size,
-      count: b.count,
-    });
-
-    return {
-      daysInMonth,
-      halves: [
-        { key: 'first', label: '上半月', range: `1 – ${HALF_END}`, tone: '#10B981', ...summarize(first) },
-        { key: 'second', label: '下半月', range: `${HALF_END + 1} – ${daysInMonth}`, tone: '#3B7DD8', ...summarize(second) },
-      ],
-      // 两个半月按日期天然不重叠，天数直接相加即可
-      total: {
-        income: first.income + second.income,
-        hours: first.hours + second.hours,
-        days: first.days.size + second.days.size,
-        count: first.count + second.count,
-      },
-    };
-  }, [incomes, year, month]);
-
   const openAdd = () => {
     setEditItem(null);
     setFormDate(new Date().toISOString().slice(0, 10));
@@ -416,72 +368,6 @@ export default function IncomePage() {
         </div>
       )}
 
-      {/* 半月收入表：上半月 1-15 / 下半月 16-月底 */}
-      {halfMonthStats && (
-        <div className="rounded-xl md:rounded-2xl overflow-hidden mb-3 bg-white border border-gray-100 shadow-sm">
-          <div
-            className="flex items-center justify-between px-3 py-2 border-b border-gray-50"
-            style={{ background: 'linear-gradient(135deg, rgba(16,185,129,0.10), rgba(5,150,105,0.02))' }}
-          >
-            <div className="flex items-center gap-1.5 min-w-0">
-              <span className="text-sm shrink-0">📅</span>
-              <span className="text-xs font-bold text-gray-700 shrink-0">半月收入</span>
-              <span
-                className="text-[10px] px-1.5 py-0.5 rounded-full font-medium truncate"
-                style={{ background: 'rgba(16,185,129,0.12)', color: '#059669' }}
-              >
-                {industryFilter || '全部行业'}
-              </span>
-            </div>
-            <span className="text-[10px] text-gray-400 shrink-0 ml-2">半个月一结</span>
-          </div>
-
-          <table className="w-full">
-            <thead>
-              <tr className="text-[10px] text-gray-400 tracking-wider">
-                <th className="text-left font-medium px-3 py-1.5">时段</th>
-                <th className="text-right font-medium px-2 py-1.5">收入</th>
-                <th className="text-right font-medium px-2 py-1.5">工时</th>
-                <th className="text-right font-medium px-3 py-1.5">天数</th>
-              </tr>
-            </thead>
-            <tbody>
-              {halfMonthStats.halves.map((h) => (
-                <tr key={h.key} className="border-t border-gray-50">
-                  <td className="px-3 py-2">
-                    <div className="flex items-center gap-1.5">
-                      <span className="w-1.5 h-1.5 rounded-sm flex-shrink-0" style={{ backgroundColor: h.tone }} />
-                      <span className="text-sm font-medium text-gray-700">{h.label}</span>
-                      <span className="text-[10px] text-gray-400">{h.range} 号</span>
-                    </div>
-                  </td>
-                  <td className="px-2 py-2 text-right text-sm font-bold" style={{ color: '#059669' }}>
-                    $ {h.income.toFixed(0)}
-                  </td>
-                  <td className="px-2 py-2 text-right text-xs text-gray-500">{h.hours.toFixed(1)}h</td>
-                  <td className="px-3 py-2 text-right text-xs text-gray-500">{h.days} 天</td>
-                </tr>
-              ))}
-              <tr className="border-t border-gray-100 bg-gray-50/70">
-                <td className="px-3 py-2">
-                  <span className="text-xs font-semibold text-gray-500">合计</span>
-                  <span className="text-[10px] text-gray-400 ml-1">整月 {halfMonthStats.daysInMonth} 天</span>
-                </td>
-                <td className="px-2 py-2 text-right text-sm font-black text-gray-800">
-                  $ {halfMonthStats.total.income.toFixed(0)}
-                </td>
-                <td className="px-2 py-2 text-right text-xs font-semibold text-gray-600">
-                  {halfMonthStats.total.hours.toFixed(1)}h
-                </td>
-                <td className="px-3 py-2 text-right text-xs font-semibold text-gray-600">
-                  {halfMonthStats.total.days} 天
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      )}
-
       {/* Rest days & Advanced */}
 
       {/* Calendar View */}
@@ -645,7 +531,7 @@ export default function IncomePage() {
       )}
 
       {stats && (showCharts ? (
-        <IncomeCharts incomes={incomes} stats={stats} />
+        <IncomeCharts incomes={incomes} stats={stats} year={year} month={month} industryFilter={industryFilter} />
       ) : (
         <button onClick={() => setShowCharts(true)}
           className='w-full py-3 px-4 rounded-2xl border-2 border-dashed border-gray-200 text-gray-400 hover:text-gray-600 hover:border-gray-300 hover:bg-gray-50/50 transition-all text-sm font-medium flex items-center justify-center gap-2 group'>

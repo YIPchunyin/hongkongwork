@@ -1,6 +1,6 @@
 ﻿'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 
 interface IncomeItem {
   _id: string;
@@ -29,11 +29,14 @@ interface Stats {
 interface IncomeChartsProps {
   incomes: IncomeItem[];
   stats: Stats;
+  year?: number;
+  month?: number | null;
+  industryFilter?: string | null;
 }
 
 const chartColors = ['#10B981', '#3B82F6', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#14B8A6', '#F97316', '#6366F1', '#84CC16'];
 
-export default function IncomeCharts({ incomes, stats }: IncomeChartsProps) {
+export default function IncomeCharts({ incomes, stats, year, month, industryFilter }: IncomeChartsProps) {
   const [ChartComponents, setChartComponents] = useState<{
     Bar: typeof import("react-chartjs-2").Bar;
     Doughnut: typeof import("react-chartjs-2").Doughnut;
@@ -52,6 +55,169 @@ export default function IncomeCharts({ incomes, stats }: IncomeChartsProps) {
     loadCharts();
   }, []);
 
+  // 半月结算汇总：上半月 1-15 号 / 下半月 16-月底
+  // 地盘中只有「国益」这家公司是半个月结一次（益哥不是），所以只统计国益的记录。
+  // 国益只出现在地盘，因此筛选「酒楼/补贴」时这张表没有意义，直接隐藏。
+  const halfMonth = useMemo(() => {
+    if (!month || !year) return null;
+    if (industryFilter && industryFilter !== '地盘') return null;
+    const daysInMonth = new Date(year, month, 0).getDate();
+    const HALF_END = 15;
+
+    type Bucket = { income: number; hours: number; days: Set<string>; count: number };
+    const makeBucket = (): Bucket => ({ income: 0, hours: 0, days: new Set<string>(), count: 0 });
+
+    const first = makeBucket();
+    const second = makeBucket();
+
+    incomes.forEach((i) => {
+      if (i.company !== '国益') return;
+      const dayKey = i.date?.substring(0, 10);
+      if (!dayKey) return;
+      const dayNum = parseInt(dayKey.substring(8, 10), 10);
+      if (!Number.isFinite(dayNum)) return;
+      const bucket = dayNum <= HALF_END ? first : second;
+      bucket.income += i.amount || 0;
+      bucket.hours += i.hours || 0;
+      bucket.days.add(dayKey);
+      bucket.count += 1;
+    });
+
+    const summarize = (b: Bucket) => ({
+      income: b.income,
+      hours: b.hours,
+      days: b.days.size,
+      count: b.count,
+    });
+
+    return {
+      daysInMonth,
+      halves: [
+        { key: 'first', label: '上半月', range: `1 – ${HALF_END}`, tone: '#10B981', ...summarize(first) },
+        { key: 'second', label: '下半月', range: `${HALF_END + 1} – ${daysInMonth}`, tone: '#3B7DD8', ...summarize(second) },
+      ],
+      // 两个半月按日期天然不重叠，天数直接相加即可
+      total: {
+        income: first.income + second.income,
+        hours: first.hours + second.hours,
+        days: first.days.size + second.days.size,
+        count: first.count + second.count,
+      },
+    };
+  }, [incomes, year, month]);
+
+  // 派生指标：公司时薪对比 / 班次分布 / 日薪稳定度
+  const insights = useMemo(() => {
+    type ComAgg = { income: number; hours: number; days: Set<string>; count: number };
+    type ShiftAgg = { income: number; hours: number; count: number };
+
+    const companies = new Map<string, ComAgg>();
+    const shifts = new Map<string, ShiftAgg>();
+    const dayTotals = new Map<string, number>();
+
+    incomes.forEach((i) => {
+      const day = i.date?.substring(0, 10) || '';
+      const amount = i.amount || 0;
+      const hours = i.hours || 0;
+
+      const comName = i.company || '未填公司';
+      let com = companies.get(comName);
+      if (!com) {
+        com = { income: 0, hours: 0, days: new Set<string>(), count: 0 };
+        companies.set(comName, com);
+      }
+      com.income += amount;
+      com.hours += hours;
+      com.count += 1;
+      if (day) com.days.add(day);
+
+      const shiftName = i.shift || '未填班次';
+      let shift = shifts.get(shiftName);
+      if (!shift) {
+        shift = { income: 0, hours: 0, count: 0 };
+        shifts.set(shiftName, shift);
+      }
+      shift.income += amount;
+      shift.hours += hours;
+      shift.count += 1;
+
+      if (day) dayTotals.set(day, (dayTotals.get(day) || 0) + amount);
+    });
+
+    const companyRows = [...companies.entries()]
+      .map(([name, v]) => ({
+        name,
+        income: v.income,
+        hours: v.hours,
+        days: v.days.size,
+        count: v.count,
+        hourly: v.hours > 0 ? v.income / v.hours : 0,
+        daily: v.days.size > 0 ? v.income / v.days.size : 0,
+      }))
+      .sort((a, b) => b.income - a.income);
+
+    const shiftRows = [...shifts.entries()]
+      .map(([name, v]) => ({
+        name,
+        income: v.income,
+        hours: v.hours,
+        count: v.count,
+        avg: v.count > 0 ? v.income / v.count : 0,
+      }))
+      .sort((a, b) => b.income - a.income);
+
+    // 日薪：按自然日汇总后的每日总收入
+    const dayValues = [...dayTotals.values()];
+    const dailyAvg = dayValues.length > 0 ? dayValues.reduce((a, b) => a + b, 0) / dayValues.length : 0;
+    const dailyMax = dayValues.length > 0 ? Math.max(...dayValues) : 0;
+    const sortedDayValues = [...dayValues].sort((a, b) => a - b);
+    const dailyMedian =
+      sortedDayValues.length === 0
+        ? 0
+        : sortedDayValues.length % 2 === 1
+          ? sortedDayValues[(sortedDayValues.length - 1) / 2]
+          : (sortedDayValues[sortedDayValues.length / 2 - 1] + sortedDayValues[sortedDayValues.length / 2]) / 2;
+
+    const bucketDefs = [
+      { label: '< 600', test: (v: number) => v < 600 },
+      { label: '600–800', test: (v: number) => v >= 600 && v < 800 },
+      { label: '800–1000', test: (v: number) => v >= 800 && v < 1000 },
+      { label: '1000–1200', test: (v: number) => v >= 1000 && v < 1200 },
+      { label: '≥ 1200', test: (v: number) => v >= 1200 },
+    ];
+    const buckets = bucketDefs.map((b) => ({ label: b.label, count: dayValues.filter(b.test).length }));
+    const maxBucket = buckets.reduce((m, b) => Math.max(m, b.count), 0);
+
+    return { companyRows, shiftRows, dayCount: dayValues.length, dailyAvg, dailyMedian, dailyMax, buckets, maxBucket };
+  }, [incomes]);
+
+  // 当月累计收入走势（仅月视图有意义）
+  const cumulative = useMemo(() => {
+    if (!month || !year) return null;
+    const daysInMonth = new Date(year, month, 0).getDate();
+    const perDay: number[] = new Array(daysInMonth).fill(0);
+
+    incomes.forEach((i) => {
+      const day = i.date?.substring(0, 10);
+      if (!day) return;
+      const dayNum = parseInt(day.substring(8, 10), 10);
+      if (Number.isFinite(dayNum) && dayNum >= 1 && dayNum <= daysInMonth) {
+        perDay[dayNum - 1] += i.amount || 0;
+      }
+    });
+
+    const labels: string[] = [];
+    const data: number[] = [];
+    let acc = 0;
+    for (let d = 1; d <= daysInMonth; d++) {
+      acc += perDay[d - 1];
+      labels.push(String(d));
+      data.push(Math.round(acc));
+    }
+
+    return { labels, data, total: acc };
+  }, [incomes, year, month]);
+
   if (!loaded || !ChartComponents) {
     return (
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 mb-4 w-full max-w-full">
@@ -65,10 +231,86 @@ export default function IncomeCharts({ incomes, stats }: IncomeChartsProps) {
     );
   }
 
-  const { Bar, Doughnut } = ChartComponents;
+  const { Bar, Doughnut, Line } = ChartComponents;
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 mb-4 w-full max-w-full">
+      {/* Half-month Settlement */}
+      {halfMonth && (
+        <div className="rounded-2xl overflow-hidden p-3 sm:p-5 glass-card glass-hover lg:col-span-2">
+          <h3 className="text-xs sm:text-sm font-bold text-gray-700 mb-2 sm:mb-3 flex items-center gap-2 flex-wrap">
+            <span className="w-2 h-2 rounded-full bg-emerald-500" />
+            🏗️ 国益 半月收入
+            <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700">
+              地盘 · 仅国益
+            </span>
+            <span className="text-[10px] font-normal text-gray-400 ml-auto">半个月一结</span>
+          </h3>
+
+          <table className="w-full">
+            <thead>
+              <tr className="text-[10px] text-gray-400 tracking-wider">
+                <th className="text-left font-medium px-3 py-1.5">时段</th>
+                <th className="text-right font-medium px-2 py-1.5">收入</th>
+                <th className="text-right font-medium px-2 py-1.5">工时</th>
+                <th className="text-right font-medium px-3 py-1.5">天数</th>
+              </tr>
+            </thead>
+            <tbody>
+              {halfMonth.halves.map((h) => (
+                <tr key={h.key} className="border-t border-gray-50">
+                  <td className="px-3 py-2">
+                    <div className="flex items-center gap-1.5">
+                      <span className="w-1.5 h-1.5 rounded-sm flex-shrink-0" style={{ backgroundColor: h.tone }} />
+                      <span className="text-sm font-medium text-gray-700">{h.label}</span>
+                      <span className="text-[10px] text-gray-400">{h.range} 号</span>
+                    </div>
+                  </td>
+                  <td className="px-2 py-2 text-right text-sm font-bold" style={{ color: '#059669' }}>
+                    $ {h.income.toFixed(0)}
+                  </td>
+                  <td className="px-2 py-2 text-right text-xs text-gray-500">{h.hours.toFixed(1)}h</td>
+                  <td className="px-3 py-2 text-right text-xs text-gray-500">{h.days} 天</td>
+                </tr>
+              ))}
+              <tr className="border-t border-gray-100 bg-gray-50/70">
+                <td className="px-3 py-2">
+                  <span className="text-xs font-semibold text-gray-500">合计</span>
+                  <span className="text-[10px] text-gray-400 ml-1">整月 {halfMonth.daysInMonth} 天</span>
+                </td>
+                <td className="px-2 py-2 text-right text-sm font-black text-gray-800">
+                  $ {halfMonth.total.income.toFixed(0)}
+                </td>
+                <td className="px-2 py-2 text-right text-xs font-semibold text-gray-600">
+                  {halfMonth.total.hours.toFixed(1)}h
+                </td>
+                <td className="px-3 py-2 text-right text-xs font-semibold text-gray-600">
+                  {halfMonth.total.days} 天
+                </td>
+              </tr>
+            </tbody>
+          </table>
+
+          {/* 上下半月收入占比条 */}
+          {halfMonth.total.income > 0 && (
+            <div className="flex h-1.5 rounded-full overflow-hidden bg-gray-100 mt-3">
+              <div
+                style={{
+                  width: (halfMonth.halves[0].income / halfMonth.total.income) * 100 + '%',
+                  backgroundColor: halfMonth.halves[0].tone,
+                }}
+              />
+              <div
+                style={{
+                  width: (halfMonth.halves[1].income / halfMonth.total.income) * 100 + '%',
+                  backgroundColor: halfMonth.halves[1].tone,
+                }}
+              />
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Monthly Trend */}
       {Object.keys(stats.monthlyTotals).length > 1 && (
         <div className="rounded-2xl overflow-hidden p-3 sm:p-5 glass-card glass-hover">
@@ -234,6 +476,164 @@ export default function IncomeCharts({ incomes, stats }: IncomeChartsProps) {
           );
         })()}
       </div>
+
+      {/* Company Hourly Rate Comparison */}
+      {insights.companyRows.length > 0 && (
+        <div className="rounded-2xl overflow-hidden p-4 sm:p-5 glass-card glass-hover">
+          <h3 className="text-sm font-semibold text-gray-700 mb-3">💼 公司时薪对比</h3>
+          <table className="w-full">
+            <thead>
+              <tr className="text-[10px] text-gray-400 tracking-wider">
+                <th className="text-left font-medium py-1">公司</th>
+                <th className="text-right font-medium py-1">工时</th>
+                <th className="text-right font-medium py-1">收入</th>
+                <th className="text-right font-medium py-1">时薪</th>
+                <th className="text-right font-medium py-1">日均</th>
+              </tr>
+            </thead>
+            <tbody>
+              {insights.companyRows.map((c, i) => (
+                <tr key={c.name} className="border-t border-gray-50">
+                  <td className="py-1.5 pr-1">
+                    <span className="flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: chartColors[i % chartColors.length] }} />
+                      <span className="text-xs text-gray-700">{c.name}</span>
+                    </span>
+                  </td>
+                  <td className="py-1.5 text-right text-xs text-gray-500">{c.hours.toFixed(0)}h</td>
+                  <td className="py-1.5 text-right text-xs font-medium text-gray-700">{c.income.toFixed(0)}</td>
+                  <td className="py-1.5 text-right text-xs font-bold text-emerald-600">
+                    {c.hourly > 0 ? 'HK$' + c.hourly.toFixed(0) : '—'}
+                  </td>
+                  <td className="py-1.5 text-right text-xs text-gray-500">
+                    {c.daily > 0 ? 'HK$' + c.daily.toFixed(0) : '—'}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <p className="text-[10px] text-gray-400 mt-2">时薪 = 收入 ÷ 工时；日均 = 收入 ÷ 出勤天数</p>
+        </div>
+      )}
+
+      {/* Shift Breakdown */}
+      {insights.shiftRows.length > 0 && (
+        <div className="rounded-2xl overflow-hidden p-4 sm:p-5 glass-card glass-hover">
+          <h3 className="text-sm font-semibold text-gray-700 mb-3">🕐 班次分布</h3>
+          <div className="space-y-2.5">
+            {(() => {
+              const total = insights.shiftRows.reduce((sum, r) => sum + r.income, 0);
+              return insights.shiftRows.map((s, i) => {
+                const pct = total > 0 ? (s.income / total) * 100 : 0;
+                return (
+                  <div key={s.name}>
+                    <div className="flex justify-between items-baseline text-sm mb-1">
+                      <span className="text-gray-600 flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full" style={{ backgroundColor: chartColors[i % chartColors.length] }} />
+                        {s.name}
+                        <span className="text-[10px] text-gray-400">{s.count} 次</span>
+                      </span>
+                      <span className="font-medium text-gray-800">
+                        HK$ {s.income.toFixed(0)}
+                        <span className="text-[10px] text-gray-400 ml-1">({pct.toFixed(1)}%)</span>
+                      </span>
+                    </div>
+                    <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+                      <div
+                        className="h-full rounded-full transition-all"
+                        style={{ width: pct.toFixed(1) + '%', backgroundColor: chartColors[i % chartColors.length] }}
+                      />
+                    </div>
+                    <div className="flex justify-between text-[10px] text-gray-400 mt-0.5">
+                      <span>平均每次 HK$ {s.avg.toFixed(0)}</span>
+                      <span>{s.hours.toFixed(0)}h</span>
+                    </div>
+                  </div>
+                );
+              });
+            })()}
+          </div>
+        </div>
+      )}
+
+      {/* Daily Pay Stability */}
+      <div className="rounded-2xl overflow-hidden p-4 sm:p-5 glass-card glass-hover">
+        <h3 className="text-sm font-semibold text-gray-700 mb-3">💰 日薪稳定度</h3>
+        {insights.dayCount > 0 ? (
+          <>
+            <div className="grid grid-cols-3 gap-2 mb-3">
+              <div className="rounded-xl px-2 py-2 bg-emerald-50 border border-emerald-100 text-center">
+                <p className="text-[10px] text-emerald-600 font-medium">平均日薪</p>
+                <p className="text-sm font-bold text-emerald-700">{insights.dailyAvg.toFixed(0)}</p>
+              </div>
+              <div className="rounded-xl px-2 py-2 bg-blue-50 border border-blue-100 text-center">
+                <p className="text-[10px] text-blue-600 font-medium">中位数</p>
+                <p className="text-sm font-bold text-blue-700">{insights.dailyMedian.toFixed(0)}</p>
+              </div>
+              <div className="rounded-xl px-2 py-2 bg-amber-50 border border-amber-100 text-center">
+                <p className="text-[10px] text-amber-600 font-medium">最高单日</p>
+                <p className="text-sm font-bold text-amber-700">{insights.dailyMax.toFixed(0)}</p>
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              {insights.buckets.map((b) => (
+                <div key={b.label} className="flex items-center gap-2">
+                  <span className="text-[10px] text-gray-400 w-16 flex-shrink-0 text-right">{b.label}</span>
+                  <div className="flex-1 h-3 bg-gray-100 rounded-full overflow-hidden">
+                    <div
+                      className="h-full rounded-full bg-gradient-to-r from-emerald-400 to-emerald-500 transition-all"
+                      style={{ width: (insights.maxBucket > 0 ? (b.count / insights.maxBucket) * 100 : 0) + '%' }}
+                    />
+                  </div>
+                  <span className="text-[10px] text-gray-500 w-8 flex-shrink-0">{b.count}天</span>
+                </div>
+              ))}
+            </div>
+            <p className="text-[10px] text-gray-400 mt-2">共 {insights.dayCount} 个出勤日，按每日总收入区间统计</p>
+          </>
+        ) : (
+          <p className="text-sm text-gray-400 text-center py-4">暂无数据</p>
+        )}
+      </div>
+
+      {/* Cumulative Income This Month */}
+      {cumulative && (
+        <div className="rounded-2xl overflow-hidden p-3 sm:p-5 glass-card glass-hover lg:col-span-2">
+          <h3 className="text-xs sm:text-sm font-bold text-gray-700 mb-2 sm:mb-3 flex items-center gap-2 flex-wrap">
+            <span className="w-2 h-2 rounded-full bg-indigo-500" />
+            📈 当月累计收入走势
+            <span className="text-[10px] font-normal text-gray-400 ml-auto">
+              累计 HK$ {cumulative.total.toFixed(0)}
+            </span>
+          </h3>
+          <Line
+            data={{
+              labels: cumulative.labels,
+              datasets: [
+                {
+                  label: '累计收入 (HK$)',
+                  data: cumulative.data,
+                  borderColor: '#6366F1',
+                  backgroundColor: 'rgba(99,102,241,0.12)',
+                  fill: true,
+                  borderWidth: 2,
+                  pointRadius: 0,
+                  pointHoverRadius: 4,
+                  tension: 0.25,
+                },
+              ],
+            }}
+            options={{
+              responsive: true,
+              plugins: { legend: { display: false } },
+              scales: {
+                y: { beginAtZero: true, ticks: { callback: (v: any) => 'HK$' + v } },
+                x: { ticks: { maxTicksLimit: 12 } },
+              },
+            }}
+          />
+        </div>
+      )}
     </div>
   );
 }
