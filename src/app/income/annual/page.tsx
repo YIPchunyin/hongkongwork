@@ -19,9 +19,12 @@ interface IncomeItem {
 interface AnnualStats {
   totalIncome: number; totalHours: number; totalRecords: number;
   workDays: number; restDays: number; totalDays: number; workRate: number;
+  singleDays: number; doubleDays: number;
   monthlyIncome: Record<string, number>;
   monthlyWorkDays: Record<string, number>;
   monthlyRestDays: Record<string, number>;
+  monthlySingleDays: Record<string, number>;
+  monthlyDoubleDays: Record<string, number>;
   companyTotals: Record<string, number>;
   industryTotals: Record<string, number>;
   weekdayTotals: number[];
@@ -115,6 +118,36 @@ function AnnualReportContent() {
       monthlyRestDays[mk] = Math.max(0, actualDaysInMonth - monthDateSets[mk].size);
     }
 
+    // 单工 / 双工：当天只有 1 笔收入记录算单工，2 笔及以上算双工
+    const monthlySingleDays: Record<string, number> = {};
+    const monthlyDoubleDays: Record<string, number> = {};
+    for (let m = 1; m <= 12; m++) {
+      const mk = year + '-' + String(m).padStart(2, '0');
+      monthlySingleDays[mk] = 0;
+      monthlyDoubleDays[mk] = 0;
+    }
+
+    const dayRecordCounts: Record<string, number> = {};
+    incomes.forEach(i => {
+      if (!i.date) return;
+      const dk = i.date.substring(0, 10);
+      dayRecordCounts[dk] = (dayRecordCounts[dk] || 0) + 1;
+    });
+
+    let singleDays = 0;
+    let doubleDays = 0;
+    Object.entries(dayRecordCounts).forEach(([dk, cnt]) => {
+      const mk = dk.substring(0, 7);
+      if (monthlySingleDays[mk] === undefined) return;
+      if (cnt === 1) {
+        monthlySingleDays[mk] += 1;
+        singleDays += 1;
+      } else {
+        monthlyDoubleDays[mk] += 1;
+        doubleDays += 1;
+      }
+    });
+
     // Company totals
     const companyTotals: Record<string, number> = {};
     incomes.forEach(i => {
@@ -164,7 +197,9 @@ function AnnualReportContent() {
     return {
       totalIncome, totalHours, totalRecords,
       workDays, restDays, totalDays, workRate,
+      singleDays, doubleDays,
       monthlyIncome, monthlyWorkDays, monthlyRestDays,
+      monthlySingleDays, monthlyDoubleDays,
       companyTotals, industryTotals,
       weekdayTotals, weekdayCounts,
       quarterlyIncome, quarterlyWorkDays,
@@ -384,12 +419,19 @@ function AnnualReportContent() {
 
         {/* Monthly Rest Days Detail */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-3 sm:p-5">
-          <h3 className="text-sm font-bold text-gray-700 mb-3">🌙 每月休息天数</h3>
+          <div className="flex items-center justify-between mb-3 flex-wrap gap-1">
+            <h3 className="text-sm font-bold text-gray-700">🌙 每月休息 / 单工 / 双工</h3>
+            <span className="text-[10px] text-gray-400">
+              全年 单工 <b className="text-emerald-600">{stats.singleDays}</b> 天 · 双工 <b className="text-violet-600">{stats.doubleDays}</b> 天
+            </span>
+          </div>
           <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
-            {sortedMonths.map((m, i) => {
+            {sortedMonths.map((m) => {
               const rest = stats.monthlyRestDays[m] || 0;
               const total = new Date(year, parseInt(m.substring(5)), 0).getDate();
               const pct = total > 0 ? (rest / total * 100) : 0;
+              const single = stats.monthlySingleDays[m] || 0;
+              const double = stats.monthlyDoubleDays[m] || 0;
               return (
                 <div key={m} className="text-center p-2 sm:p-3 rounded-xl bg-gradient-to-b from-gray-50 to-white border border-gray-100">
                   <p className="text-xs font-bold text-gray-700">{parseInt(m.substring(5))}月</p>
@@ -399,10 +441,15 @@ function AnnualReportContent() {
                     <div className="h-full rounded-full bg-amber-400" style={{ width: pct.toFixed(0) + '%' }} />
                   </div>
                   <p className="text-[9px] text-amber-500 mt-0.5">{pct.toFixed(0)}%</p>
+                  <div className="flex items-center justify-center gap-1 mt-1.5 pt-1.5 border-t border-gray-100">
+                    <span className="text-[9px] font-medium px-1 py-0.5 rounded bg-emerald-50 text-emerald-600">单{single}</span>
+                    <span className="text-[9px] font-medium px-1 py-0.5 rounded bg-violet-50 text-violet-600">双{double}</span>
+                  </div>
                 </div>
               );
             })}
           </div>
+          <p className="text-[10px] text-gray-400 mt-2">单工 = 当天只上 1 个班次；双工 = 当天上 2 个或以上班次</p>
         </div>
 
         {/* Weekday Analysis */}
