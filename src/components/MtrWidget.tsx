@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useTranslation } from 'react-i18next';
 import { useRouter } from 'next/navigation';
 import { getLineColor } from '@/lib/mtr-stations';
 
@@ -10,7 +9,6 @@ interface LineInfo { line: string; lineName: string; up: TrainEntry[]; down: Tra
 interface MtrData { station: { code: string; nameTc: string; nameEn: string; lines: { code: string; name: string }[]; }; distanceKm: number; sysTime: string; lines: LineInfo[]; }
 
 export default function MtrWidget() {
-  const { t } = useTranslation();
   const router = useRouter();
   const [data, setData] = useState<MtrData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -70,8 +68,8 @@ export default function MtrWidget() {
   if (error || !data) {
     return (
       <div className="bg-gradient-to-br from-orange-500 to-red-600 rounded-2xl p-5 sm:p-6 text-white shadow-lg card-hover" onClick={handleClick}>
-        <p className="text-orange-100 text-sm font-medium">🚇 {t('mtr.nearbyStation')}</p>
-        <p className="text-white/60 text-sm mt-2">{t('home.loadingData')}...</p>
+        <p className="text-orange-100 text-sm font-medium">🚇 最近车站</p>
+        <p className="text-white/60 text-sm mt-2">加载数据中...</p>
       </div>
     );
   }
@@ -139,14 +137,14 @@ export default function MtrWidget() {
               </div>
             );
           }) : (
-            <p className="text-orange-200 text-xs text-center py-2">{t('mtr.noData')}</p>
+            <p className="text-orange-200 text-xs text-center py-2">暂无到站信息</p>
           )}
         </div>
 
         <div className="mt-2 flex items-center justify-between">
-          <p className="text-orange-200 text-[10px]">&#x1f504; {t('home.refreshEvery')}</p>
+          <p className="text-orange-200 text-[10px]">&#x1f504; 每30秒刷新</p>
           <span className="text-orange-200 text-xs group-hover:text-white transition-colors flex items-center gap-1">
-            {t('home.allTimes')}
+            全部班次
             <svg className="w-3 h-3 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
             </svg>

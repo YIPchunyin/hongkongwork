@@ -4,7 +4,6 @@ import "./globals.css";
 import Navbar from "@/components/Navbar";
 import MobileNav from "@/components/MobileNav";
 import { AuthProvider } from "@/components/AuthProvider";
-import I18nInit from "@/components/I18nInit";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -64,7 +63,6 @@ export default function RootLayout({
           <div className="absolute top-2/3 left-1/2 w-64 h-64 bg-amber-200/10 rounded-full blur-3xl animate-float" style={{ animationDelay: '2s' }} />
         </div>
 
-        <I18nInit>
         <AuthProvider>
           <div className="relative z-10 flex flex-col min-h-full">
             <Navbar />
@@ -79,7 +77,6 @@ export default function RootLayout({
             </footer>
           </div>
         </AuthProvider>
-        </I18nInit>
       </body>
     </html>
   );

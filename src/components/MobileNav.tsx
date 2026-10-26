@@ -4,10 +4,8 @@ import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/components/AuthProvider';
-import { useTranslation } from 'react-i18next';
-import i18n from '@/lib/i18n';
 
-const getTabs = (t: (key: string) => string) => [
+const getTabs = () => [
   { href: '/', label: '首页', icon: (
     <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
       <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
@@ -43,94 +41,157 @@ const getTabs = (t: (key: string) => string) => [
 export default function MobileNav() {
   const pathname = usePathname();
   const { user, logout } = useAuth();
-  const { t } = useTranslation();
-  const [menuOpen, setMenuOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
 
+  // 默认收起：只露出右下角的用户头像，点一下展开，再点一下还原
+  const [expanded, setExpanded] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const navRef = useRef<HTMLElement>(null);
+
+  const collapse = () => {
+    setExpanded(false);
+    setMenuOpen(false);
+  };
+
+  // 切换路由后自动收起
   useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(false);
+    setExpanded(false);
+    setMenuOpen(false);
+  }, [pathname]);
+
+  // 展开时：点空白处或按 Esc 收起
+  useEffect(() => {
+    if (!expanded) return;
+    const onPointerDown = (e: MouseEvent) => {
+      if (navRef.current && !navRef.current.contains(e.target as Node)) {
+        setExpanded(false);
+        setMenuOpen(false);
+      }
     };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, []);
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setExpanded(false);
+        setMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', onPointerDown);
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', onPointerDown);
+      document.removeEventListener('keydown', onKeyDown);
+    };
+  }, [expanded]);
+
+  const tabs = getTabs();
+  const myTab = tabs[tabs.length - 1];
+
+  const avatar = user ? (
+    <div className="w-7 h-7 bg-blue-600 rounded-full flex items-center justify-center text-white text-[11px] font-bold">
+      {user.username.charAt(0).toUpperCase()}
+    </div>
+  ) : (
+    myTab.icon
+  );
+
+  // 悬浮头像按钮：始终存在。收起时显示头像，展开时变成向下的箭头，再点一下就还原。
+  const toggleButton = (
+    <button
+      type="button"
+      onClick={() => setExpanded((v) => !v)}
+      aria-label={expanded ? '收起导航菜单' : '展开导航菜单'}
+      aria-expanded={expanded}
+      className="md:hidden fixed right-4 z-[60] w-12 h-12 rounded-full flex items-center justify-center bg-white/90 backdrop-blur-lg border border-gray-200 shadow-lg active:scale-90 transition-all duration-300"
+      style={{ bottom: 'calc(1rem + env(safe-area-inset-bottom, 0px))' }}
+    >
+      {expanded ? (
+        <svg className="w-5 h-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+        </svg>
+      ) : (
+        avatar
+      )}
+    </button>
+  );
 
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-lg border-t border-gray-200 safe-area-bottom">
-      <div className="flex items-center justify-around h-14">
-        {getTabs(t).map((tab) => {
-          const isActive = pathname === tab.href || (tab.href !== '/' && pathname.startsWith(tab.href));
-          if (tab.href === '/settings') {
-            return (
-              <div key={tab.href} className="relative" ref={menuRef}>
-                <button
-                  onClick={() => user ? setMenuOpen(!menuOpen) : (window.location.href = '/login')}
-                  className={'flex flex-col items-center justify-center min-w-[56px] h-full px-2 relative ' + (isActive ? 'text-blue-600' : 'text-gray-400')}
-                >
-                  <span className={isActive ? 'scale-110 transition-transform' : ''}>
-                    {user ? (
-                      <div className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center text-white text-[10px] font-bold">
-                        {user.username.charAt(0).toUpperCase()}
-                      </div>
-                    ) : tab.icon}
-                  </span>
-                  <span className={'text-[10px] mt-0.5 font-medium ' + (isActive ? 'font-bold' : '')}>{tab.label}</span>
-                  {isActive && <span className="absolute -top-0.5 left-1/2 -translate-x-1/2 w-8 h-0.5 bg-blue-600 rounded-full" />}
-                </button>
+    <>
+      {toggleButton}
 
-                {menuOpen && user && (
-                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-50">
-                    <div className="px-4 py-2 border-b border-gray-100">
-                      <p className="text-sm font-medium text-gray-900">{user.name || user.username}</p>
-                      <p className="text-xs text-gray-500">@{user.username}</p>
+      {expanded && (
+        <>
+          {/* 点空白处收起 */}
+          <div className="md:hidden fixed inset-0 z-[55] bg-black/10" onClick={collapse} />
+
+          <nav
+            ref={navRef}
+            className="md:hidden fixed bottom-0 left-0 right-[4.5rem] z-[60] bg-white/95 backdrop-blur-lg border-t border-gray-200 safe-area-bottom animate-slideUp"
+          >
+            <div className="flex items-center justify-around h-14">
+              {tabs.map((tab) => {
+                const isActive = pathname === tab.href || (tab.href !== '/' && pathname.startsWith(tab.href));
+
+                if (tab.href === '/settings') {
+                  return (
+                    <div key={tab.href} className="relative flex-1 min-w-0">
+                      <button
+                        onClick={() => (user ? setMenuOpen((v) => !v) : (window.location.href = '/login'))}
+                        className={'w-full flex flex-col items-center justify-center h-full px-1.5 relative ' + (isActive ? 'text-blue-600' : 'text-gray-400')}
+                      >
+                        {/* 这里固定用描边人像，避免和右下角的头像开关混在一起 */}
+                        <span className={isActive ? 'scale-110 transition-transform' : ''}>{tab.icon}</span>
+                        <span className={'text-[10px] mt-0.5 font-medium ' + (isActive ? 'font-bold' : '')}>{tab.label}</span>
+                        {isActive && <span className="absolute -top-0.5 left-1/2 -translate-x-1/2 w-8 h-0.5 bg-blue-600 rounded-full" />}
+                      </button>
+
+                      {menuOpen && user && (
+                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-50">
+                          <div className="px-4 py-2 border-b border-gray-100">
+                            <p className="text-sm font-medium text-gray-900">{user.name || user.username}</p>
+                            <p className="text-xs text-gray-500">@{user.username}</p>
+                          </div>
+                          <Link
+                            href="/settings"
+                            onClick={collapse}
+                            className="flex items-center px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 min-h-[44px]"
+                          >
+                            <svg className="w-4 h-4 mr-2 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            </svg>
+                            账号设置
+                          </Link>
+                          <div className="border-t border-gray-100 mt-1" />
+                          <button
+                            onClick={() => { logout(); collapse(); }}
+                            className="flex items-center w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 min-h-[44px]"
+                          >
+                            <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                            </svg>
+                            退出登录
+                          </button>
+                        </div>
+                      )}
                     </div>
-                    <Link
-                      href="/settings"
-                      onClick={() => setMenuOpen(false)}
-                      className="flex items-center px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 min-h-[44px]"
-                    >
-                      <svg className="w-4 h-4 mr-2 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                      </svg>
-                      账号设置
-                    </Link>
-                    <div className="border-t border-gray-100 pt-1 mt-1">
-                      <p className="px-4 py-1 text-[10px] text-gray-400 uppercase tracking-wider">{t('nav.language')}</p>
-                      <button onClick={() => { i18n.changeLanguage("zh-CN"); setMenuOpen(false); }} className="flex items-center w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 min-h-[36px]">
-                        <span className="mr-2">????</span> {t('nav.chineseSimple')}
-                      </button>
-                      <button onClick={() => { i18n.changeLanguage("zh-HK"); setMenuOpen(false); }} className="flex items-center w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 min-h-[36px]">
-                        <span className="mr-2">????</span> {t('nav.chineseTrad')}
-                      </button>
-                      <button onClick={() => { i18n.changeLanguage("en"); setMenuOpen(false); }} className="flex items-center w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 min-h-[36px]">
-                        <span className="mr-2">????</span> {t('nav.english')}
-                      </button>
-                    </div>
-                    <button
-                      onClick={() => { logout(); setMenuOpen(false); }}
-                      className="flex items-center w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 min-h-[44px]"
-                    >
-                      <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                      </svg>
-                      退出登录
-                    </button>
-                  </div>
-                )}
-              </div>
-            );
-          }
-          return (
-            <Link key={tab.href} href={tab.href}
-              className={'flex flex-col items-center justify-center min-w-[56px] h-full px-2 relative ' + (isActive ? 'text-blue-600' : 'text-gray-400')}>
-              <span className={isActive ? 'scale-110 transition-transform' : ''}>{tab.icon}</span>
-              <span className={'text-[10px] mt-0.5 font-medium ' + (isActive ? 'font-bold' : '')}>{tab.label}</span>
-              {isActive && <span className="absolute -top-0.5 left-1/2 -translate-x-1/2 w-8 h-0.5 bg-blue-600 rounded-full" />}
-            </Link>
-          );
-        })}
-      </div>
-    </nav>
+                  );
+                }
+
+                return (
+                  <Link
+                    key={tab.href}
+                    href={tab.href}
+                    onClick={collapse}
+                    className={'flex-1 min-w-0 flex flex-col items-center justify-center h-full px-1.5 relative ' + (isActive ? 'text-blue-600' : 'text-gray-400')}
+                  >
+                    <span className={isActive ? 'scale-110 transition-transform' : ''}>{tab.icon}</span>
+                    <span className={'text-[10px] mt-0.5 font-medium ' + (isActive ? 'font-bold' : '')}>{tab.label}</span>
+                    {isActive && <span className="absolute -top-0.5 left-1/2 -translate-x-1/2 w-8 h-0.5 bg-blue-600 rounded-full" />}
+                  </Link>
+                );
+              })}
+            </div>
+          </nav>
+        </>
+      )}
+    </>
   );
 }
