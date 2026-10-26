@@ -55,7 +55,7 @@ function AnnualReportContent() {
   const fetchData = useCallback(async (yr: number) => {
     setLoading(true);
     try {
-      const res = await fetch('/api/income?year=' + yr + '&limit=500');
+      const res = await fetch('/api/income?year=' + yr + '&limit=2000');
       const json = await res.json();
       if (json.success) {
         setIncomes(json.data.items);

@@ -150,7 +150,7 @@ export default function IncomePage() {
   const fetchIncomes = useCallback(async () => {
     setFetching(true);
     try {
-      const res = await cachedFetch('/api/income?year=' + (year || '') + '&month=' + (month ? String(month) : '') + '&page=' + page + '&limit=500' + (industryFilter ? '&industry=' + encodeURIComponent(industryFilter) : ''));
+      const res = await cachedFetch('/api/income?year=' + (year || '') + '&month=' + (month ? String(month) : '') + '&page=' + page + '&limit=2000' + (industryFilter ? '&industry=' + encodeURIComponent(industryFilter) : ''));
       
       if (res.success) {
         setIncomes(res.data.items);
