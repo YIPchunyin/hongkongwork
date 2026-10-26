@@ -3,7 +3,6 @@ import connectDB from '@/lib/mongodb';
 import Expense from '@/lib/models/Expense';
 import { getTokenFromRequest, verifyToken } from '@/lib/auth';
 import { uploadToR2, isR2Configured } from '@/lib/r2Storage';
-import { saveFileToLocal, fileToBuffer } from '@/lib/localStorage';
 
 export const dynamic = 'force-dynamic';
 
@@ -32,17 +31,31 @@ export async function POST(request: NextRequest) {
 
     await connectDB();
 
-    // Upload image
-    const buffer = await fileToBuffer(file);
-    let imageUrl: string, imageOssKey: string;
-    if (isR2Configured()) {
+    // 只允许写入对象存储：R2 未配置时直接拒绝，绝不落本地磁盘
+    if (!isR2Configured()) {
+      return NextResponse.json(
+        { success: false, error: '图片存储未配置（缺少 R2 凭证），已拒绝上传' },
+        { status: 503 }
+      );
+    }
+
+    // Upload image（只写 R2，失败即报错，不降级）
+    const buffer = Buffer.from(await file.arrayBuffer());
+    let imageUrl: string;
+    let imageOssKey: string;
+    try {
       const r2Result = await uploadToR2(buffer, file.name, 'expenses');
       imageUrl = r2Result.url;
       imageOssKey = r2Result.key;
-    } else {
-      const { relativePath } = await saveFileToLocal(buffer, file.name, 'image');
-      imageUrl = '/api/files/' + relativePath;
-      imageOssKey = relativePath;
+    } catch (uploadErr) {
+      console.error('[Expense manual] R2 上传失败:', uploadErr);
+      return NextResponse.json(
+        {
+          success: false,
+          error: '上传到对象存储失败：' + (uploadErr instanceof Error ? uploadErr.message : '未知错误'),
+        },
+        { status: 500 }
+      );
     }
 
     const validCategories = ['餐饮', '交通', '购物', '医疗', '娱乐', '居住', '通讯', '教育', '其他', '工具'];

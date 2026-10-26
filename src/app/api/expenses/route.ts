@@ -2,7 +2,6 @@
 import connectDB from '@/lib/mongodb';
 import Expense from '@/lib/models/Expense';
 import { getTokenFromRequest, verifyToken } from '@/lib/auth';
-import { saveFileToLocal, fileToBuffer } from '@/lib/localStorage';
 import { uploadToR2, isR2Configured } from '@/lib/r2Storage';
 
 const API_BASE_URL = process.env.AI_API_BASE_URL || 'https://api-ai.7e.ink';
@@ -269,6 +268,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: '请上传图片' }, { status: 400 });
     }
 
+    // 只允许写入对象存储：R2 未配置时直接拒绝，绝不落本地磁盘
+    if (!isR2Configured()) {
+      return NextResponse.json(
+        { success: false, error: '图片存储未配置（缺少 R2 凭证），已拒绝上传' },
+        { status: 503 }
+      );
+    }
+
     await connectDB();
 
     const results: Array<{ _id: string; fileName: string; imageUrl: string }> = [];
@@ -277,17 +284,22 @@ export async function POST(request: NextRequest) {
     for (const file of files) {
       const buffer = Buffer.from(await file.arrayBuffer());
 
-      // Upload to R2 or local storage
-      let imageUrl: string, imageOssKey: string;
-      const useR2 = isR2Configured();
-      if (useR2) {
+      // 只写 R2，失败即报错，不再降级到本地磁盘
+      let imageUrl: string;
+      let imageOssKey: string;
+      try {
         const r2Result = await uploadToR2(buffer, file.name, 'expenses');
         imageUrl = r2Result.url;
         imageOssKey = r2Result.key;
-      } else {
-        const { relativePath } = await saveFileToLocal(buffer, file.name, 'image');
-        imageUrl = `/api/files/${relativePath}`;
-        imageOssKey = relativePath;
+      } catch (uploadErr) {
+        console.error('[Expense] R2 上传失败:', uploadErr);
+        return NextResponse.json(
+          {
+            success: false,
+            error: '上传到对象存储失败：' + (uploadErr instanceof Error ? uploadErr.message : '未知错误'),
+          },
+          { status: 500 }
+        );
       }
 
       // Create pending record (AI will process in background)
