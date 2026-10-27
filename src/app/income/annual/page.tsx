@@ -20,6 +20,12 @@ interface AnnualStats {
   totalIncome: number; totalHours: number; totalRecords: number;
   workDays: number; restDays: number; totalDays: number; workRate: number;
   singleDays: number; doubleDays: number;
+  singleIncome: number; doubleIncome: number;
+  h1Income: number; h2Income: number; h1Days: number; h2Days: number;
+  weekendIncome: number; weekendDays: number; weekdayIncome: number; weekdayDays: number;
+  maxWorkStreak: number; maxRestStreak: number; top20Share: number; top20Days: number;
+  companyRows: { name: string; income: number; hours: number; days: number; hourly: number; daily: number }[];
+  shiftRows: { name: string; income: number; count: number; hours: number }[];
   monthlyIncome: Record<string, number>;
   monthlyWorkDays: Record<string, number>;
   monthlyRestDays: Record<string, number>;
@@ -194,10 +200,129 @@ function AnnualReportContent() {
       }
     }
 
+    // 公司维度对比（时薪 / 日均）
+    const companyAgg: Record<string, { income: number; hours: number; days: Set<string> }> = {};
+    incomes.forEach(i => {
+      const c = i.company || '其他';
+      if (!companyAgg[c]) companyAgg[c] = { income: 0, hours: 0, days: new Set() };
+      companyAgg[c].income += i.amount;
+      companyAgg[c].hours += i.hours || 0;
+      if (i.date) companyAgg[c].days.add(i.date.substring(0, 10));
+    });
+    const companyRows = Object.entries(companyAgg)
+      .map(([name, v]) => ({
+        name,
+        income: v.income,
+        hours: v.hours,
+        days: v.days.size,
+        hourly: v.hours > 0 ? v.income / v.hours : 0,
+        daily: v.days.size > 0 ? v.income / v.days.size : 0,
+      }))
+      .sort((a, b) => b.income - a.income);
+
+    // 班次分布
+    const shiftAgg: Record<string, { income: number; count: number; hours: number }> = {};
+    incomes.forEach(i => {
+      const s = i.shift || '未填';
+      if (!shiftAgg[s]) shiftAgg[s] = { income: 0, count: 0, hours: 0 };
+      shiftAgg[s].income += i.amount;
+      shiftAgg[s].count += 1;
+      shiftAgg[s].hours += i.hours || 0;
+    });
+    const shiftRows = Object.entries(shiftAgg)
+      .map(([name, v]) => ({ name, income: v.income, count: v.count, hours: v.hours }))
+      .sort((a, b) => b.income - a.income);
+
+    // 单工 / 双工 各自的收入
+    const dayIncomeMap: Record<string, number> = {};
+    incomes.forEach(i => {
+      if (!i.date) return;
+      const dk = i.date.substring(0, 10);
+      dayIncomeMap[dk] = (dayIncomeMap[dk] || 0) + i.amount;
+    });
+    let singleIncome = 0;
+    let doubleIncome = 0;
+    Object.entries(dayRecordCounts).forEach(([dk, cnt]) => {
+      const inc = dayIncomeMap[dk] || 0;
+      if (cnt === 1) singleIncome += inc;
+      else doubleIncome += inc;
+    });
+
+    // 上下半年
+    let h1Income = 0, h2Income = 0, h1Days = 0, h2Days = 0;
+    for (let m = 1; m <= 12; m++) {
+      const mk = year + '-' + String(m).padStart(2, '0');
+      if (m <= 6) {
+        h1Income += monthlyIncome[mk] || 0;
+        h1Days += monthlyWorkDays[mk] || 0;
+      } else {
+        h2Income += monthlyIncome[mk] || 0;
+        h2Days += monthlyWorkDays[mk] || 0;
+      }
+    }
+
+    // 工作日 vs 周末
+    let weekendIncome = 0, weekdayIncome = 0;
+    const weekendDateSet = new Set<string>();
+    const weekdayDateSet = new Set<string>();
+    incomes.forEach(i => {
+      if (!i.date) return;
+      const wd = new Date(i.date).getDay();
+      const dk = i.date.substring(0, 10);
+      if (wd === 0 || wd === 6) {
+        weekendIncome += i.amount;
+        weekendDateSet.add(dk);
+      } else {
+        weekdayIncome += i.amount;
+        weekdayDateSet.add(dk);
+      }
+    });
+
+    // 最长连续开工
+    const sortedDates = [...dateSet].sort();
+    let maxWorkStreak = 0;
+    let curWork = 0;
+    let prevTime = 0;
+    for (const ds of sortedDates) {
+      const t = new Date(ds + 'T00:00:00').getTime();
+      if (prevTime && Math.round((t - prevTime) / 86400000) === 1) curWork += 1;
+      else curWork = 1;
+      if (curWork > maxWorkStreak) maxWorkStreak = curWork;
+      prevTime = t;
+    }
+
+    // 最长连续休息（按自然日逐日扫描，到当年今天或年末为止）
+    const lastDay = isCurrentYear
+      ? new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime()
+      : new Date(year, 11, 31).getTime();
+    let maxRestStreak = 0;
+    let runRest = 0;
+    for (let d = new Date(year, 0, 1); d.getTime() <= lastDay; d = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1)) {
+      const key = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+      if (dateSet.has(key)) {
+        runRest = 0;
+      } else {
+        runRest += 1;
+        if (runRest > maxRestStreak) maxRestStreak = runRest;
+      }
+    }
+
+    // 收入集中度：收入最高的前 20% 工作日贡献了多少
+    const dayIncomesSorted = Object.values(dayIncomeMap).sort((a, b) => b - a);
+    const top20Days = Math.max(1, Math.ceil(dayIncomesSorted.length * 0.2));
+    const top20Sum = dayIncomesSorted.slice(0, top20Days).reduce((a, b) => a + b, 0);
+    const top20Share = totalIncome > 0 ? (top20Sum / totalIncome) * 100 : 0;
+
     return {
       totalIncome, totalHours, totalRecords,
       workDays, restDays, totalDays, workRate,
       singleDays, doubleDays,
+      singleIncome, doubleIncome,
+      h1Income, h2Income, h1Days, h2Days,
+      weekendIncome, weekendDays: weekendDateSet.size,
+      weekdayIncome, weekdayDays: weekdayDateSet.size,
+      maxWorkStreak, maxRestStreak, top20Share, top20Days,
+      companyRows, shiftRows,
       monthlyIncome, monthlyWorkDays, monthlyRestDays,
       monthlySingleDays, monthlyDoubleDays,
       companyTotals, industryTotals,
@@ -224,6 +349,7 @@ function AnnualReportContent() {
 
     const sortedMonths = Object.keys(stats.monthlyIncome).sort();
     const labels = sortedMonths.map(m => parseInt(m.substring(5)) + '月');
+    const isCurrentYear = year === new Date().getFullYear();
 
     return (
       <div className="space-y-4 sm:space-y-6">
@@ -382,7 +508,7 @@ function AnnualReportContent() {
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
           {/* Most Worked Weekday */}
           <div className="rounded-xl p-3 sm:p-4 shadow-lg bg-gradient-to-br from-indigo-600 to-blue-700 text-white">
-            <p className="text-[10px] text-indigo-500 font-medium">📅 最常工作日</p>
+            <p className="text-[11px] font-bold text-white">📅 最常工作日</p>
             {(function() {
               const maxCount = Math.max(...stats.weekdayCounts);
               const idx = stats.weekdayCounts.indexOf(maxCount);
@@ -397,21 +523,21 @@ function AnnualReportContent() {
 
           {/* Best Month */}
           <div className="rounded-xl p-3 sm:p-4 shadow-lg bg-gradient-to-br from-amber-600 to-orange-700 text-white">
-            <p className="text-[10px] text-amber-500 font-medium">🏆 最高收入月</p>
+            <p className="text-[11px] font-bold text-white">🏆 最高收入月</p>
             <p className="text-lg font-extrabold text-white mt-0.5">{stats.bestMonth}</p>
             <p className="text-[10px] text-white/70 mt-0.5">HK$ {stats.bestMonthIncome.toLocaleString()}</p>
           </div>
 
           {/* Total Records */}
           <div className="rounded-xl p-3 sm:p-4 shadow-lg bg-gradient-to-br from-green-600 to-emerald-700 text-white">
-            <p className="text-[10px] text-green-500 font-medium">📋 总记录数</p>
+            <p className="text-[11px] font-bold text-white">📋 总记录数</p>
             <p className="text-lg font-extrabold text-white mt-0.5">{stats.totalRecords}</p>
             <p className="text-[10px] text-white/70 mt-0.5">笔收入记录</p>
           </div>
 
           {/* Rest rate trend */}
           <div className="rounded-xl p-3 sm:p-4 shadow-lg bg-gradient-to-br from-rose-500 to-pink-600 text-white">
-            <p className="text-[10px] text-rose-500 font-medium">🌙 年休息率</p>
+            <p className="text-[11px] font-bold text-white">🌙 年休息率</p>
             <p className="text-lg font-extrabold text-white mt-0.5">{stats.restDays}天</p>
             <p className="text-[10px] text-white/70 mt-0.5">休息率 {((1 - stats.workRate/100)*100).toFixed(0)}%</p>
           </div>
@@ -499,6 +625,175 @@ function AnnualReportContent() {
               );
             })}
           </div>
+        </div>
+
+        {/* Company Comparison */}
+        {stats.companyRows.length > 0 && (
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-3 sm:p-5">
+            <h3 className="text-sm font-bold text-gray-700 mb-3">💼 公司对比（时薪 / 日均）</h3>
+            <table className="w-full">
+              <thead>
+                <tr className="text-[10px] text-gray-400 tracking-wider">
+                  <th className="text-left font-medium py-1.5">公司</th>
+                  <th className="text-right font-medium py-1.5">工作日</th>
+                  <th className="text-right font-medium py-1.5">工时</th>
+                  <th className="text-right font-medium py-1.5">收入</th>
+                  <th className="text-right font-medium py-1.5">时薪</th>
+                  <th className="text-right font-medium py-1.5">日均</th>
+                </tr>
+              </thead>
+              <tbody>
+                {stats.companyRows.map((c, i) => (
+                  <tr key={c.name} className="border-t border-gray-50">
+                    <td className="py-2 pr-1">
+                      <span className="flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: chartColors[i % chartColors.length] }} />
+                        <span className="text-xs text-gray-700">{c.name}</span>
+                      </span>
+                    </td>
+                    <td className="py-2 text-right text-xs text-gray-500">{c.days} 天</td>
+                    <td className="py-2 text-right text-xs text-gray-500">{c.hours.toFixed(0)}h</td>
+                    <td className="py-2 text-right text-xs font-medium text-gray-700">{c.income.toFixed(0)}</td>
+                    <td className="py-2 text-right text-xs font-bold text-emerald-600">{c.hourly > 0 ? 'HK$' + c.hourly.toFixed(0) : '—'}</td>
+                    <td className="py-2 text-right text-xs text-gray-600">{c.daily > 0 ? 'HK$' + c.daily.toFixed(0) : '—'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <p className="text-[10px] text-gray-400 mt-2">时薪 = 收入 ÷ 工时；日均 = 收入 ÷ 出勤天数</p>
+          </div>
+        )}
+
+        {/* Shift Breakdown */}
+        {stats.shiftRows.length > 0 && (
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-3 sm:p-5">
+            <h3 className="text-sm font-bold text-gray-700 mb-3">🕐 班次分布</h3>
+            <div className="space-y-2.5">
+              {stats.shiftRows.map((s, i) => {
+                const pct = stats.totalIncome > 0 ? (s.income / stats.totalIncome) * 100 : 0;
+                return (
+                  <div key={s.name}>
+                    <div className="flex justify-between items-baseline text-sm mb-1">
+                      <span className="text-gray-600 flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full" style={{ backgroundColor: chartColors[i % chartColors.length] }} />
+                        {s.name}
+                        <span className="text-[10px] text-gray-400">{s.count} 次 · {s.hours.toFixed(0)}h</span>
+                      </span>
+                      <span className="font-medium text-gray-800 text-xs">
+                        HK$ {s.income.toFixed(0)}
+                        <span className="text-[10px] text-gray-400 ml-1">({pct.toFixed(1)}%)</span>
+                      </span>
+                    </div>
+                    <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+                      <div className="h-full rounded-full" style={{ width: pct.toFixed(1) + '%', backgroundColor: chartColors[i % chartColors.length] }} />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Single vs Double Shift */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-3 sm:p-5">
+          <h3 className="text-sm font-bold text-gray-700 mb-3">⚖️ 单工 vs 双工</h3>
+          <div className="grid grid-cols-2 gap-2 sm:gap-3">
+            {[
+              { label: '单工', tone: '#10B981', days: stats.singleDays, income: stats.singleIncome },
+              { label: '双工', tone: '#8B5CF6', days: stats.doubleDays, income: stats.doubleIncome },
+            ].map((o) => {
+              const avg = o.days > 0 ? o.income / o.days : 0;
+              const pct = stats.totalIncome > 0 ? (o.income / stats.totalIncome) * 100 : 0;
+              return (
+                <div key={o.label} className="rounded-xl p-3 border text-center" style={{ borderColor: o.tone + '44', backgroundColor: o.tone + '0F' }}>
+                  <p className="text-xs font-bold" style={{ color: o.tone }}>{o.label}</p>
+                  <p className="text-lg font-extrabold text-gray-800 mt-0.5">
+                    {o.days} <span className="text-xs font-medium text-gray-400">天</span>
+                  </p>
+                  <p className="text-xs text-gray-500 mt-0.5">HK$ {o.income.toFixed(0)}</p>
+                  <p className="text-[10px] text-gray-400 mt-0.5">日均 HK$ {avg.toFixed(0)} · 占 {pct.toFixed(1)}%</p>
+                </div>
+              );
+            })}
+          </div>
+          <p className="text-[10px] text-gray-400 mt-2">
+            {stats.doubleDays > 0 && stats.singleDays > 0
+              ? `双工日日均比单工高 HK$ ${((stats.doubleIncome / stats.doubleDays) - (stats.singleIncome / stats.singleDays)).toFixed(0)}`
+              : '暂无对比数据'}
+          </p>
+        </div>
+
+        {/* Period Comparison */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-3 sm:p-5">
+          <h3 className="text-sm font-bold text-gray-700 mb-3">🗓️ 时段对比</h3>
+          <div className="grid grid-cols-2 gap-3 sm:gap-5">
+            <div>
+              <p className="text-[10px] text-gray-400 font-medium mb-1.5">上下半年</p>
+              <div className="space-y-1.5">
+                {[
+                  { label: '上半年', income: stats.h1Income, days: stats.h1Days, tone: '#3B82F6' },
+                  { label: isCurrentYear ? '下半年（至今）' : '下半年', income: stats.h2Income, days: stats.h2Days, tone: '#F59E0B' },
+                ].map((o) => {
+                  const pct = stats.totalIncome > 0 ? (o.income / stats.totalIncome) * 100 : 0;
+                  return (
+                    <div key={o.label}>
+                      <div className="flex justify-between text-[11px] text-gray-600">
+                        <span>{o.label} · {o.days}天</span>
+                        <span className="font-medium">{o.income.toFixed(0)}</span>
+                      </div>
+                      <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden mt-0.5">
+                        <div className="h-full rounded-full" style={{ width: pct.toFixed(1) + '%', backgroundColor: o.tone }} />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+            <div>
+              <p className="text-[10px] text-gray-400 font-medium mb-1.5">工作日 vs 周末</p>
+              <div className="space-y-1.5">
+                {[
+                  { label: '平日', income: stats.weekdayIncome, days: stats.weekdayDays, tone: '#10B981' },
+                  { label: '周末', income: stats.weekendIncome, days: stats.weekendDays, tone: '#EC4899' },
+                ].map((o) => {
+                  const pct = stats.totalIncome > 0 ? (o.income / stats.totalIncome) * 100 : 0;
+                  return (
+                    <div key={o.label}>
+                      <div className="flex justify-between text-[11px] text-gray-600">
+                        <span>{o.label} · {o.days}天</span>
+                        <span className="font-medium">{o.income.toFixed(0)}</span>
+                      </div>
+                      <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden mt-0.5">
+                        <div className="h-full rounded-full" style={{ width: pct.toFixed(1) + '%', backgroundColor: o.tone }} />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Work Rhythm */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-3 sm:p-5">
+          <h3 className="text-sm font-bold text-gray-700 mb-3">🔥 工作节奏</h3>
+          <div className="grid grid-cols-3 gap-2 sm:gap-3">
+            {[
+              { label: '最长连续开工', value: stats.maxWorkStreak, unit: '天', icon: '💪', tone: '#10B981' },
+              { label: '最长连续休息', value: stats.maxRestStreak, unit: '天', icon: '🌴', tone: '#0EA5E9' },
+              { label: `前 ${stats.top20Days} 个高收入日`, value: stats.top20Share.toFixed(0), unit: '% 收入', icon: '🎯', tone: '#8B5CF6' },
+            ].map((o) => (
+              <div key={o.label} className="rounded-xl p-2.5 sm:p-3 text-center border" style={{ borderColor: o.tone + '33', backgroundColor: o.tone + '0D' }}>
+                <p className="text-base">{o.icon}</p>
+                <p className="text-lg font-extrabold" style={{ color: o.tone }}>
+                  {o.value}
+                  <span className="text-[10px] font-medium text-gray-400 ml-0.5">{o.unit}</span>
+                </p>
+                <p className="text-[10px] text-gray-500 leading-tight mt-0.5">{o.label}</p>
+              </div>
+            ))}
+          </div>
+          <p className="text-[10px] text-gray-400 mt-2">「连续」按自然日计算；高收入日 = 日收入最高的前 20% 出勤日，其占比越接近 20% 说明收入越平均</p>
         </div>
       </div>
     );
