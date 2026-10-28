@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { uploadToR2, isR2Configured } from '@/lib/r2Storage';
+import { requireAuth } from '@/lib/apiAuth';
 
 export const dynamic = 'force-dynamic';
 
@@ -7,6 +8,8 @@ export const dynamic = 'force-dynamic';
 // 只允许写入 R2：未配置或上传失败时直接报错，绝不降级写本地磁盘。
 export async function POST(request: NextRequest) {
   try {
+    const auth = requireAuth(request);
+    if (!auth.ok) return auth.response;
     if (!isR2Configured()) {
       return NextResponse.json(
         { success: false, error: '图片存储未配置（缺少 R2 凭证），已拒绝上传' },

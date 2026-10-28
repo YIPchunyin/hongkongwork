@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAuth } from '@/lib/apiAuth';
 import connectDB from '@/lib/mongodb';
 import User from '@/lib/models/User';
 import Income from '@/lib/models/Income';
 
 export async function POST(request: NextRequest) {
   try {
+    const auth = requireAuth(request);
+    if (!auth.ok) return auth.response;
+
     const body = await request.json();
     const { username, records } = body;
 

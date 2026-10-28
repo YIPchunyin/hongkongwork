@@ -35,7 +35,7 @@ export async function GET(
   const filePath = path.resolve(UPLOAD_BASE, relativePath);
 
   // 确保文件在 uploads 目录内
-  if (!filePath.startsWith(UPLOAD_BASE)) {
+  if (filePath !== UPLOAD_BASE && !filePath.startsWith(UPLOAD_BASE + path.sep)) {
     return new NextResponse('Forbidden', { status: 403 });
   }
 

@@ -28,6 +28,18 @@ export function isR2Configured(): boolean {
   return !!(R2_ACCESS_KEY_ID && R2_SECRET_ACCESS_KEY);
 }
 
+/**
+ * 从 R2 公网地址反推 object key。
+ * 传入的不是本项目的 R2 公网地址时返回 null（例如历史遗留的本地路径）。
+ */
+export function r2KeyFromUrl(url: string | null | undefined): string | null {
+  if (!url) return null;
+  const base = R2_PUBLIC_URL.replace(/\/+$/, "");
+  if (!url.startsWith(base + "/")) return null;
+  const key = url.slice(base.length + 1);
+  return key ? decodeURIComponent(key) : null;
+}
+
 export async function uploadToR2(
   buffer: Buffer,
   originalName: string,

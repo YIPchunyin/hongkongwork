@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAuth } from '@/lib/apiAuth';
 import { fixOrientation, rotateImage, resizeImage, getImageInfo, optimizeForWeb } from '@/lib/imageUtils';
 
 export const dynamic = 'force-dynamic';
 
 export async function POST(request: NextRequest) {
   try {
+    const auth = requireAuth(request);
+    if (!auth.ok) return auth.response;
+
     const formData = await request.formData();
     const file = formData.get('file') as File | null;
     const action = (formData.get('action') as string) || 'info';
