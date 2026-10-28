@@ -24,6 +24,7 @@ interface AnnualStats {
   h1Income: number; h2Income: number; h1Days: number; h2Days: number;
   weekendIncome: number; weekendDays: number; weekdayIncome: number; weekdayDays: number;
   maxWorkStreak: number; maxRestStreak: number; top20Share: number; top20Days: number;
+  maxWorkStreakRange: string; maxRestStreakRange: string;
   companyRows: { name: string; income: number; hours: number; days: number; hourly: number; daily: number }[];
   shiftRows: { name: string; income: number; count: number; hours: number }[];
   monthlyIncome: Record<string, number>;
@@ -278,16 +279,27 @@ function AnnualReportContent() {
       }
     });
 
-    // 最长连续开工
+    // 最长连续开工（同时记录起止日期，方便核对是哪一段）
     const sortedDates = [...dateSet].sort();
     let maxWorkStreak = 0;
     let curWork = 0;
     let prevTime = 0;
+    let runStart = '';
+    let maxWorkStart = '';
+    let maxWorkEnd = '';
     for (const ds of sortedDates) {
       const t = new Date(ds + 'T00:00:00').getTime();
-      if (prevTime && Math.round((t - prevTime) / 86400000) === 1) curWork += 1;
-      else curWork = 1;
-      if (curWork > maxWorkStreak) maxWorkStreak = curWork;
+      if (prevTime && Math.round((t - prevTime) / 86400000) === 1) {
+        curWork += 1;
+      } else {
+        curWork = 1;
+        runStart = ds;
+      }
+      if (curWork > maxWorkStreak) {
+        maxWorkStreak = curWork;
+        maxWorkStart = runStart;
+        maxWorkEnd = ds;
+      }
       prevTime = t;
     }
 
@@ -297,15 +309,27 @@ function AnnualReportContent() {
       : new Date(year, 11, 31).getTime();
     let maxRestStreak = 0;
     let runRest = 0;
+    let restRunStart = '';
+    let maxRestStart = '';
+    let maxRestEnd = '';
     for (let d = new Date(year, 0, 1); d.getTime() <= lastDay; d = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1)) {
       const key = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
       if (dateSet.has(key)) {
         runRest = 0;
       } else {
+        if (runRest === 0) restRunStart = key;
         runRest += 1;
-        if (runRest > maxRestStreak) maxRestStreak = runRest;
+        if (runRest > maxRestStreak) {
+          maxRestStreak = runRest;
+          maxRestStart = restRunStart;
+          maxRestEnd = key;
+        }
       }
     }
+
+    const md = (s: string) => (s ? parseInt(s.substring(5, 7), 10) + '/' + parseInt(s.substring(8, 10), 10) : '');
+    const maxWorkStreakRange = maxWorkStreak > 0 ? md(maxWorkStart) + '–' + md(maxWorkEnd) : '';
+    const maxRestStreakRange = maxRestStreak > 0 ? md(maxRestStart) + '–' + md(maxRestEnd) : '';
 
     // 收入集中度：收入最高的前 20% 工作日贡献了多少
     const dayIncomesSorted = Object.values(dayIncomeMap).sort((a, b) => b - a);
@@ -322,6 +346,7 @@ function AnnualReportContent() {
       weekendIncome, weekendDays: weekendDateSet.size,
       weekdayIncome, weekdayDays: weekdayDateSet.size,
       maxWorkStreak, maxRestStreak, top20Share, top20Days,
+      maxWorkStreakRange, maxRestStreakRange,
       companyRows, shiftRows,
       monthlyIncome, monthlyWorkDays, monthlyRestDays,
       monthlySingleDays, monthlyDoubleDays,
@@ -546,7 +571,7 @@ function AnnualReportContent() {
         {/* Monthly Rest Days Detail */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-3 sm:p-5">
           <div className="flex items-center justify-between mb-3 flex-wrap gap-1">
-            <h3 className="text-sm font-bold text-gray-700">🌙 每月休息 / 单工 / 双工</h3>
+            <h3 className="text-sm font-bold text-gray-700">🌙 每月休息天数</h3>
             <span className="text-[10px] text-gray-400">
               全年 单工 <b className="text-emerald-600">{stats.singleDays}</b> 天 · 双工 <b className="text-violet-600">{stats.doubleDays}</b> 天
             </span>
@@ -576,6 +601,29 @@ function AnnualReportContent() {
             })}
           </div>
           <p className="text-[10px] text-gray-400 mt-2">单工 = 当天只上 1 个班次；双工 = 当天上 2 个或以上班次</p>
+        </div>
+
+        {/* Work Rhythm */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-3 sm:p-5">
+          <h3 className="text-sm font-bold text-gray-700 mb-3">🔥 工作节奏</h3>
+          <div className="grid grid-cols-3 gap-2 sm:gap-3">
+            {[
+              { label: '最长连续开工', value: stats.maxWorkStreak, unit: '天', icon: '💪', tone: '#10B981', sub: stats.maxWorkStreakRange },
+              { label: '最长连续休息', value: stats.maxRestStreak, unit: '天', icon: '🌴', tone: '#0EA5E9', sub: stats.maxRestStreakRange },
+              { label: `前 ${stats.top20Days} 个高收入日`, value: stats.top20Share.toFixed(0), unit: '% 收入', icon: '🎯', tone: '#8B5CF6', sub: '' },
+            ].map((o) => (
+              <div key={o.label} className="rounded-xl p-2.5 sm:p-3 text-center border" style={{ borderColor: o.tone + '33', backgroundColor: o.tone + '0D' }}>
+                <p className="text-base">{o.icon}</p>
+                <p className="text-lg font-extrabold" style={{ color: o.tone }}>
+                  {o.value}
+                  <span className="text-[10px] font-medium text-gray-400 ml-0.5">{o.unit}</span>
+                </p>
+                <p className="text-[10px] text-gray-500 leading-tight mt-0.5">{o.label}</p>
+                {o.sub && <p className="text-[9px] text-gray-400 leading-tight mt-0.5">{o.sub}</p>}
+              </div>
+            ))}
+          </div>
+          <p className="text-[10px] text-gray-400 mt-2">「连续」按自然日计算，当天有任意收入记录即算开工；高收入日 = 日收入最高的前 20% 出勤日，其占比越接近 20% 说明收入越平均</p>
         </div>
 
         {/* Weekday Analysis */}
@@ -772,28 +820,6 @@ function AnnualReportContent() {
               </div>
             </div>
           </div>
-        </div>
-
-        {/* Work Rhythm */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-3 sm:p-5">
-          <h3 className="text-sm font-bold text-gray-700 mb-3">🔥 工作节奏</h3>
-          <div className="grid grid-cols-3 gap-2 sm:gap-3">
-            {[
-              { label: '最长连续开工', value: stats.maxWorkStreak, unit: '天', icon: '💪', tone: '#10B981' },
-              { label: '最长连续休息', value: stats.maxRestStreak, unit: '天', icon: '🌴', tone: '#0EA5E9' },
-              { label: `前 ${stats.top20Days} 个高收入日`, value: stats.top20Share.toFixed(0), unit: '% 收入', icon: '🎯', tone: '#8B5CF6' },
-            ].map((o) => (
-              <div key={o.label} className="rounded-xl p-2.5 sm:p-3 text-center border" style={{ borderColor: o.tone + '33', backgroundColor: o.tone + '0D' }}>
-                <p className="text-base">{o.icon}</p>
-                <p className="text-lg font-extrabold" style={{ color: o.tone }}>
-                  {o.value}
-                  <span className="text-[10px] font-medium text-gray-400 ml-0.5">{o.unit}</span>
-                </p>
-                <p className="text-[10px] text-gray-500 leading-tight mt-0.5">{o.label}</p>
-              </div>
-            ))}
-          </div>
-          <p className="text-[10px] text-gray-400 mt-2">「连续」按自然日计算；高收入日 = 日收入最高的前 20% 出勤日，其占比越接近 20% 说明收入越平均</p>
         </div>
       </div>
     );
