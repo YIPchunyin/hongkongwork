@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 
@@ -80,6 +80,7 @@ export default function IncomePage() {
   const [formIndustry, setFormIndustry] = useState('地盘');
   const [formCompany, setFormCompany] = useState('国益');
   const [saving, setSaving] = useState(false);
+  const [toast, setToast] = useState('');
   const [selectedDay, setSelectedDay] = useState<any>(null);
   const [showAmount, setShowAmount] = useState(false);
   const [industryFilter, setIndustryFilter] = useState<string | null>(null);
@@ -231,6 +232,44 @@ export default function IncomePage() {
       }
     } catch { alert('保存失败'); }
     finally { setSaving(false); }
+  };
+
+  // 常用工作卡片：点一下就入账；勾选多张后一次提交（同一天打几份工）
+  const handleQuickAdd = async (items: any[]): Promise<boolean> => {
+    if (items.length === 0) return false;
+    const date = formDate || new Date().toISOString().slice(0, 10);
+    try {
+      for (const it of items) {
+        const res = await fetch('/api/income', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            date,
+            amount: Number(it.amount) || 0,
+            note: it.note || '',
+            shift: it.shift || '',
+            hours: Number(it.hours) || 0,
+            industry: it.industry || '',
+            company: it.company || '',
+          }),
+        });
+        const json = await res.json();
+        if (!json.success) {
+          alert(json.error || '保存失败');
+          return false;
+        }
+      }
+      // 新增成功后直接关掉「新增收入」界面
+      setShowModal(false);
+      setToast(`已添加 ${items.length} 条收入`);
+      setTimeout(() => setToast(''), 2500);
+      clearIncomeCache();
+      fetchIncomes();
+      return true;
+    } catch {
+      alert('保存失败');
+      return false;
+    }
   };
 
   const deleteIncome = async (id: string) => {
@@ -554,15 +593,8 @@ export default function IncomePage() {
               <h2 className="text-base md:text-lg font-bold text-gray-900">{editItem ? '编辑收入' : '✨ 新增收入'}</h2>
             </div>
             <form onSubmit={handleSave} className="space-y-2.5 md:space-y-4">
-              <QuickAddCards incomes={incomes} onSelect={(item) => {
-                setFormAmount(item.amount ? String(item.amount) : '');
-                setFormShift(item.shift || '早班');
-                setFormHours(item.hours ? String(item.hours) : '');
-                setFormIndustry(item.industry || '地盘');
-                setFormCompany(item.company || '国益');
-                setFormNote(item.note || '');
-                setEditItem(null);
-              }} />
+              {/* 编辑已有记录时不显示快捷卡片，避免误新建 */}
+              {!editItem && <QuickAddCards incomes={incomes} onQuickAdd={handleQuickAdd} />}
 
               <div className="grid grid-cols-2 gap-2 md:gap-3">
                 <div>
@@ -643,6 +675,12 @@ export default function IncomePage() {
           <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
         </svg>
       </button>
+
+      {toast && (
+        <div className="fixed left-1/2 -translate-x-1/2 bottom-24 md:bottom-10 z-[60] px-4 py-2 rounded-full bg-gray-900 text-white text-xs shadow-lg">
+          ✓ {toast}
+        </div>
+      )}
     </div>
   );
 }
