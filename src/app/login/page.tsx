@@ -21,7 +21,11 @@ export default function LoginPage() {
     }
 
     setSubmitting(true);
-    const result = await login(username, password);
+    const params = new URLSearchParams(window.location.search);
+    const redirect = params.get('redirect');
+    const safeRedirect =
+      redirect && redirect.startsWith('/') && !redirect.startsWith('//') ? redirect : undefined;
+    const result = await login(username, password, safeRedirect);
     setSubmitting(false);
 
     if (!result.success) {

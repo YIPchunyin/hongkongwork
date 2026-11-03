@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
@@ -14,7 +14,7 @@ export interface User {
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  login: (username: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  login: (username: string, password: string, redirectTo?: string) => Promise<{ success: boolean; error?: string }>;
   register: (username: string, name: string, password: string, email?: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
@@ -49,7 +49,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     refreshUser();
   }, [refreshUser]);
 
-  const login = useCallback(async (username: string, password: string) => {
+  const login = useCallback(async (username: string, password: string, redirectTo?: string) => {
     try {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
@@ -60,7 +60,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (json.success) {
         setUser(json.data.user);
-        router.push('/');
+        router.push(redirectTo || '/');
         router.refresh();
         return { success: true };
       }
